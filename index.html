@@ -27,10 +27,10 @@
     }
   </script>
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
 
   <style>
-    /* 1. Futuristic Luxury & Glassmorphism */
+    /* Futuristic Luxury & Glassmorphism */
     body {
       background-color: #fafafa;
       color: #0f172a;
@@ -45,7 +45,7 @@
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
     }
 
-    /* 2. Subtle Animated Gradients */
+    /* Subtle Animated Gradients */
     .animated-bg {
       background: linear-gradient(-45deg, #ffffff, #f1f5f9, #ffedd5, #f8fafc);
       background-size: 400% 400%;
@@ -58,7 +58,7 @@
       100% { background-position: 0% 50%; }
     }
 
-    /* 3. Micro-interactions */
+    /* Micro-interactions */
     .hover-lift {
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
     }
@@ -90,7 +90,7 @@
       100% { filter: hue-rotate(360deg); }
     }
 
-    /* 4. Smooth Section Reveal */
+    /* Smooth Section Reveal */
     .reveal {
       opacity: 0;
       transform: translateY(40px);
@@ -110,7 +110,7 @@
 </head>
 <body class="antialiased selection:bg-accent selection:text-white">
 
-<nav class="fixed w-full z-50 glass transition-all duration-300" aria-label="Main Navigation" id="navbar">
+  <nav class="fixed w-full z-50 glass transition-all duration-300" aria-label="Main Navigation" id="navbar">
     <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
       <a href="#" class="flex items-center" aria-label="Sahebji Youth Home">
         <img src="sylogo.png" alt="Sahebji Youth Logo" class="h-10 w-auto"> 
@@ -118,7 +118,7 @@
       <div class="hidden md:flex space-x-8 items-center">
         <a href="#mission" class="text-slate-600 hover:text-slate-900 font-medium transition-colors">Our Mission</a>
         <a href="#core-values" class="text-slate-600 hover:text-slate-900 font-medium transition-colors">Core Values</a>
-        
+        <a href="#about" class="text-slate-600 hover:text-slate-900 font-medium transition-colors">About Us</a>
         <a href="mailto:info@sahebjiyouth.org" class="glow-ring px-6 py-2 bg-slate-900 text-white rounded-full font-medium hover:bg-slate-800 transition-colors">
           Connect Globally
         </a>
@@ -143,8 +143,8 @@
           <a href="#mission" class="hover-lift glow-ring px-8 py-4 bg-slate-900 text-white rounded-full font-semibold text-lg shadow-xl">
             Explore Our Mission
           </a>
-          <a href="#core-values" class="hover-lift px-8 py-4 glass rounded-full font-semibold text-lg text-slate-900 border border-slate-200">
-            Our Core Values
+          <a href="#about" class="hover-lift px-8 py-4 glass rounded-full font-semibold text-lg text-slate-900 border border-slate-200">
+            Upcoming Events
           </a>
         </div>
       </div>
@@ -219,25 +219,110 @@
       </div>
     </section>
 
+    <section id="about" class="py-32 px-6 relative bg-slate-50 border-t border-slate-200" aria-labelledby="about-title">
+      <div class="max-w-7xl mx-auto">
+        <div class="max-w-4xl mx-auto text-center reveal mb-20">
+          <span class="block text-accent font-semibold tracking-widest uppercase mb-4 text-sm md:text-base">Experience</span>
+          <h2 id="about-title" class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-8 leading-tight text-slate-900">
+            <span class="font-display italic text-slate-700 font-normal">About</span> Us.
+          </h2>
+          
+          <div class="text-lg md:text-xl text-slate-600 font-light leading-relaxed space-y-6 text-left">
+            <p>
+              Sahebji Youth hosts youth events worldwide, including youth camps, leadership retreats, youth conventions, and shibirs. These events offer a one-of-a-kind experience where youth can build lifelong friendships through collaborative learning, friendly competitions, stimulating workshops, and spiritual growth. 
+            </p>
+            <p>
+              Youth from across the world come together to participate in daily inspirational discourses, group discussions, and engaging activities tailored to their age group, deepening their understanding of our culture and religion. And this is all designed to create divine memories and lasting connections.
+            </p>
+            <div class="mt-8 p-6 bg-orange-50 rounded-2xl border border-orange-100 text-center">
+              <p class="text-valueTitle font-medium">
+                For more information on upcoming events this year, check back here in April 2026 for registration details.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 reveal">
+          
+          <article class="glass p-8 rounded-3xl hover-lift border-t border-white/60 text-center flex flex-col items-center justify-center">
+            <div class="w-14 h-14 rounded-full bg-slate-900 flex items-center justify-center mb-6 text-white shadow-md">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </div>
+            <h4 class="text-xl font-bold mb-1 text-slate-900">Yogi Youth Camp</h4>
+            <p class="text-accent font-semibold mb-4">America</p>
+            <div class="px-4 py-1.5 rounded-full bg-slate-100 text-slate-600 text-sm font-medium border border-slate-200">
+              June 21-27
+            </div>
+          </article>
+
+          <article class="glass p-8 rounded-3xl hover-lift border-t border-white/60 text-center flex flex-col items-center justify-center" style="transition-delay: 100ms;">
+            <div class="w-14 h-14 rounded-full bg-slate-900 flex items-center justify-center mb-6 text-white shadow-md">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h4 class="text-xl font-bold mb-1 text-slate-900 leading-tight">Sahebji Youth Shibir</h4>
+            <p class="text-accent font-semibold mb-4">West Coast</p>
+            <div class="px-4 py-1.5 rounded-full bg-slate-100 text-slate-600 text-sm font-medium border border-slate-200">
+              July 1-5
+            </div>
+          </article>
+
+          <article class="glass p-8 rounded-3xl hover-lift border-t border-white/60 text-center flex flex-col items-center justify-center" style="transition-delay: 200ms;">
+            <div class="w-14 h-14 rounded-full bg-slate-900 flex items-center justify-center mb-6 text-white shadow-md">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+            </div>
+            <h4 class="text-xl font-bold mb-1 text-slate-900 leading-tight">International Youth Convention</h4>
+            <p class="text-accent font-semibold mb-4">London</p>
+            <div class="px-4 py-1.5 rounded-full bg-slate-100 text-slate-600 text-sm font-medium border border-slate-200">
+              July 15-16
+            </div>
+          </article>
+
+          <article class="glass p-8 rounded-3xl hover-lift border-t border-white/60 text-center flex flex-col items-center justify-center" style="transition-delay: 300ms;">
+            <div class="w-14 h-14 rounded-full bg-slate-900 flex items-center justify-center mb-6 text-white shadow-md">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+            </div>
+            <h4 class="text-xl font-bold mb-1 text-slate-900">Yogi Youth Camp</h4>
+            <p class="text-accent font-semibold mb-4">Canada</p>
+            <div class="px-4 py-1.5 rounded-full bg-slate-100 text-slate-600 text-sm font-medium border border-slate-200">
+              August 1-4
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
   </main>
 
-<footer class="bg-slate-50 py-12 text-center border-t border-slate-200">
-    <div class="max-w-7xl mx-auto px-6 space-y-6 flex flex-col items-center justify-center">
-      <h3 class="text-xl font-bold text-slate-900">Sahebji Youth</h3>
-      <p class="text-slate-500 font-light">The Global Youth Wing of Anoopam Mission</p>
+  <footer class="bg-slate-900 py-16 text-center border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-6 space-y-8 flex flex-col items-center justify-center">
+      
+      <div class="space-y-2">
+        <h3 class="text-xl font-bold text-white">Sahebji Youth</h3>
+        <p class="text-slate-400 font-light">The Global Youth Wing of Anoopam Mission</p>
+      </div>
 
-      <a href="https://www.anoopam.org" target="_blank" class="block hover-lift">
-        <img src="amlogo.png" alt="Anoopam Mission Logo" class="h-16 w-auto">
+      <a href="https://www.anoopam.org" target="_blank" class="block hover-lift transition-transform">
+        <img src="amlogo.png" alt="Anoopam Mission Logo" class="h-16 w-auto brightness-0 invert opacity-90 hover:opacity-100 transition-opacity">
       </a>
 
-      <p class="text-sm text-slate-400">&copy; 2026 Anoopam Mission. All rights reserved.</p>
+      <div class="text-slate-400 text-sm leading-relaxed space-y-1">
+        <p>Brahmajyoti, Yogiji Marg, Mogri, Anand, Gujarat 388345, India</p>
+        <p>
+          <a href="tel:+912692230483" class="hover:text-accent transition-colors">+91 2692 230 483</a> 
+          <span class="mx-2 text-slate-600">|</span> 
+          <a href="https://www.anoopam.org" target="_blank" class="hover:text-accent transition-colors">www.anoopam.org</a>
+        </p>
+      </div>
+
+      <p class="text-xs text-slate-500 pt-4">&copy; 2026 Anoopam Mission. All rights reserved.</p>
     </div>
   </footer>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       
-      // 1. Smooth Section Reveal
+      // Smooth Section Reveal
       const revealElements = document.querySelectorAll('.reveal');
       
       const revealObserver = new IntersectionObserver((entries, observer) => {
@@ -255,7 +340,7 @@
 
       revealElements.forEach(el => revealObserver.observe(el));
 
-      // 2. Parallax-like Hero Effect & Navbar blur adjustment
+      // Parallax & Navbar Blur
       const heroContent = document.getElementById('hero-content');
       const navbar = document.getElementById('navbar');
 
