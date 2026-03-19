@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yogi Youth Camp 2026 Registration</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Lato:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['"Lato"', 'sans-serif'],
+                    },
+                    colors: {
+                        yyc: {
+                            primary: '#1E2B58', 
+                            dark: '#1F2937',
+                            sky: '#38BDF8',     
+                            skyLight: '#E0F2FE',
+                            peach: '#FFEDD5',   
+                            peachDark: '#FDBA74',
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass {
+                @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+            }
+            .glass-panel {
+                @apply bg-white/60 border border-white/60 rounded-xl p-5 shadow-sm;
+            }
+            .glass-input {
+                @apply bg-white/70 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-yyc-sky/50 focus:border-yyc-sky focus:bg-white transition-all duration-300 rounded-lg;
+            }
+            .btn-primary {
+                @apply bg-gradient-to-r from-yyc-primary to-blue-600 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-blue-500/30 transform hover:-translate-y-0.5 transition-all duration-300 uppercase tracking-wider text-sm;
+            }
+            .btn-secondary {
+                @apply bg-white text-gray-600 font-bold py-3 px-6 rounded-full border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition-all duration-300 uppercase tracking-wider text-sm;
+            }
+            .section-title {
+                @apply font-serif text-2xl md:text-3xl text-gray-800 mb-2;
+            }
+            .form-label {
+                @apply block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 ml-1;
+            }
+            .data-label {
+                @apply text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1;
+            }
+            .data-value {
+                @apply text-xl font-bold text-gray-800 break-words leading-tight;
+            }
+            .consent-box::-webkit-scrollbar { width: 6px; }
+            .consent-box::-webkit-scrollbar-track { background: #f1f1f1; }
+            .consent-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+            
+            /* TAB STYLES */
+            .tab-btn {
+                @apply whitespace-nowrap py-3 px-5 text-sm font-bold text-gray-500 border-b-2 border-transparent hover:text-yyc-primary transition-colors cursor-pointer;
+            }
+            .tab-btn.active {
+                @apply text-yyc-primary border-yyc-primary;
+            }
+        }
+    </style>
+
+    <style>
+        /* Global Navigation Styles */
+        .hover-lift {
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+        }
+        .hover-lift:hover, .hover-lift:focus-visible {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            outline: none;
+        }
+        .glow-ring {
+            position: relative;
+        }
+        .glow-ring::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: inherit;
+            background: linear-gradient(45deg, transparent, #fb923c, transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+        }
+        .glow-ring:hover::before, .glow-ring:focus-visible::before {
+            opacity: 0.6;
+            animation: rotateGlow 3s linear infinite;
+        }
+        @keyframes rotateGlow {
+            100% { filter: hue-rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-sky-50 via-white to-orange-50 min-h-screen relative overflow-x-hidden font-sans text-gray-700 flex flex-col">
+
+    <nav class="fixed w-full z-50 glass transition-all duration-300" aria-label="Main Navigation" id="navbar">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="/" class="flex items-center" aria-label="Sahebji Youth Home">
+                <img src="/sylogo.png" alt="Sahebji Youth Logo" class="h-10 w-auto"> 
+            </a>
+            <div class="flex items-center">
+                <a href="mailto:info@sahebjiyouth.org" class="glow-ring px-6 py-2 bg-slate-900 text-white rounded-full font-medium hover:bg-slate-800 transition-colors text-sm md:text-base">
+                    Connect Globally
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-sky-200/30 rounded-full blur-[100px] animate-pulse"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-orange-200/30 rounded-full blur-[100px] animate-pulse" style="animation-delay: 2s;"></div>
+    </div>
+
+    <main class="flex-grow">
+        <div class="container mx-auto px-4 pt-32 pb-16 max-w-4xl relative z-10">
+            
+            <div class="text-center mb-6 animate-fade-in-up">
+                <h1 class="font-serif text-4xl md:text-5xl text-yyc-primary font-bold mb-5 tracking-wide">Yogi Youth Camp</h1>
+                
+                <div class="max-w-3xl mx-auto bg-white/70 border border-yyc-sky/30 rounded-xl p-6 shadow-sm mb-6 relative overflow-hidden backdrop-blur-sm">
+                    <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-yyc-sky to-yyc-primary"></div>
+                    <p class="text-gray-700 text-xs md:text-sm leading-relaxed mb-3 text-left">
+                        YYC offers a one-of-a-kind experience where campers can <strong>build lifelong friendships</strong> through <strong>collaborative learning, friendly competitions, stimulating workshops, and spiritual growth</strong>. Youth from across the nation come together to participate in <strong>daily inspirational discourses, group discussions, and engaging activities</strong> tailored to their age group, deepening their understanding of our <strong>culture and religion</strong>.
+                    </p>
+                    <p class="text-gray-700 text-xs md:text-sm leading-relaxed text-left">
+                        Get ready for <strong>exciting evening events, creative arts and crafts, and thrilling sports competitions</strong>—all designed to create <strong>divine memories and lasting connections</strong>.
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-center gap-2 mt-4 text-sm font-bold text-yyc-primary uppercase tracking-widest bg-yyc-skyLight/50 py-2 px-4 rounded-lg inline-block shadow-sm border border-blue-100">
+                    <span>June 21 - 27, 2026</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-yyc-primary mx-2"></span>
+                    <span>Coplay, PA</span>
+                </div>
+            </div>
+
+            <div class="glass-panel bg-white/70 mb-8 animate-fade-in-up" style="animation-delay: 0.1s;">
+                <div class="flex overflow-x-auto border-b border-gray-200 mb-5 pb-1 hide-scrollbar" id="tabs-container">
+                    <button class="tab-btn active" onclick="switchTab('tab-registration')">Registration</button>
+                    <button class="tab-btn" onclick="switchTab('tab-fee')">Fee</button>
+                    <button class="tab-btn" onclick="switchTab('tab-policy')">Parental Supervision Policy</button>
+                    <button class="tab-btn" onclick="switchTab('tab-transport')">Transportation</button>
+                    <button class="tab-btn" onclick="switchTab('tab-accom')">Accommodations</button>
+                    <button class="tab-btn" onclick="switchTab('tab-groups')">Groups</button>
+                    <button class="tab-btn" onclick="switchTab('tab-facilities')">Facilities</button>
+                </div>
+
+                <div id="tab-registration" class="tab-content text-sm text-gray-700 leading-relaxed block">
+                    <h3 class="text-xl font-serif text-yyc-primary mb-3">Registration</h3>
+                    <p class="mb-3">Check-in for YYC will open on <strong>Sunday, June 21, 2026, at 1:00 PM</strong>. Upon arrival, please proceed with your luggage to the designated check-in area, where volunteers will be ready to assist you.</p>
+                    <ol class="list-decimal ml-6 space-y-1.5 mb-4">
+                        <li><strong>Meet Volunteers</strong> – A team of volunteers will greet you and guide you through the check-in process.</li>
+                        <li><strong>Provide Your Name</strong> – Check in by giving your name to the registration team.</li>
+                        <li><strong>Donations</strong> – If you wish to make an additional donation, you will have the opportunity to do so at check-in.</li>
+                        <li><strong>Luggage Tagging</strong> – Volunteers will help you tag your luggage to ensure it is properly stored.</li>
+                        <li><strong>Join the Campers</strong> – Once checked in, you can join the rest of the campers, mingle, and settle in before the opening ceremony.</li>
+                    </ol>
+                    <p class="mb-3">Please plan to depart our facilities by <strong>1:00 PM on Saturday, June 27, 2026</strong>. Ensure that all personal belongings are collected and all check-out procedures are completed before your departure.</p>
+                    <p>We look forward to welcoming you and wish you a great time at YYC!</p>
+                </div>
+
+                <div id="tab-fee" class="tab-content text-sm text-gray-700 leading-relaxed hidden">
+                    <h3 class="text-xl font-serif text-yyc-primary mb-3">Fee</h3>
+                    <p>We request that each camper pay an <strong>application fee of $100</strong> to reserve their spot as an attendee. This can be paid via <strong>credit or debit card</strong> on the last page of the registration form. Please note, this fee is non-refundable and does not qualify as tax-deductible. Any <strong>additional donations are warmly welcomed</strong> and can be made via <a href="#" class="text-blue-600 underline">Paypal Giving Fund</a> or in-person during the check-in process on June 21.</p>
+                </div>
+
+                <div id="tab-policy" class="tab-content text-sm text-gray-700 leading-relaxed hidden">
+                    <h3 class="text-xl font-serif text-yyc-primary mb-3">Parental Supervision Policy</h3>
+                    <p>Children between the ages of <strong>5-8</strong> will be considered <strong>freshman campers</strong> but must be accompanied by a parent or guardian. There are no organized activities for children <strong>ages 4 and under</strong>. If a parent wishes to bring a child <strong>age 4 or under</strong>, they must remain with them at all times. <strong>Parents are not required to complete a registration form.</strong> For further information or inquiries, please email <a href="mailto:info@sahebjiyouth.org" class="text-blue-600 underline">info@sahebjiyouth.org</a>.</p>
+                </div>
+
+                <div id="tab-transport" class="tab-content text-sm text-gray-700 leading-relaxed hidden">
+                    <h3 class="text-xl font-serif text-yyc-primary mb-3">Transportation</h3>
+                    <p>Airport pick-ups will be available from the following airports: <strong>Allentown (ABE), Newark (EWR), Philadelphia (PHL), and Trenton (TTN)</strong>. We kindly ask campers to be <strong>mindful when booking early morning or late-night flights</strong> out of respect for our dedicated volunteers coordinating transportation. Planning your arrival and departure at reasonable times will help ensure a smooth and efficient travel experience for everyone.</p>
+                </div>
+
+                <div id="tab-accom" class="tab-content text-sm text-gray-700 leading-relaxed hidden">
+                    <h3 class="text-xl font-serif text-yyc-primary mb-3">Accommodations</h3>
+                    <p class="mb-3">All YYC campers will be comfortably housed in <strong>nearby hotels in the Allentown area</strong>, with separate accommodations for boys and girls. Daily camp activities will take place on the <strong>Mandir campus</strong>, where an enriching and immersive experience awaits. <strong>Transportation will be provided</strong> between the hotels and the Mandir to ensure a smooth and convenient stay.</p>
+                    <p>Local campers have the option to commute from home, but we kindly request that you <strong>arrive on time</strong> each morning according to the provided schedule to fully participate in the camp experience.</p>
+                </div>
+
+                <div id="tab-groups" class="tab-content text-sm text-gray-700 leading-relaxed hidden">
+                    <h3 class="text-xl font-serif text-yyc-primary mb-3">Groups</h3>
+                    <p>To create a more engaging and enriching experience, campers will be grouped by age for select activities. These include <strong>inspiring sabhas, dynamic team-building exercises, and thoughtful discussion groups</strong>, ensuring meaningful connections and age-appropriate learning. Each group will have the opportunity to bond, grow, and immerse themselves in the YYC experience alongside peers.</p>
+                </div>
+
+                <div id="tab-facilities" class="tab-content text-sm text-gray-700 leading-relaxed hidden">
+                    <h3 class="text-xl font-serif text-yyc-primary mb-3">Facilities</h3>
+                    <p class="mb-2">We offer a range of facilities to enhance your experience, including:</p>
+                    <ul class="list-disc ml-6 space-y-1">
+                        <li>A <strong>large, air-conditioned temple hall</strong> for gatherings and programs.</li>
+                        <li>A <strong>spacious, air-conditioned dining hall</strong> for meals.</li>
+                        <li>A <strong>field</strong> for soccer, volleyball, and group games.</li>
+                        <li>A <strong>college regulation outdoor basketball court</strong> for recreational play.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="glass rounded-2xl p-6 md:p-10 relative overflow-hidden animate-fade-in-up" style="animation-delay: 0.2s;">
+                
+                <div class="absolute top-0 left-0 w-full h-1 bg-gray-100">
+                    <div id="progress-bar" class="h-full bg-gradient-to-r from-yyc-sky to-yyc-primary w-[15%] transition-all duration-500"></div>
+                </div>
+
+                <div id="loader" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
+                    <div class="w-12 h-12 border-4 border-gray-100 border-t-yyc-primary rounded-full animate-spin"></div>
+                    <p class="mt-4 text-yyc-primary font-bold text-sm tracking-widest animate-pulse">PROCESSING...</p>
+                </div>
+
+                <div id="step-lookup" class="step-content block">
+                    <div class="text-center mb-8">
+                        <h3 class="section-title">Welcome</h3>
+                        <p class="text-gray-500">Enter your details to retrieve your registration profile.</p>
+                    </div>
+
+                    <div class="space-y-5">
+                        <div>
+                            <label class="form-label">Registrant Type <span class="text-red-500">*</span></label>
+                            <select id="lookup-type" class="glass-input w-full p-4 font-bold text-gray-700">
+                                <option value="">Select an option...</option>
+                                <option value="Camper">Camper</option>
+                                <option value="Volunteer">Volunteer</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="form-label">First Name <span class="text-red-500">*</span></label>
+                                <input type="text" id="lookup-first" class="glass-input w-full p-4" placeholder="Enter first name">
+                            </div>
+                            <div>
+                                <label class="form-label">Last Name <span class="text-red-500">*</span></label>
+                                <input type="text" id="lookup-last" class="glass-input w-full p-4" placeholder="Enter last name">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label">Zip / Postal Code <span class="text-red-500">*</span></label>
+                            <input type="text" id="lookup-zip" class="glass-input w-full p-4" placeholder="e.g. 18037 or A1A 1A1">
+                        </div>
+                        
+                        <button onclick="performLookup()" class="btn-primary w-full mt-4 group">
+                            Begin Registration
+                            <span class="material-icons text-sm ml-2 group-hover:translate-x-1 transition-transform inline-block align-middle">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="step-personal" class="step-content hidden">
+                    <div id="personal-view-mode" class="block animate-fade-in-up">
+                        <div class="flex justify-between items-end mb-6">
+                            <div>
+                                <h3 class="section-title mb-0">Profile Summary</h3>
+                                <p class="text-gray-400 text-xs mt-1">Please verify your information.</p>
+                            </div>
+                            <button onclick="togglePersonalEdit(true)" class="text-yyc-primary hover:text-blue-600 font-bold text-xs tracking-widest flex items-center gap-1 transition-colors py-2">
+                                <span class="material-icons text-sm">edit</span> EDIT DETAILS
+                            </button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="glass-panel grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
+                                <div class="col-span-2 md:col-span-4 border-b border-gray-100 pb-4 mb-2">
+                                    <div class="data-label">Full Name</div>
+                                    <div id="view-name" class="text-3xl font-serif font-bold text-yyc-dark">--</div>
+                                </div>
+                                
+                                <div class="col-span-2">
+                                    <div class="data-label">Email</div>
+                                    <div id="view-email" class="data-value lowercase">--</div>
+                                </div>
+                                <div class="col-span-2">
+                                    <div class="data-label">Phone</div>
+                                    <div id="view-phone" class="data-value font-mono">--</div>
+                                </div>
+
+                                <div>
+                                    <div class="data-label">DOB</div>
+                                    <div id="view-dob" class="data-value">--</div>
+                                </div>
+                                <div>
+                                    <div class="data-label">Gender</div>
+                                    <div id="view-gender" class="data-value">--</div>
+                                </div>
+                                <div class="col-span-2">
+                                    <div class="data-label">T-Shirt</div>
+                                    <div id="view-tshirt" class="data-value">--</div>
+                                </div>
+                                
+                                <div class="col-span-2 md:col-span-4 border-t border-gray-100 pt-3 mt-1">
+                                    <div class="data-label">Address</div>
+                                    <div id="view-address" class="data-value text-lg font-normal">--</div>
+                                </div>
+                            </div>
+
+                            <div class="glass-panel border-l-4 border-l-yyc-peachDark bg-orange-50/30">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <span class="material-icons text-yyc-peachDark text-lg">emergency</span>
+                                    <span class="font-bold text-gray-700 text-xs uppercase tracking-wide">Emergency Contact</span>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <div class="data-label">Name</div>
+                                        <div id="view-em-name" class="data-value">--</div>
+                                    </div>
+                                    <div>
+                                        <div class="data-label">Relationship</div>
+                                        <div id="view-em-rel" class="data-value">--</div>
+                                    </div>
+                                    <div>
+                                        <div class="data-label">Phone</div>
+                                        <div id="view-em-phone" class="data-value font-mono">--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 mt-8">
+                            <button onclick="goToStep('step-lookup')" class="btn-secondary w-1/3">Back</button>
+                            <button onclick="validatePersonalAndGo()" class="btn-primary w-2/3">Confirm & Continue</button>
+                        </div>
+                    </div>
+
+                    <div id="personal-edit-mode" class="hidden">
+                        <div id="no-record-warning" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 animate-fade-in-up">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="material-icons text-blue-600">search_off</span>
+                                <strong class="font-bold text-blue-900">Record Not Found</strong>
+                            </div>
+                            <p class="text-sm text-blue-800">We couldn't find an existing profile matching those details. Please proceed by entering your information manually below.</p>
+                        </div>
+
+                        <div class="text-center mb-8">
+                            <h3 class="section-title">Edit Details</h3>
+                            <p class="text-gray-500 text-sm">Update your information below. Fields marked with <span class="text-red-500 font-bold">*</span> are required.</p>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="col-span-1 md:col-span-1"><label class="form-label">First Name <span class="text-red-500">*</span></label><input type="text" id="p-first" class="glass-input w-full p-3"></div>
+                                <div class="col-span-1 md:col-span-1"><label class="form-label">Middle Name <span class="text-gray-400 font-normal">(Optional)</span></label><input type="text" id="p-middle" class="glass-input w-full p-3"></div>
+                                <div class="col-span-1 md:col-span-1"><label class="form-label">Last Name <span class="text-red-500">*</span></label><input type="text" id="p-last" class="glass-input w-full p-3"></div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><label class="form-label">Birth Date <span class="text-red-500">*</span></label><input type="date" id="p-dob" class="glass-input w-full p-3"></div>
+                                <div>
+                                    <label class="form-label">Gender <span class="text-red-500">*</span></label>
+                                    <select id="p-gender" class="glass-input w-full p-3">
+                                        <option value="">Select</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="form-label">T-Shirt Size <span class="text-red-500">*</span></label>
+                                <select id="p-tshirt" class="glass-input w-full p-3">
+                                    <option value="">Select Size</option>
+                                    <optgroup label="Youth Sizes">
+                                        <option value="YS">Youth Small</option>
+                                        <option value="YM">Youth Medium</option>
+                                        <option value="YL">Youth Large</option>
+                                    </optgroup>
+                                    <optgroup label="Adult Sizes">
+                                        <option value="S">Adult Small</option>
+                                        <option value="M">Adult Medium</option>
+                                        <option value="L">Adult Large</option>
+                                        <option value="XL">Adult XL</option>
+                                        <option value="XXL">Adult XXL</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            <div class="pt-4 border-t border-gray-100">
+                                <h4 class="font-serif text-lg text-yyc-primary mb-4">Contact Details</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="form-label">Street Address <span class="text-red-500">*</span></label>
+                                        <input type="text" id="c-street" class="glass-input w-full p-3" placeholder="Line 1">
+                                        <input type="text" id="c-street2" class="glass-input w-full p-3 mt-2" placeholder="Line 2 (Optional)">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div><label class="form-label">City <span class="text-red-500">*</span></label><input type="text" id="c-city" class="glass-input w-full p-3"></div>
+                                        <div><label class="form-label">State/Prov <span class="text-red-500">*</span></label><input type="text" id="c-state" class="glass-input w-full p-3"></div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div><label class="form-label">Zip/Postal Code <span class="text-red-500">*</span></label><input type="text" id="c-zip" class="glass-input w-full p-3"></div>
+                                        <div>
+                                            <label class="form-label">Cell Number <span class="text-red-500">*</span></label>
+                                            <input type="tel" id="c-phone" class="glass-input w-full p-3" placeholder="(###) ###-####" oninput="formatPhoneNumberInput(event)">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Email <span class="text-red-500">*</span></label>
+                                        <input type="email" id="c-email" class="glass-input w-full p-3" placeholder="johndoe@example.com">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-gray-100">
+                                <div class="bg-yyc-skyLight/50 p-5 rounded-xl border border-blue-100">
+                                    <h4 class="font-serif text-lg text-yyc-dark mb-4 flex items-center gap-2">
+                                        <span class="material-icons text-yyc-primary">emergency</span> Emergency Contact
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div><label class="form-label">Full Name <span class="text-red-500">*</span></label><input type="text" id="e-name" class="glass-input w-full p-3"></div>
+                                        <div><label class="form-label">Relationship <span class="text-red-500">*</span></label><input type="text" id="e-rel" class="glass-input w-full p-3"></div>
+                                        <div>
+                                            <label class="form-label">Phone <span class="text-red-500">*</span></label>
+                                            <input type="tel" id="e-phone" class="glass-input w-full p-3" placeholder="(###) ###-####" oninput="formatPhoneNumberInput(event)">
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Email <span class="text-red-500">*</span></label>
+                                            <input type="email" id="e-email" class="glass-input w-full p-3" placeholder="johndoe@example.com">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 mt-8">
+                            <button onclick="togglePersonalEdit(false)" class="btn-secondary w-1/3">Cancel</button>
+                            <button onclick="saveAndToggle()" class="btn-primary w-2/3">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="step-travel" class="step-content hidden">
+                    <div class="text-center mb-8">
+                        <h3 class="section-title">Travel Plans</h3>
+                        
+                        <div class="bg-gradient-to-r from-blue-50 to-sky-50 border-2 border-yyc-sky/60 rounded-xl p-5 my-5 shadow-sm mx-auto max-w-md transform hover:scale-[1.02] transition-transform">
+                            <span class="material-icons text-yyc-primary mb-1">event_available</span>
+                            <p class="text-yyc-dark text-lg font-black tracking-wide m-0 leading-snug">YYC will begin June 21st and conclude June 27th.</p>
+                        </div>
+                        
+                        <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 inline-block text-left text-sm text-blue-800 shadow-sm max-w-md">
+                            <strong>Disclaimer:</strong> Check-in begins at 1:00 PM on Sunday, June 21st. Camp concludes with departure by 1:00 PM on Saturday, June 27th.
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap justify-center gap-4 mb-8 mt-6">
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="travelType" value="Car" class="peer hidden" onchange="toggleTravelMode()">
+                            <div class="w-24 h-24 rounded-2xl bg-white border-2 border-gray-100 peer-checked:border-yyc-primary peer-checked:bg-yyc-skyLight flex flex-col items-center justify-center transition-all shadow-sm hover:shadow-md">
+                                <span class="material-icons text-3xl text-gray-400 peer-checked:text-yyc-primary mb-1">directions_car</span>
+                                <span class="text-xs font-bold text-gray-500 peer-checked:text-yyc-dark">Car</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="travelType" value="Flight" class="peer hidden" onchange="toggleTravelMode()">
+                            <div class="w-24 h-24 rounded-2xl bg-white border-2 border-gray-100 peer-checked:border-yyc-primary peer-checked:bg-yyc-skyLight flex flex-col items-center justify-center transition-all shadow-sm hover:shadow-md">
+                                <span class="material-icons text-3xl text-gray-400 peer-checked:text-yyc-primary mb-1">flight</span>
+                                <span class="text-xs font-bold text-gray-500 peer-checked:text-yyc-dark">Flight</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="travelType" value="FlightNotBooked" class="peer hidden" onchange="toggleTravelMode()">
+                            <div class="w-24 h-24 rounded-2xl bg-white border-2 border-gray-100 peer-checked:border-yyc-primary peer-checked:bg-yyc-skyLight flex flex-col items-center justify-center transition-all shadow-sm hover:shadow-md text-center p-2">
+                                <span class="material-icons text-3xl text-gray-400 peer-checked:text-yyc-primary mb-1">pending_actions</span>
+                                <span class="text-[10px] leading-tight font-bold text-gray-500 peer-checked:text-yyc-dark">Flight Not Booked</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div id="flight-module" class="hidden space-y-8 animate-fade-in-up">
+                        <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
+                            <h4 class="font-bold text-gray-800 mb-4 flex items-center"><span class="material-icons text-green-500 mr-2 transform rotate-90">flight</span> Arrival Flight</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                                <div><label class="form-label">Date <span class="text-red-500">*</span></label><input type="date" id="arr-date" class="glass-input w-full p-2 text-sm" min="2026-06-18" max="2026-06-30"></div>
+                                <div class="md:col-span-2">
+                                    <label class="form-label">Flight # <span class="text-red-500">*</span></label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="arr-num" class="glass-input w-full p-2 text-sm uppercase" placeholder="e.g. UA123">
+                                        <button onclick="checkFlight('arr')" class="bg-gray-800 text-white px-4 rounded-lg text-xs font-bold hover:bg-black transition-colors">CHECK</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="arr-result" class="hidden bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                <div class="flex justify-between items-center mb-2 pb-2 border-b border-gray-200">
+                                    <img id="arr-logo" src="" class="h-6 object-contain" alt="Airline">
+                                    <span id="arr-flight-display" class="font-black text-lg text-gray-800">--</span>
+                                </div>
+                                <div class="flex justify-between items-center text-center">
+                                    <div><div id="arr-dep-code" class="text-xl font-bold text-gray-600">DEP</div><div id="arr-dep-time" class="text-xs text-yyc-primary font-bold">00:00</div></div>
+                                    <div class="flex-1 px-4 text-gray-300 flex items-center justify-center"><span class="border-t-2 border-dashed border-gray-300 w-full"></span><span class="material-icons text-sm">arrow_forward</span></div>
+                                    <div><div id="arr-arr-code" class="text-xl font-bold text-gray-600">ARR</div><div id="arr-arr-time" class="text-xs text-yyc-primary font-bold">00:00</div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+                            <h4 class="font-bold text-gray-800 mb-4 flex items-center"><span class="material-icons text-red-500 mr-2 transform rotate-90">flight</span> Departure Flight</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                                <div><label class="form-label">Date <span class="text-red-500">*</span></label><input type="date" id="dep-date" class="glass-input w-full p-2 text-sm" min="2026-06-18" max="2026-06-30"></div>
+                                <div class="md:col-span-2">
+                                    <label class="form-label">Flight # <span class="text-red-500">*</span></label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="dep-num" class="glass-input w-full p-2 text-sm uppercase" placeholder="e.g. DL456">
+                                        <button onclick="checkFlight('dep')" class="bg-gray-800 text-white px-4 rounded-lg text-xs font-bold hover:bg-black transition-colors">CHECK</button>
+                                    </div>
+                                </div>
+                            </div>
+                             <div id="dep-result" class="hidden bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                <div class="flex justify-between items-center mb-2 pb-2 border-b border-gray-200">
+                                    <img id="dep-logo" src="" class="h-6 object-contain" alt="Airline">
+                                    <span id="dep-flight-display" class="font-black text-lg text-gray-800">--</span>
+                                </div>
+                                <div class="flex justify-between items-center text-center">
+                                    <div><div id="dep-dep-code" class="text-xl font-bold text-gray-600">DEP</div><div id="dep-dep-time" class="text-xs text-yyc-primary font-bold">00:00</div></div>
+                                    <div class="flex-1 px-4 text-gray-300 flex items-center justify-center"><span class="border-t-2 border-dashed border-gray-300 w-full"></span><span class="material-icons text-sm">arrow_forward</span></div>
+                                    <div><div id="dep-arr-code" class="text-xl font-bold text-gray-600">ARR</div><div id="dep-arr-time" class="text-xs text-yyc-primary font-bold">00:00</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="car-module" class="hidden space-y-4 animate-fade-in-up">
+                        <div class="bg-blue-50 text-blue-900 rounded-xl p-5 border border-blue-200">
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="material-icons text-blue-600">directions_car</span>
+                                <span class="font-bold">Driving Details</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="form-label text-blue-900">Arrival Date & Time <span class="text-red-500">*</span></label>
+                                    <input type="datetime-local" id="car-arr-dt" class="glass-input w-full p-3 bg-white/80" min="2026-06-18T00:00" max="2026-06-30T23:59" value="2026-06-21T13:00">
+                                </div>
+                                <div>
+                                    <label class="form-label text-blue-900">Departure Date & Time <span class="text-red-500">*</span></label>
+                                    <input type="datetime-local" id="car-dep-dt" class="glass-input w-full p-3 bg-white/80" min="2026-06-18T00:00" max="2026-06-30T23:59" value="2026-06-27T13:00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="not-booked-module" class="hidden space-y-4 animate-fade-in-up">
+                        <div class="bg-orange-50 text-orange-900 rounded-xl p-5 border border-orange-200 text-center">
+                            <p class="text-sm">You have indicated that your flight is not yet booked. Please ensure you provide your travel details to the coordination team as soon as they are finalized.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 mt-8">
+                        <button onclick="goToStep('step-personal')" class="btn-secondary w-1/3">Back</button>
+                        <button onclick="validateTravel()" class="btn-primary w-2/3">Next Step</button>
+                    </div>
+                </div>
+
+                <div id="step-accom" class="step-content hidden">
+                    <div class="text-center mb-8">
+                        <h3 class="section-title">Accommodations</h3>
+                        <p class="text-gray-500 text-sm mb-4">Do you require overnight accommodations during your stay?</p>
+                        
+                        <div class="bg-yyc-skyLight border border-blue-200 rounded-lg p-3 text-sm text-blue-800 inline-block max-w-lg text-left shadow-sm leading-relaxed">
+                            <span class="material-icons text-blue-500 text-sm align-middle mr-1">info</span>
+                            <strong>Note:</strong> Accommodations will be arranged for you based on the travel arrival and departure dates you provided in the previous step.
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-2 gap-4 mt-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="accom" value="Yes" class="peer hidden">
+                                <div class="p-5 rounded-xl border-2 border-gray-200 peer-checked:border-yyc-primary peer-checked:bg-yyc-skyLight hover:bg-gray-50 transition-all text-center">
+                                    <span class="block font-bold text-lg text-gray-800">Yes</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="accom" value="No" class="peer hidden">
+                                <div class="p-5 rounded-xl border-2 border-gray-200 peer-checked:border-yyc-primary peer-checked:bg-yyc-skyLight hover:bg-gray-50 transition-all text-center">
+                                    <span class="block font-bold text-lg text-gray-800">No</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 mt-8">
+                        <button onclick="goToStep('step-travel')" class="btn-secondary w-1/3">Back</button>
+                        <button onclick="validateAccom()" class="btn-primary w-2/3">Next Step</button>
+                    </div>
+                </div>
+
+                <div id="step-medical" class="step-content hidden">
+                    <div class="text-center mb-8">
+                        <h3 class="section-title">Medical & Consent</h3>
+                        <p class="text-gray-500 text-sm">Final step before submission!</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <label class="form-label">Allergies / Medical Conditions</label>
+                            <textarea id="m-conditions" rows="3" class="glass-input w-full p-3" placeholder="Please list any allergies, medications, or conditions..."></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div><label class="form-label">Insurance Provider</label><input type="text" id="m-insurance" class="glass-input w-full p-3"></div>
+                            <div><label class="form-label">Group ID</label><input type="text" id="m-group" class="glass-input w-full p-3"></div>
+                            <div><label class="form-label">Policy Holder</label><input type="text" id="m-policy-holder" class="glass-input w-full p-3"></div>
+                        </div>
+
+                        <div class="consent-box bg-gray-50 p-5 rounded-lg h-64 overflow-y-scroll text-xs text-gray-500 leading-relaxed border border-gray-200 mt-6">
+                            <strong class="block text-gray-700 mb-2">Informed Consent and Acknowledgment</strong>
+                            <ol class="list-decimal list-inside mb-4 space-y-1">
+                                <li>I consent to my or my child's participation in all activities organized by Anoopam Mission during the camp.</li>
+                                <li>In exchange for the acceptance of mine or said child's candidacy by Anoopam Mission, I assume all risk and hazards incidental to the conduct of the activities, and release, absolve and hold harmless Anoopam Mission and all its respective officers, agents, and representatives from any and all liability for injuries to said child arising out of traveling to, participating in, or returning from selected camp sessions.</li>
+                                <li>In case of injury to me or said child, I hereby waive all claims against Anoopam Mission including all counselors, volunteers, and administrators.</li>
+                            </ol>
+
+                            <strong class="block text-gray-700 mb-2">Code of Conduct Agreement</strong>
+                            <p class="mb-2">As an attendee of the Yogi Youth Camp, I agree to:</p>
+                            <ol class="list-decimal list-inside mb-4 space-y-1">
+                                <li>Treat all participants, instructors, and volunteers with respect, courtesy, and cooperation.</li>
+                                <li>Avoid actions that could harm others physically or emotionally. Fighting, bullying, or other inappropriate behaviors are strictly prohibited and may result in dismissal without refund.</li>
+                                <li>Respect the property of others, including camp and personal belongings. Damaging or defacing property is not allowed.</li>
+                                <li>Communicate appropriately, refraining from foul language, gestures, or harsh words.</li>
+                                <li>Comply with all safety rules and dress appropriately for activities, including wearing closed-toe/heel shoes.</li>
+                                <li>Abstain from bringing weapons, alcohol, tobacco, or any illicit substances to camp.</li>
+                                <li>Report violations of this agreement to the Camp Administrative Volunteer.</li>
+                                <li>Participate in all activities to the best of my ability while maintaining a fun and inclusive environment.</li>
+                                <li>I understand that violating the Code of Conduct may result in disciplinary action, including suspension or dismissal from the camp.</li>
+                            </ol>
+                            
+                            <p class="mt-4 italic border-t border-gray-200 pt-2">
+                                <strong>Confirmation:</strong> BY CLICKING "COMPLETE REGISTRATION" BELOW, I AM DELIVERING AN ELECTRONIC SIGNATURE THAT WILL HAVE THE SAME EFFECT AS AN ORIGINAL MANUAL PAPER SIGNATURE. THE ELECTRONIC SIGNATURE WILL BE EQUALLY AS BINDING AS AN ORIGINAL MANUAL PAPER SIGNATURE.
+                            </p>
+                        </div>
+                        
+                        <div class="flex items-start gap-3 p-3 bg-yyc-skyLight rounded-lg">
+                            <input type="checkbox" id="consent-check" class="mt-1 w-5 h-5 text-yyc-primary rounded focus:ring-yyc-primary border-gray-300">
+                            <label for="consent-check" class="text-sm font-semibold text-gray-700 select-none cursor-pointer leading-snug">
+                                I have read, understood, and agreed to the terms outlined above. <span class="text-red-500">*</span>
+                            </label>
+                        </div>
+
+                        <div class="flex items-start gap-3 p-4 bg-yyc-peach/30 rounded-lg border border-orange-100">
+                            <input type="checkbox" id="privacy-check" class="mt-1 w-5 h-5 text-orange-600 rounded focus:ring-orange-500 border-gray-300">
+                            <label for="privacy-check" class="text-xs text-gray-800 select-none cursor-pointer leading-relaxed">
+                                <strong>Privacy Notice at Collection:</strong> By checking this box, I acknowledge and consent that Anoopam Mission is collecting my personal information (including Name, Phone, Email, and Address) strictly for the purpose of registration, safety, and administration of the Yogi Youth Camp. I understand that my personal information will not be sold, shared with third parties, or used for marketing purposes. <span class="text-red-500 font-bold">*</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-10 pt-6 border-t border-gray-100">
+                        <button onclick="submitRegistration()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-1 transition-all text-lg">
+                            COMPLETE REGISTRATION
+                        </button>
+                        <button onclick="goToStep('step-accom')" class="w-full text-gray-400 font-bold text-sm mt-4 hover:text-gray-600">Go Back</button>
+                    </div>
+                </div>
+
+                <div id="step-success" class="step-content hidden text-center py-10">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="material-icons text-4xl text-green-600">check</span>
+                    </div>
+                    <h2 class="font-serif text-3xl text-gray-800 mb-4">Registration Complete!</h2>
+                    <p class="text-gray-600 mb-8">Jay Swaminarayan!<br>We look forward to seeing you in Coplay, PA.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-slate-900 py-16 text-center border-t border-slate-800 w-full mt-auto">
+        <div class="max-w-7xl mx-auto px-6 space-y-8 flex flex-col items-center justify-center">
+            <div class="space-y-2">
+                <h3 class="text-xl font-bold text-white">Sahebji Youth</h3>
+                <p class="text-slate-400 font-light">The Global Youth Wing of Anoopam Mission</p>
+            </div>
+
+            <a href="https://www.anoopam.org" target="_blank" class="block hover-lift transition-transform">
+                <img src="/amlogo.png" alt="Anoopam Mission Logo" class="h-16 w-auto brightness-0 invert opacity-90 hover:opacity-100 transition-opacity">
+            </a>
+
+            <div class="text-slate-400 text-sm leading-relaxed space-y-1">
+                <p>Brahmajyoti, Yogiji Marg, Mogri, Anand, Gujarat 388345, India</p>
+                <p>
+                    <a href="tel:+912692230483" class="hover:text-orange-400 transition-colors">+91 2692 230 483</a> 
+                    <span class="mx-2 text-slate-600">|</span> 
+                    <a href="https://www.anoopam.org" target="_blank" class="hover:text-orange-400 transition-colors">www.anoopam.org</a>
+                </p>
+            </div>
+
+            <div class="pt-4 flex flex-col items-center space-y-3">
+                <p class="text-xs text-slate-500">&copy; 2026 Anoopam Mission. All rights reserved.</p>
+                <p class="text-[10px] md:text-xs text-slate-600 leading-relaxed max-w-2xl">
+                    Anoopam Mission is a Public Charitable Trust, Reg. No. E/1390/Anand, Dt. 03-09-2001<br class="hidden sm:block">
+                    Registered under Foreign Contribution Regulation Act, 1976, Reg. No. 042040035
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // CONFIGURATION
+        const LOOKUP_API_URL = "https://default6a3682358b304544aeac16b2bfa9cb.65.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a2b809137ebe4cacbb137c05414553db/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=rY6SIRrCaffT3a40ugkwHX_VhvTsvRMasvaqVKBGUQE"; 
+        
+        // Slightly different API endpoint variable to represent the different flow for YYC data submission into Excel
+        const YYC_REGISTER_API_URL = "https://default6a3682358b304544aeac16b2bfa9cb.65.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/new_yyc_flow_placeholder/triggers/manual/paths/invoke?api-version=1"; 
+        
+        const FLIGHT_PROXY_URL = "https://default6a3682358b304544aeac16b2bfa9cb.65.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2b6587f3c7044fa79230e99f855129bd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Kwr2zyHS0lJ8wDANt8KLn0p6Yf8c-KGihZQDSfEfCb8";
+
+        let flightData = { arr: null, dep: null };
+        
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => {
+                if(content.parentElement.id !== 'tabs-container' && !content.id.startsWith('tab-')) return; 
+                content.classList.add('hidden');
+                content.classList.remove('block');
+            });
+            
+            const selectedTab = document.getElementById(tabId);
+            selectedTab.classList.remove('hidden');
+            selectedTab.classList.add('block', 'animate-fade-in-up');
+        }
+
+        function goToStep(stepId) {
+            document.querySelectorAll('.step-content').forEach(el => {
+                // Ignore tab contents when switching primary steps
+                if(el.id.startsWith('tab-')) return;
+                
+                el.classList.add('hidden');
+                el.classList.remove('block', 'animate-fade-in-up');
+            });
+            const target = document.getElementById(stepId);
+            target.classList.remove('hidden');
+            target.classList.add('block', 'animate-fade-in-up');
+            
+            const bar = document.getElementById('progress-bar');
+            if(stepId === 'step-lookup') bar.style.width = '15%';
+            if(stepId === 'step-personal') bar.style.width = '35%';
+            if(stepId === 'step-travel') bar.style.width = '55%';
+            if(stepId === 'step-accom') bar.style.width = '75%';
+            if(stepId === 'step-medical') bar.style.width = '90%';
+            if(stepId === 'step-success') bar.style.width = '100%';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleLoader(show) {
+            const loader = document.getElementById('loader');
+            if(show) loader.classList.remove('hidden');
+            else loader.classList.add('hidden');
+        }
+
+        // AUTO FORMATTING FOR PHONE NUMBERS
+        function formatPhoneNumberInput(e) {
+            // Check to ensure we allow users to backspace properly
+            if (e.inputType !== 'deleteContentBackward') {
+                let input = e.target.value.replace(/\D/g, '');
+                let formatted = '';
+                if (input.length > 0) {
+                    formatted = '(' + input.substring(0,3);
+                    if (input.length > 3) {
+                        formatted += ') ' + input.substring(3,6);
+                    }
+                    if (input.length > 6) {
+                        formatted += '-' + input.substring(6,10);
+                    }
+                }
+                e.target.value = formatted;
+            }
+        }
+
+        async function performLookup() {
+            const type = document.getElementById('lookup-type').value;
+            const first = document.getElementById('lookup-first').value.trim();
+            const last = document.getElementById('lookup-last').value.trim();
+            let zip = document.getElementById('lookup-zip').value.trim().toUpperCase();
+            
+            if(!type || !first || !last || !zip) { alert("Please fill in all fields, including Registrant Type."); return; }
+            toggleLoader(true);
+            
+            document.getElementById('no-record-warning').classList.add('hidden');
+
+            try {
+                const response = await fetch(LOOKUP_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'lookup', firstName: first, lastName: last, zip: zip })
+                });
+                const data = await response.json();
+
+                if(data.found) {
+                    populateForm(data.data);
+                    goToStep('step-personal');
+                } else {
+                    document.getElementById('p-first').value = first;
+                    document.getElementById('p-last').value = last;
+                    document.getElementById('c-zip').value = zip;
+                    document.getElementById('no-record-warning').classList.remove('hidden');
+                    togglePersonalEdit(true);
+                    goToStep('step-personal');
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Connection Error. Please try again.");
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        function formatPhone(phone) {
+            if(!phone) return "";
+            const cleaned = ('' + phone).replace(/\D/g, '');
+            const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+            if (match) return '(' + match[1] + ') ' + match[2] + '-' + match[3];
+            return phone; 
+        }
+
+        function excelDateToJS(serial) {
+           if (!serial || isNaN(serial) || serial < 10000) return serial; 
+           const utc_days  = Math.floor(serial - 25569);
+           const utc_value = utc_days * 86400; 
+           return new Date((serial - 25569) * 86400 * 1000).toISOString().split('T')[0];
+        }
+
+        function populateForm(data) {
+            const setVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val || ""; };
+            
+            let dobVal = data.dob;
+            if (dobVal && !isNaN(dobVal) && dobVal > 10000) dobVal = excelDateToJS(dobVal);
+
+            setVal('p-first', data.firstName);
+            setVal('p-middle', data.middle);
+            setVal('p-last', data.lastName);
+            setVal('c-street', data.street);
+            setVal('c-street2', data.street2);
+            setVal('c-city', data.city);
+            setVal('c-state', data.state);
+            setVal('c-zip', data.zip);
+            setVal('p-gender', data.gender);
+            setVal('p-dob', dobVal); 
+            setVal('p-tshirt', data.tshirt);
+            // Format phone numbers automatically when prepopulating so they pass validation
+            setVal('c-phone', formatPhone(data.phone));
+            setVal('c-email', data.email);
+            setVal('e-name', data.emergencyName);
+            setVal('e-rel', data.emergencyRel);
+            setVal('e-phone', formatPhone(data.emergencyPhone));
+            setVal('e-email', data.emergencyEmail);
+            
+            setVal('m-conditions', data.medicalCond);
+            setVal('m-insurance', data.insurance);
+            setVal('m-group', data.group);
+            setVal('m-policy-holder', data.policyHolder);
+
+            refreshReadOnlyView();
+            togglePersonalEdit(false);
+        }
+
+        function refreshReadOnlyView() {
+            const getVal = (id) => document.getElementById(id).value || "";
+            
+            const first = getVal('p-first');
+            const middle = getVal('p-middle');
+            const last = getVal('p-last');
+
+            let fullName = `${first} ${last}`;
+            if(middle && middle.trim() !== "") fullName = `${first} ${middle} ${last}`;
+            document.getElementById('view-name').innerText = fullName;
+            
+            document.getElementById('view-dob').innerText = getVal('p-dob') || "--"; 
+            document.getElementById('view-gender').innerText = getVal('p-gender') || "--";
+            document.getElementById('view-tshirt').innerText = getVal('p-tshirt') || "--";
+            document.getElementById('view-email').innerText = getVal('c-email') || "--";
+            document.getElementById('view-phone').innerText = formatPhone(getVal('c-phone')) || "--";
+            
+            const s1 = getVal('c-street');
+            const s2 = document.getElementById('c-street2').value;
+            const line2 = s2 ? `, ${s2}` : "";
+            document.getElementById('view-address').innerText = s1 ? `${s1}${line2}, ${getVal('c-city')}, ${getVal('c-state')} ${getVal('c-zip')}` : "--";
+
+            document.getElementById('view-em-name').innerText = getVal('e-name') || "--";
+            document.getElementById('view-em-rel').innerText = getVal('e-rel') || "--";
+            document.getElementById('view-em-phone').innerText = formatPhone(getVal('e-phone')) || "--";
+        }
+
+        function togglePersonalEdit(isEdit) {
+            const viewMode = document.getElementById('personal-view-mode');
+            const editMode = document.getElementById('personal-edit-mode');
+            
+            if(isEdit) {
+                viewMode.classList.add('hidden');
+                editMode.classList.remove('hidden');
+                editMode.classList.add('animate-fade-in-up');
+            } else {
+                editMode.classList.add('hidden');
+                viewMode.classList.remove('hidden');
+                viewMode.classList.add('animate-fade-in-up');
+            }
+        }
+
+        // VALIDATION FUNCTION FOR PERSONAL FIELDS
+        function validatePersonalFields() {
+            const requiredFields = [
+                'p-first', 'p-last', 'p-dob', 'p-gender', 'p-tshirt', 
+                'c-street', 'c-city', 'c-state', 'c-zip', 'c-phone', 'c-email', 
+                'e-name', 'e-rel', 'e-phone', 'e-email'
+            ];
+            
+            for (let id of requiredFields) {
+                if (!document.getElementById(id).value.trim()) {
+                    alert("Please fill out all mandatory fields (marked with an asterisk *).");
+                    document.getElementById(id).focus();
+                    return false;
+                }
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const phoneRegex = /^\(\d{3}\) \d{3}-\d{4}$/;
+
+            if (!phoneRegex.test(document.getElementById('c-phone').value)) {
+                alert("Please enter a valid personal phone number in the format (###) ###-####.");
+                document.getElementById('c-phone').focus();
+                return false;
+            }
+            if (!emailRegex.test(document.getElementById('c-email').value)) {
+                alert("Please enter a valid personal email address (e.g., johndoe@example.com).");
+                document.getElementById('c-email').focus();
+                return false;
+            }
+            if (!phoneRegex.test(document.getElementById('e-phone').value)) {
+                alert("Please enter a valid emergency phone number in the format (###) ###-####.");
+                document.getElementById('e-phone').focus();
+                return false;
+            }
+            if (!emailRegex.test(document.getElementById('e-email').value)) {
+                alert("Please enter a valid emergency email address (e.g., johndoe@example.com).");
+                document.getElementById('e-email').focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        function saveAndToggle() {
+            if (!validatePersonalFields()) return;
+
+            document.getElementById('no-record-warning').classList.add('hidden');
+            refreshReadOnlyView();
+            togglePersonalEdit(false);
+        }
+
+        function validatePersonalAndGo() {
+            if (!validatePersonalFields()) {
+                // If it fails validation from the view state (e.g. they skipped clicking Edit Details manually)
+                alert("Missing or invalid required information. Please click 'EDIT DETAILS' and verify all fields.");
+                return;
+            }
+            goToStep('step-travel');
+        }
+
+        function toggleTravelMode() {
+            const mode = document.querySelector('input[name="travelType"]:checked').value;
+            const flightMod = document.getElementById('flight-module');
+            const carMod = document.getElementById('car-module');
+            const notBookedMod = document.getElementById('not-booked-module');
+
+            flightMod.classList.add('hidden');
+            carMod.classList.add('hidden');
+            if(notBookedMod) notBookedMod.classList.add('hidden');
+
+            if(mode === 'Flight') {
+                flightMod.classList.remove('hidden');
+            } else if(mode === 'Car') {
+                carMod.classList.remove('hidden');
+            } else if(mode === 'FlightNotBooked') {
+                if(notBookedMod) notBookedMod.classList.remove('hidden');
+            }
+        }
+
+        function formatTime(iso) {
+            if(!iso) return "";
+            const timePart = iso.split('T')[1].substring(0,5);
+            let [h, m] = timePart.split(':');
+            h = parseInt(h);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        }
+        
+        function formatDateTime12(dtVal) {
+             if(!dtVal) return "";
+             const [date, time] = dtVal.split('T');
+             let [h, m] = time.split(':');
+             h = parseInt(h);
+             const ampm = h >= 12 ? 'PM' : 'AM';
+             h = h % 12 || 12;
+             return `${date} ${h}:${m} ${ampm}`;
+        }
+
+        async function checkFlight(type) {
+            const num = document.getElementById(`${type}-num`).value.replace(/\s/g, '').toUpperCase();
+            const date = document.getElementById(`${type}-date`).value;
+            if(!num || !date) { alert("Please enter flight number and date."); return; }
+            
+            const btn = event.target; 
+            const originalText = btn.innerText;
+            btn.innerText = "..."; btn.disabled = true;
+
+            try {
+                const match = num.match(/^([A-Z0-9]{2})(\d{1,4})$/);
+                if(!match) throw new Error("Invalid format");
+                const [year, month, day] = date.split('-');
+
+                const response = await fetch(FLIGHT_PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ carrier: match[1], flight: match[2], direction: type === 'arr' ? 'arriving' : 'departing', year: year, month: month, day: day })
+                });
+                if(!response.ok) throw new Error("Flight not found");
+                const data = await response.json();
+                
+                if(data.scheduledFlights && data.scheduledFlights.length > 0) {
+                    const f = data.scheduledFlights[0];
+                    const depTime = formatTime(f.departureTime);
+                    const arrTime = formatTime(f.arrivalTime);
+                    
+                    document.getElementById(`${type}-result`).classList.remove('hidden');
+                    document.getElementById(`${type}-logo`).src = `https://pics.avs.io/200/100/${f.carrierFsCode}.png`;
+                    document.getElementById(`${type}-flight-display`).innerText = `${f.carrierFsCode} ${f.flightNumber}`;
+                    document.getElementById(`${type}-dep-code`).innerText = f.departureAirportFsCode;
+                    document.getElementById(`${type}-dep-time`).innerText = depTime;
+                    document.getElementById(`${type}-arr-code`).innerText = f.arrivalAirportFsCode;
+                    document.getElementById(`${type}-arr-time`).innerText = arrTime;
+                    
+                    flightData[type] = {
+                        flight: `${f.carrierFsCode}${f.flightNumber}`, date: date,
+                        dep: f.departureAirportFsCode, arr: f.arrivalAirportFsCode, time: type === 'arr' ? arrTime : depTime
+                    };
+                } else { throw new Error("Flight not found"); }
+            } catch(e) {
+                console.warn(e);
+                alert("Could not validate flight. Please check details.");
+            } finally {
+                btn.innerText = originalText; btn.disabled = false;
+            }
+        }
+
+        function validateTravel() {
+            const mode = document.querySelector('input[name="travelType"]:checked');
+            if(!mode) { alert("Please select a travel method."); return; }
+            
+            if(mode.value === 'Car') {
+                if(!document.getElementById('car-arr-dt').value || !document.getElementById('car-dep-dt').value) {
+                    alert("Please specify your car arrival and departure times.");
+                    return;
+                }
+            } else if(mode.value === 'Flight') {
+                if(!flightData.arr || !flightData.arr.date || !flightData.dep || !flightData.dep.date) {
+                    alert("Please validate both your Arrival and Departure flight details before continuing.");
+                    return;
+                }
+            }
+            goToStep('step-accom');
+        }
+
+        function validateAccom() {
+            const accom = document.querySelector('input[name="accom"]:checked');
+            if(!accom) { alert("Please answer the accommodations question."); return; }
+            goToStep('step-medical');
+        }
+
+        async function submitRegistration() {
+            if(!document.getElementById('consent-check').checked || !document.getElementById('privacy-check').checked) {
+                alert("You must check both boxes to agree to the Code of Conduct, Waivers, and Data Privacy policies before submitting."); 
+                return;
+            }
+            
+            toggleLoader(true);
+            
+            const travelType = document.querySelector('input[name="travelType"]:checked').value;
+            let finalTravelData = {};
+
+            if (travelType === 'Car') {
+                const arrDT = document.getElementById('car-arr-dt').value;
+                const depDT = document.getElementById('car-dep-dt').value;
+                const arrStr = formatDateTime12(arrDT);
+                const depStr = formatDateTime12(depDT);
+                const arrParts = arrStr.split(' ');
+                const depParts = depStr.split(' ');
+                
+                finalTravelData = {
+                    arr: { date: arrParts[0], time: arrParts[1] + ' ' + arrParts[2], airport: "N/A", flight: "Car" },
+                    dep: { date: depParts[0], time: depParts[1] + ' ' + depParts[2], airport: "N/A", flight: "Car" }
+                };
+            } else if (travelType === 'FlightNotBooked') {
+                finalTravelData = {
+                    arr: { date: "pending", time: "tbd", airport: "tbd", flight: "tbd" },
+                    dep: { date: "pending", time: "tbd", airport: "tbd", flight: "tbd" }
+                };
+            } else {
+                finalTravelData = flightData;
+                if(!finalTravelData.arr) finalTravelData.arr = { date: "", time: "", airport: "", flight: "" };
+                if(!finalTravelData.dep) finalTravelData.dep = { date: "", time: "", airport: "", flight: "" };
+            }
+
+            const s1 = document.getElementById('c-street').value;
+            const s2 = document.getElementById('c-street2').value;
+            const fullAddress = s2 ? `${s1}, ${s2}` : s1;
+
+            let calcAge = "";
+            const dobInput = document.getElementById('p-dob').value;
+            if (dobInput) {
+                const birthDate = new Date(dobInput);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                calcAge = age.toString();
+            }
+
+            const payload = {
+                personal: {
+                    type: document.getElementById('lookup-type').value, 
+                    first: document.getElementById('p-first').value,
+                    middle: document.getElementById('p-middle').value,
+                    last: document.getElementById('p-last').value,
+                    dob: dobInput,
+                    age: calcAge,
+                    gender: document.getElementById('p-gender').value,
+                    tshirt: document.getElementById('p-tshirt').value,
+                    email: document.getElementById('c-email').value,
+                    phone: document.getElementById('c-phone').value,
+                    address: fullAddress,
+                    city: document.getElementById('c-city').value,
+                    state: document.getElementById('c-state').value,
+                    zip: document.getElementById('c-zip').value
+                },
+                medical: {
+                    emergencyName: document.getElementById('e-name').value,
+                    emergencyRel: document.getElementById('e-rel').value,
+                    emergencyPhone: document.getElementById('e-phone').value,
+                    emergencyEmail: document.getElementById('e-email').value,
+                    conditions: document.getElementById('m-conditions').value,
+                    insurance: document.getElementById('m-insurance').value,
+                    group: document.getElementById('m-group').value,
+                    policyHolder: document.getElementById('m-policy-holder').value
+                },
+                travel: {
+                    type: travelType,
+                    flightDetails: finalTravelData
+                },
+                accommodation: document.querySelector('input[name="accom"]:checked').value
+            };
+
+            try {
+                const response = await fetch(YYC_REGISTER_API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                
+                if(response.ok) {
+                    goToStep('step-success');
+                } else {
+                    throw new Error("Server rejected submission");
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Submission failed. Please try again.");
+            } finally {
+                toggleLoader(false);
+            }
+        }
+    </script>
+</body>
+</html>
