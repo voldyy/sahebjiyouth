@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Mission | Sahebji Youth</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { accent: { DEFAULT: '#fb923c', hover: '#f97316' }, valueTitle: '#d97706', }, fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], display: ['Playfair Display', 'serif'], } } } }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+
+  <style>
+    body { background-color: #fafafa; color: #0f172a; overflow-x: hidden; }
+    .glass { background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05); }
+    .animated-bg { background: linear-gradient(-45deg, #ffffff, #f1f5f9, #ffedd5, #f8fafc); background-size: 400% 400%; animation: gradientBG 15s ease infinite; }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    .hover-lift { transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease; }
+    .hover-lift:hover, .hover-lift:focus-visible { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08); outline: none; }
+    .glow-ring { position: relative; }
+    .glow-ring::before { content: ''; position: absolute; inset: -2px; border-radius: inherit; background: linear-gradient(45deg, transparent, #fb923c, transparent); opacity: 0; transition: opacity 0.4s ease; z-index: -1; }
+    .glow-ring:hover::before, .glow-ring:focus-visible::before { opacity: 0.6; animation: rotateGlow 3s linear infinite; }
+    @keyframes rotateGlow { 100% { filter: hue-rotate(360deg); } }
+    .reveal { opacity: 0; transform: translateY(40px); transition: all 1s cubic-bezier(0.5, 0, 0, 1); }
+    .reveal.active { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body class="antialiased selection:bg-accent selection:text-white flex flex-col min-h-screen animated-bg">
+
+  <nav class="fixed w-full z-50 glass transition-all duration-300" aria-label="Main Navigation" id="navbar">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <a href="/" class="flex items-center" aria-label="Sahebji Youth Home">
+        <img src="/sylogo.png" alt="Sahebji Youth Logo" class="h-10 w-auto"> 
+      </a>
+      <div class="hidden md:flex space-x-8 items-center">
+        <a href="/our-mission" class="text-slate-900 font-medium transition-colors border-b-2 border-accent">Our Mission</a>
+        <a href="/core-values" class="text-slate-600 hover:text-slate-900 font-medium transition-colors">Core Values</a>
+        <a href="/about-us" class="text-slate-600 hover:text-slate-900 font-medium transition-colors">About Us</a>
+        <a href="mailto:info@sahebjiyouth.org" class="glow-ring px-6 py-2 bg-slate-900 text-white rounded-full font-medium hover:bg-slate-800 transition-colors">
+          Connect Globally
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-grow pt-40 pb-24 px-6 relative z-10">
+    <div class="max-w-4xl mx-auto text-center reveal">
+      <span class="block text-accent font-semibold tracking-widest uppercase mb-4 text-sm md:text-base">Purpose & Community</span>
+      <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-12 leading-tight text-slate-900">
+        <span class="font-display italic text-slate-700 font-normal">Our</span> Mission.
+      </h1>
+      
+      <div class="text-lg md:text-xl text-slate-700 mb-12 max-w-3xl mx-auto font-light leading-relaxed space-y-6 text-left glass p-8 md:p-12 rounded-3xl">
+        <p>
+          Anoopam Mission believes in serving God by serving humanity. Through the vision of its respected spiritual leader, Sant Bhagwant Sahebji, Anoopam Mission has committed itself to working in the areas of healthcare, education, relief, rehabilitation, social welfare, spiritual and cultural activities. The aim is to help those who need it the most, without any discrimination of caste, creed, color, gender or religion.
+        </p>
+        <p>
+          Sahebji Youth represents the youth worldwide affiliated with Anoopam Mission, a socio-spiritual, global, non-profit organization within the Hindu-Swaminarayan faith.
+        </p>
+        <p>
+          Taking inspiration and guidance from our guru, Sant Bhagwant Sahebji, we incorporate traditional Swaminarayan values into our lives and strive to be positive, constructive influences within our families, communities, and society as a whole.
+        </p>
+        <p>
+          Guruhari Sahebdada loves the youth unconditionally, and this love has inspired us to always seek the divinity in every circumstance. Sahebji Youth live by his saying:
+        </p>
+      </div>
+      
+      <div class="relative py-12 px-10 rounded-3xl overflow-hidden glass hover-lift group border border-slate-200 mt-8">
+        <div class="absolute inset-0 z-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-accent/40 to-transparent"></div>
+        <div class="relative z-10">
+          <svg class="absolute -top-6 -left-6 w-20 h-20 text-accent/10 opacity-50 transform group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 14.017-9.57H24c-.24 2.16-1.669 3.916-3.613 4.794V14.12h4.63v6.88h-11.001zm-11.001 0v-7.391c0-5.704 3.748-9.57 14.017-9.57H13c-.24 2.16-1.669 3.916-3.613 4.794V14.12h4.629v6.88H3.016z"></path></svg>
+          <p class="font-display italic text-3xl md:text-4xl lg:text-5xl text-slate-900 relative z-10 leading-tight">
+            Think Positive and the Rest Will Follow
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-slate-900 py-16 text-center border-t border-slate-800 relative z-10">
+    <div class="max-w-7xl mx-auto px-6 space-y-8 flex flex-col items-center justify-center">
+      <div class="space-y-2">
+        <h3 class="text-xl font-bold text-white">Sahebji Youth</h3>
+        <p class="text-slate-400 font-light">The Global Youth Wing of Anoopam Mission</p>
+      </div>
+      <a href="https://www.anoopam.org" target="_blank" class="block hover-lift transition-transform">
+        <img src="/amlogo.png" alt="Anoopam Mission Logo" class="h-16 w-auto brightness-0 invert opacity-90 hover:opacity-100 transition-opacity">
+      </a>
+      <div class="text-slate-400 text-sm leading-relaxed space-y-1">
+        <p>Brahmajyoti, Yogiji Marg, Mogri, Anand, Gujarat 388345, India</p>
+        <p><a href="tel:+912692230483" class="hover:text-accent transition-colors">+91 2692 230 483</a> <span class="mx-2 text-slate-600">|</span> <a href="https://www.anoopam.org" target="_blank" class="hover:text-accent transition-colors">www.anoopam.org</a></p>
+      </div>
+      <div class="pt-4 flex flex-col items-center space-y-3">
+        <p class="text-xs text-slate-500">&copy; 2026 Anoopam Mission. All rights reserved.</p>
+        <p class="text-[10px] md:text-xs text-slate-600 leading-relaxed max-w-2xl">
+          Anoopam Mission is a Public Charitable Trust, Reg. No. E/1390/Anand, Dt. 03-09-2001<br class="hidden sm:block">
+          Registered under Foreign Contribution Regulation Act, 1976, Reg. No. 042040035
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const revealElements = document.querySelectorAll('.reveal');
+      const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('active'); observer.unobserve(entry.target); } });
+      }, { root: null, threshold: 0.15, rootMargin: "0px 0px -50px 0px" });
+      revealElements.forEach(el => revealObserver.observe(el));
+
+      const navbar = document.getElementById('navbar');
+      window.addEventListener('scroll', () => {
+        window.requestAnimationFrame(() => {
+          if (window.scrollY > 50) {
+            navbar.classList.add('shadow-md', 'border-b', 'border-white/20');
+            navbar.style.background = 'rgba(255, 255, 255, 0.85)';
+          } else {
+            navbar.classList.remove('shadow-md', 'border-b', 'border-white/20');
+            navbar.style.background = 'rgba(255, 255, 255, 0.65)';
+          }
+        });
+      }, { passive: true });
+    });
+  </script>
+</body>
+</html>
