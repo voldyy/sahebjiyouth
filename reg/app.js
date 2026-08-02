@@ -343,7 +343,7 @@ function App() {
         }),
         React.createElement("p", { className: "eyebrow" }, "RSVP Form"),
         React.createElement("h1", { id: "formTitle" }, "Shravan Mas Samuh Mahapuja"),
-        React.createElement("p", { className: "intro" }, "The Mahapuja will begin promptly at 5:00 PM on Saturday, August 29, 2026. Please enter your phone number below to begin.")
+        React.createElement("p", { className: "intro" }, "The Mahapuja will begin promptly at 4:30 PM on Saturday, August 29, 2026. Please enter your phone number below to begin.")
       ),
       React.createElement(
         "form",
