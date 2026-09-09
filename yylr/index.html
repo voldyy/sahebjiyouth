@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yogi Youth Leadership Retreat 2026 Registration</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Lato:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="yylr-lookup-index.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['"Lato"', 'sans-serif'],
+                    },
+                    colors: {
+                        yylr: {
+                            primary: '#9A5A18',
+                            dark: '#2F2418',
+                            amber: '#F2B84B',
+                            gold: '#F8D06A',
+                            softOrange: '#FFF1DE',
+                            sky: '#38BDF8',
+                            skyLight: '#EAF8FF',
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass {
+                @apply bg-white/90 backdrop-blur-xl border border-white/70 shadow-[0_24px_70px_rgba(154,90,24,0.14)];
+            }
+            .glass-panel {
+                @apply bg-white/80 border border-orange-100 rounded-xl p-5 shadow-sm;
+            }
+            .glass-input {
+                @apply bg-white/85 border border-orange-100 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-yylr-sky/50 focus:border-yylr-sky focus:bg-white transition-all duration-300 rounded-xl;
+            }
+            .btn-primary {
+                @apply bg-gradient-to-r from-yylr-primary via-yylr-amber to-yylr-gold text-white font-black py-3 px-6 rounded-xl shadow-lg hover:shadow-orange-300/50 transform hover:-translate-y-0.5 transition-all duration-300 uppercase tracking-wider text-sm;
+            }
+            .btn-secondary {
+                @apply bg-white text-gray-600 font-bold py-3 px-6 rounded-xl border border-orange-100 hover:bg-orange-50 hover:text-yylr-dark transition-all duration-300 uppercase tracking-wider text-sm;
+            }
+            .section-title {
+                @apply font-serif text-2xl md:text-3xl text-yylr-dark mb-2;
+            }
+            .form-label {
+                @apply block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 ml-1;
+            }
+            .data-label {
+                @apply text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1;
+            }
+            .data-value {
+                @apply text-xl font-bold text-gray-800 break-words leading-tight;
+            }
+            .consent-box::-webkit-scrollbar { width: 6px; }
+            .consent-box::-webkit-scrollbar-track { background: #f1f1f1; }
+            .consent-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        }
+
+        body {
+            background: linear-gradient(145deg, #fff9ef 0%, #fff6e8 44%, #ebf9ff 100%);
+        }
+
+        #retreat-scene {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .hero-copy strong {
+            color: #8a4f13;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .mobile-actions {
+                flex-direction: column;
+            }
+
+            .mobile-actions button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden font-sans text-gray-700">
+
+    <canvas id="retreat-scene" aria-hidden="true"></canvas>
+
+    <div class="container mx-auto px-4 py-8 md:py-12 max-w-4xl relative z-10">
+        
+        <div class="text-center mb-8 md:mb-10 animate-fade-in-up">
+            <div class="inline-flex items-center justify-center h-24 w-56 max-w-[72vw] rounded-2xl bg-white/85 border border-orange-100 shadow-sm mb-4 p-4">
+                <img src="amlogo_sm.png" alt="Anoopam Mission Logo" class="h-full w-full object-contain">
+            </div>
+            <h1 class="font-serif text-4xl md:text-6xl text-yylr-primary font-bold mt-5 mb-4 leading-tight">Yogi Youth Leadership Retreat</h1>
+            <div class="w-16 h-px bg-yylr-primary/20 mx-auto mb-7"></div>
+            
+            <div class="hero-copy max-w-3xl mx-auto text-left text-[15px] md:text-base leading-7 text-yylr-dark/90 mb-6 bg-white/85 border border-orange-100 rounded-2xl p-5 md:p-6 shadow-[0_18px_48px_rgba(154,90,24,0.10)] backdrop-blur">
+                <p class="mb-3">
+                    <strong>Welcome to YYLR Registration!</strong>
+                </p>
+                <p class="mb-3">
+                    Jai Swaminarayan! We are excited to have you join us for the <strong>Yogi Youth Leadership Retreat 2026</strong>. This form is your first step in preparing for an uplifting and purposeful experience together.
+                </p>
+                <p class="mb-3">
+                    By filling it out, you’ll help us ensure that every detail — from your travel and stay to your meals and group activities — is arranged with care. Please share your basic info, travel plans, and any special needs so we can create a retreat that is safe, smooth, and inspiring for all.
+                </p>
+                <p class="mb-3">
+                    YYLR is a journey of seva, learning, and leadership. It is a chance to bond with our USA santo, with one another, and to gain skills that will serve you both at mandir and beyond.
+                </p>
+                <p>
+                    <strong>Please complete this form by November 15, 2026.</strong>
+                </p>
+            </div>
+
+            <div class="inline-flex flex-wrap items-center justify-center gap-2 mt-2 text-xs md:text-sm font-black text-yylr-dark uppercase tracking-widest bg-white/80 py-3 px-4 rounded-xl shadow-sm border border-orange-100">
+                <span>December 25-30, 2026</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-yylr-primary mx-2"></span>
+                <span>Richmond, VA</span>
+            </div>
+        </div>
+
+        <div class="glass rounded-2xl p-5 md:p-10 relative overflow-hidden animate-fade-in-up" style="animation-delay: 0.2s;">
+            
+            <div class="absolute top-0 left-0 w-full h-1 bg-gray-100">
+                <div id="progress-bar" class="h-full bg-gradient-to-r from-yylr-sky to-yylr-primary w-[15%] transition-all duration-500"></div>
+            </div>
+
+            <div id="loader" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
+                <div class="w-12 h-12 border-4 border-gray-100 border-t-yylr-primary rounded-full animate-spin"></div>
+                <p class="mt-4 text-yylr-primary font-bold text-sm tracking-widest animate-pulse">PROCESSING...</p>
+            </div>
+
+            <div id="step-lookup" class="step-content block">
+                <div class="text-center mb-8">
+                    <h3 class="section-title">Welcome</h3>
+                    <p class="text-gray-500">Enter your zip code to find your registration profile.</p>
+                </div>
+
+                <div class="space-y-5">
+                    <div class="relative">
+                        <label class="form-label">Zip / Postal Code <span class="text-red-500">*</span></label>
+                        <input type="text" id="lookup-zip" class="glass-input w-full p-4" placeholder="Start typing your zip code" autocomplete="postal-code" oninput="handleZipLookupInput()" onfocus="handleZipLookupInput()">
+                        <div id="lookup-status" class="text-xs text-gray-400 mt-2 ml-1">Loading lookup list...</div>
+                        <div id="lookup-results" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-orange-100 rounded-2xl shadow-xl overflow-hidden z-30 max-h-72 overflow-y-auto"></div>
+                    </div>
+
+                    <div id="selected-lookup-card" class="hidden bg-yylr-skyLight border border-blue-100 rounded-xl p-4">
+                        <div class="data-label">Selected Profile</div>
+                        <div id="selected-lookup-name" class="font-serif text-xl font-bold text-yylr-dark">--</div>
+                        <div id="selected-lookup-location" class="text-sm text-blue-900 mt-1">--</div>
+                    </div>
+
+                    <button id="lookup-continue-btn" onclick="performSelectedLookup()" class="btn-primary w-full mt-4 group opacity-50 pointer-events-none">
+                        Continue to Profile
+                        <span class="material-icons text-sm ml-2 group-hover:translate-x-1 transition-transform inline-block align-middle">arrow_forward</span>
+                    </button>
+
+                    <button type="button" onclick="showManualLookup(true)" class="w-full text-yylr-primary font-bold text-sm hover:text-yylr-sky transition-colors">
+                        I don't see my name
+                    </button>
+
+                    <div id="manual-lookup-panel" class="hidden bg-white/70 border border-orange-100 rounded-2xl p-4 md:p-5 space-y-4">
+                        <div>
+                            <h4 class="font-serif text-xl text-yylr-dark">Manual Lookup</h4>
+                            <p class="text-sm text-gray-500 mt-1">Enter your first name, last name, and zip code.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">First Name <span class="text-red-500">*</span></label>
+                                <input type="text" id="lookup-first" class="glass-input w-full p-3" placeholder="Enter first name">
+                            </div>
+                            <div>
+                                <label class="form-label">Last Name <span class="text-red-500">*</span></label>
+                                <input type="text" id="lookup-last" class="glass-input w-full p-3" placeholder="Enter last name">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label">Zip / Postal Code <span class="text-red-500">*</span></label>
+                            <input type="text" id="manual-lookup-zip" class="glass-input w-full p-3" placeholder="e.g. 18037 or A1A 1A1">
+                        </div>
+                        <button onclick="performManualLookup()" class="btn-secondary w-full">
+                            Search Manually
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="step-personal" class="step-content hidden">
+                <div id="personal-view-mode" class="block animate-fade-in-up">
+                    <div class="flex justify-between items-end mb-6">
+                        <div>
+                            <h3 class="section-title mb-0">Profile Summary</h3>
+                            <p class="text-gray-400 text-xs mt-1">Please verify your information.</p>
+                        </div>
+                        <button onclick="togglePersonalEdit(true)" class="text-yylr-primary hover:text-yylr-sky font-bold text-xs tracking-widest flex items-center gap-1 transition-colors py-2">
+                            <span class="material-icons text-sm">edit</span> EDIT DETAILS
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="glass-panel grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4">
+                            <div class="col-span-2 md:col-span-4 border-b border-gray-100 pb-4 mb-2">
+                                <div class="data-label">Full Name</div>
+                                <div id="view-name" class="text-3xl font-serif font-bold text-yylr-dark">--</div>
+                            </div>
+                            
+                            <div class="col-span-2">
+                                <div class="data-label">Email</div>
+                                <div id="view-email" class="data-value lowercase">--</div>
+                            </div>
+                            <div class="col-span-2">
+                                <div class="data-label">Phone</div>
+                                <div id="view-phone" class="data-value font-mono">--</div>
+                            </div>
+
+                            <div>
+                                <div class="data-label">DOB</div>
+                                <div id="view-dob" class="data-value">--</div>
+                            </div>
+                            <div>
+                                <div class="data-label">Gender</div>
+                                <div id="view-gender" class="data-value">--</div>
+                            </div>
+                            <div class="col-span-2">
+                                <div class="data-label">T-Shirt</div>
+                                <div id="view-tshirt" class="data-value">--</div>
+                            </div>
+                            
+                            <div class="col-span-2 md:col-span-4 border-t border-gray-100 pt-3 mt-1">
+                                <div class="data-label">Address</div>
+                                <div id="view-address" class="data-value text-lg font-normal">--</div>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel border-l-4 border-l-yylr-amber bg-orange-50/30">
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="material-icons text-yylr-amber text-lg">emergency</span>
+                                <span class="font-bold text-gray-700 text-xs uppercase tracking-wide">Emergency Contact</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <div class="data-label">Name</div>
+                                    <div id="view-em-name" class="data-value">--</div>
+                                </div>
+                                <div>
+                                    <div class="data-label">Relationship</div>
+                                    <div id="view-em-rel" class="data-value">--</div>
+                                </div>
+                                <div>
+                                    <div class="data-label">Phone</div>
+                                    <div id="view-em-phone" class="data-value font-mono">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mobile-actions flex gap-4 mt-8">
+                        <button onclick="goToStep('step-lookup')" class="btn-secondary w-1/3">Back</button>
+                        <button onclick="validatePersonalAndGo()" class="btn-primary w-2/3">Confirm & Continue</button>
+                    </div>
+                </div>
+
+                <div id="personal-edit-mode" class="hidden">
+                    <div id="no-record-warning" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 animate-fade-in-up">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="material-icons text-blue-600">search_off</span>
+                            <strong class="font-bold text-blue-900">Record Not Found</strong>
+                        </div>
+                        <p class="text-sm text-blue-800">We couldn't find an existing profile matching those details. Please proceed by entering your information manually below.</p>
+                    </div>
+
+                    <div class="text-center mb-8">
+                        <h3 class="section-title">Edit Details</h3>
+                        <p class="text-gray-500 text-sm">Update your information below. Fields marked with <span class="text-red-500 font-bold">*</span> are required.</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="col-span-1 md:col-span-1"><label class="form-label">First Name <span class="text-red-500">*</span></label><input type="text" id="p-first" class="glass-input w-full p-3"></div>
+                            <div class="col-span-1 md:col-span-1"><label class="form-label">Middle Name <span class="text-gray-400 font-normal">(Optional)</span></label><input type="text" id="p-middle" class="glass-input w-full p-3"></div>
+                            <div class="col-span-1 md:col-span-1"><label class="form-label">Last Name <span class="text-red-500">*</span></label><input type="text" id="p-last" class="glass-input w-full p-3"></div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="form-label">Birth Date <span class="text-red-500">*</span></label><input type="date" id="p-dob" class="glass-input w-full p-3"></div>
+                            <div>
+                                <label class="form-label">Gender <span class="text-red-500">*</span></label>
+                                <select id="p-gender" class="glass-input w-full p-3">
+                                    <option value="">Select</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="form-label">T-Shirt Size <span class="text-red-500">*</span></label>
+                            <select id="p-tshirt" class="glass-input w-full p-3">
+                                <option value="">Select Size</option>
+                                <optgroup label="Youth Sizes">
+                                    <option value="YS">Youth Small</option>
+                                    <option value="YM">Youth Medium</option>
+                                    <option value="YL">Youth Large</option>
+                                </optgroup>
+                                <optgroup label="Adult Sizes">
+                                    <option value="S">Adult Small</option>
+                                    <option value="M">Adult Medium</option>
+                                    <option value="L">Adult Large</option>
+                                    <option value="XL">Adult XL</option>
+                                    <option value="XXL">Adult XXL</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-100">
+                            <h4 class="font-serif text-lg text-yylr-primary mb-4">Contact Details</h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="form-label">Street Address <span class="text-red-500">*</span></label>
+                                    <input type="text" id="c-street" class="glass-input w-full p-3" placeholder="Line 1">
+                                    <input type="text" id="c-street2" class="glass-input w-full p-3 mt-2" placeholder="Line 2 (Optional)">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div><label class="form-label">City <span class="text-red-500">*</span></label><input type="text" id="c-city" class="glass-input w-full p-3"></div>
+                                    <div><label class="form-label">State/Prov <span class="text-red-500">*</span></label><input type="text" id="c-state" class="glass-input w-full p-3"></div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div><label class="form-label">Zip/Postal Code <span class="text-red-500">*</span></label><input type="text" id="c-zip" class="glass-input w-full p-3"></div>
+                                    <div>
+                                        <label class="form-label">Cell Number <span class="text-red-500">*</span></label>
+                                        <input type="tel" id="c-phone" class="glass-input w-full p-3" placeholder="(###) ###-####" oninput="formatPhoneNumberInput(event)">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="form-label">Email <span class="text-red-500">*</span></label>
+                                    <input type="email" id="c-email" class="glass-input w-full p-3" placeholder="johndoe@example.com">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-100">
+                            <div class="bg-yylr-skyLight/50 p-5 rounded-xl border border-blue-100">
+                                <h4 class="font-serif text-lg text-yylr-dark mb-4 flex items-center gap-2">
+                                    <span class="material-icons text-yylr-primary">emergency</span> Emergency Contact
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div><label class="form-label">Full Name <span class="text-red-500">*</span></label><input type="text" id="e-name" class="glass-input w-full p-3"></div>
+                                    <div><label class="form-label">Relationship <span class="text-red-500">*</span></label><input type="text" id="e-rel" class="glass-input w-full p-3"></div>
+                                    <div>
+                                        <label class="form-label">Phone <span class="text-red-500">*</span></label>
+                                        <input type="tel" id="e-phone" class="glass-input w-full p-3" placeholder="(###) ###-####" oninput="formatPhoneNumberInput(event)">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Email <span class="text-red-500">*</span></label>
+                                        <input type="email" id="e-email" class="glass-input w-full p-3" placeholder="johndoe@example.com">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mobile-actions flex gap-4 mt-8">
+                        <button onclick="togglePersonalEdit(false)" class="btn-secondary w-1/3">Cancel</button>
+                        <button onclick="saveAndToggle()" class="btn-primary w-2/3">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="step-travel" class="step-content hidden">
+                <div class="text-center mb-8">
+                    <h3 class="section-title">Travel Plans</h3>
+                    
+                    <div class="bg-gradient-to-r from-yylr-softOrange to-yylr-skyLight border-2 border-yylr-sky/50 rounded-xl p-5 my-5 shadow-sm mx-auto max-w-md transform hover:scale-[1.02] transition-transform">
+                        <span class="material-icons text-yylr-primary mb-1">event_available</span>
+                        <p class="text-yylr-dark text-lg font-black tracking-wide m-0 leading-snug">YYLR will begin December 25th and conclude December 30th.</p>
+                    </div>
+                    
+                    <div class="bg-yylr-skyLight border border-blue-100 rounded-lg p-3 inline-block text-left text-sm text-blue-900 shadow-sm max-w-md">
+                        <strong>Disclaimer:</strong> Check-in begins at 3:00 PM on Friday, December 25th. Retreat concludes with departure by 1:00 PM on Wednesday, December 30th.
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-4 mb-8 mt-6">
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="travelType" value="Car" class="peer hidden" onchange="toggleTravelMode()">
+                        <div class="w-24 h-24 rounded-2xl bg-white border-2 border-gray-100 peer-checked:border-yylr-primary peer-checked:bg-yylr-skyLight flex flex-col items-center justify-center transition-all shadow-sm hover:shadow-md">
+                            <span class="material-icons text-3xl text-gray-400 peer-checked:text-yylr-primary mb-1">directions_car</span>
+                            <span class="text-xs font-bold text-gray-500 peer-checked:text-yylr-dark">Car</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="travelType" value="Flight" class="peer hidden" onchange="toggleTravelMode()">
+                        <div class="w-24 h-24 rounded-2xl bg-white border-2 border-gray-100 peer-checked:border-yylr-primary peer-checked:bg-yylr-skyLight flex flex-col items-center justify-center transition-all shadow-sm hover:shadow-md">
+                            <span class="material-icons text-3xl text-gray-400 peer-checked:text-yylr-primary mb-1">flight</span>
+                            <span class="text-xs font-bold text-gray-500 peer-checked:text-yylr-dark">Flight</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="travelType" value="FlightNotBooked" class="peer hidden" onchange="toggleTravelMode()">
+                        <div class="w-24 h-24 rounded-2xl bg-white border-2 border-gray-100 peer-checked:border-yylr-primary peer-checked:bg-yylr-skyLight flex flex-col items-center justify-center transition-all shadow-sm hover:shadow-md text-center p-2">
+                            <span class="material-icons text-3xl text-gray-400 peer-checked:text-yylr-primary mb-1">pending_actions</span>
+                            <span class="text-[10px] leading-tight font-bold text-gray-500 peer-checked:text-yylr-dark">Flight Not Booked</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div id="flight-module" class="hidden space-y-8 animate-fade-in-up">
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
+                        <h4 class="font-bold text-gray-800 mb-4 flex items-center"><span class="material-icons text-green-500 mr-2 transform rotate-90">flight</span> Arrival Flight</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                            <div><label class="form-label">Date <span class="text-red-500">*</span></label><input type="date" id="arr-date" class="glass-input w-full p-2 text-sm" min="2026-12-20" max="2027-01-05"></div>
+                            <div class="md:col-span-2">
+                                <label class="form-label">Flight # <span class="text-red-500">*</span></label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="arr-num" class="glass-input w-full p-2 text-sm uppercase" placeholder="e.g. UA123">
+                                    <button onclick="checkFlight('arr', event)" class="bg-gray-800 text-white px-4 rounded-lg text-xs font-bold hover:bg-black transition-colors">CHECK</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="arr-result" class="hidden bg-gray-50 rounded-lg p-3 border border-gray-100">
+                            <div class="flex justify-between items-center mb-2 pb-2 border-b border-gray-200">
+                                <img id="arr-logo" src="" class="h-6 object-contain" alt="Airline">
+                                <span id="arr-flight-display" class="font-black text-lg text-gray-800">--</span>
+                            </div>
+                            <div class="flex justify-between items-center text-center">
+                                <div><div id="arr-dep-code" class="text-xl font-bold text-gray-600">DEP</div><div id="arr-dep-time" class="text-xs text-yylr-primary font-bold">00:00</div></div>
+                                <div class="flex-1 px-4 text-gray-300 flex items-center justify-center"><span class="border-t-2 border-dashed border-gray-300 w-full"></span><span class="material-icons text-sm">arrow_forward</span></div>
+                                <div><div id="arr-arr-code" class="text-xl font-bold text-gray-600">ARR</div><div id="arr-arr-time" class="text-xs text-yylr-primary font-bold">00:00</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+                        <h4 class="font-bold text-gray-800 mb-4 flex items-center"><span class="material-icons text-red-500 mr-2 transform rotate-90">flight</span> Departure Flight</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                            <div><label class="form-label">Date <span class="text-red-500">*</span></label><input type="date" id="dep-date" class="glass-input w-full p-2 text-sm" min="2026-12-20" max="2027-01-05"></div>
+                            <div class="md:col-span-2">
+                                <label class="form-label">Flight # <span class="text-red-500">*</span></label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="dep-num" class="glass-input w-full p-2 text-sm uppercase" placeholder="e.g. DL456">
+                                    <button onclick="checkFlight('dep', event)" class="bg-gray-800 text-white px-4 rounded-lg text-xs font-bold hover:bg-black transition-colors">CHECK</button>
+                                </div>
+                            </div>
+                        </div>
+                         <div id="dep-result" class="hidden bg-gray-50 rounded-lg p-3 border border-gray-100">
+                            <div class="flex justify-between items-center mb-2 pb-2 border-b border-gray-200">
+                                <img id="dep-logo" src="" class="h-6 object-contain" alt="Airline">
+                                <span id="dep-flight-display" class="font-black text-lg text-gray-800">--</span>
+                            </div>
+                            <div class="flex justify-between items-center text-center">
+                                <div><div id="dep-dep-code" class="text-xl font-bold text-gray-600">DEP</div><div id="dep-dep-time" class="text-xs text-yylr-primary font-bold">00:00</div></div>
+                                <div class="flex-1 px-4 text-gray-300 flex items-center justify-center"><span class="border-t-2 border-dashed border-gray-300 w-full"></span><span class="material-icons text-sm">arrow_forward</span></div>
+                                <div><div id="dep-arr-code" class="text-xl font-bold text-gray-600">ARR</div><div id="dep-arr-time" class="text-xs text-yylr-primary font-bold">00:00</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="car-module" class="hidden space-y-4 animate-fade-in-up">
+                    <div class="bg-yylr-skyLight text-blue-950 rounded-xl p-5 border border-blue-200">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="material-icons text-yylr-sky">directions_car</span>
+                            <span class="font-bold">Driving Details</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label text-blue-900">Arrival Date & Time <span class="text-red-500">*</span></label>
+                                <input type="datetime-local" id="car-arr-dt" class="glass-input w-full p-3 bg-white/80" min="2026-12-20T00:00" max="2027-01-05T23:59" value="2026-12-25T15:00">
+                            </div>
+                            <div>
+                                <label class="form-label text-blue-900">Departure Date & Time <span class="text-red-500">*</span></label>
+                                <input type="datetime-local" id="car-dep-dt" class="glass-input w-full p-3 bg-white/80" min="2026-12-20T00:00" max="2027-01-05T23:59" value="2026-12-30T13:00">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="not-booked-module" class="hidden space-y-4 animate-fade-in-up">
+                    <div class="bg-orange-50 text-orange-900 rounded-xl p-5 border border-orange-200 text-center">
+                        <p class="text-sm">You have indicated that your flight is not yet booked. Please ensure you provide your travel details to the coordination team as soon as they are finalized.</p>
+                    </div>
+                </div>
+
+                <div class="mobile-actions flex gap-4 mt-8">
+                    <button onclick="goToStep('step-personal')" class="btn-secondary w-1/3">Back</button>
+                    <button onclick="validateTravel()" class="btn-primary w-2/3">Next Step</button>
+                </div>
+            </div>
+
+            <div id="step-accom" class="step-content hidden">
+                <div class="text-center mb-8">
+                    <h3 class="section-title">Accommodations</h3>
+                    <p class="text-gray-500 text-sm mb-4">Do you require overnight accommodations during your stay?</p>
+                    
+                    <div class="bg-yylr-skyLight border border-blue-200 rounded-lg p-3 text-sm text-blue-800 inline-block max-w-lg text-left shadow-sm leading-relaxed">
+                        <span class="material-icons text-blue-500 text-sm align-middle mr-1">info</span>
+                        <strong>Note:</strong> Accommodations will be arranged for you based on the travel arrival and departure dates you provided in the previous step.
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4 mt-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="accom" value="Yes" class="peer hidden">
+                            <div class="p-5 rounded-xl border-2 border-gray-200 peer-checked:border-yylr-primary peer-checked:bg-yylr-skyLight hover:bg-gray-50 transition-all text-center">
+                                <span class="block font-bold text-lg text-gray-800">Yes</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="accom" value="No" class="peer hidden">
+                            <div class="p-5 rounded-xl border-2 border-gray-200 peer-checked:border-yylr-primary peer-checked:bg-yylr-skyLight hover:bg-gray-50 transition-all text-center">
+                                <span class="block font-bold text-lg text-gray-800">No</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mobile-actions flex gap-4 mt-8">
+                    <button onclick="goToStep('step-travel')" class="btn-secondary w-1/3">Back</button>
+                    <button onclick="validateAccom()" class="btn-primary w-2/3">Next Step</button>
+                </div>
+            </div>
+
+            <div id="step-medical" class="step-content hidden">
+                <div class="text-center mb-8">
+                    <h3 class="section-title">Medical & Privacy</h3>
+                    <p class="text-gray-500 text-sm">Final step before submission!</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="form-label">Allergies / Medical Conditions</label>
+                        <textarea id="m-conditions" rows="3" class="glass-input w-full p-3" placeholder="Please list any allergies, medications, or conditions..."></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div><label class="form-label">Insurance Provider</label><input type="text" id="m-insurance" class="glass-input w-full p-3"></div>
+                        <div><label class="form-label">Group ID</label><input type="text" id="m-group" class="glass-input w-full p-3"></div>
+                        <div><label class="form-label">Policy Holder</label><input type="text" id="m-policy-holder" class="glass-input w-full p-3"></div>
+                    </div>
+
+                    <div class="flex items-start gap-3 p-4 bg-yylr-softOrange/70 rounded-lg border border-orange-100">
+                        <input type="checkbox" id="privacy-check" class="mt-1 w-5 h-5 text-orange-600 rounded focus:ring-orange-500 border-gray-300">
+                        <label for="privacy-check" class="text-xs text-gray-800 select-none cursor-pointer leading-relaxed">
+                            <strong>Privacy Notice at Collection:</strong> By checking this box, I acknowledge and consent that Anoopam Mission is collecting my personal information (including Name, Phone, Email, and Address) strictly for the purpose of registration, safety, and administration of the Yogi Youth Leadership Retreat. I understand that my personal information will not be sold, shared with third parties, or used for marketing purposes. <span class="text-red-500 font-bold">*</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-100">
+                    <div id="standard-submit-container" class="block">
+                        <button onclick="submitRegistration()" class="btn-primary w-full py-4 text-base md:text-lg">
+                            Submit Registration
+                        </button>
+                    </div>
+
+                    <button onclick="goToStep('step-accom')" class="w-full text-gray-400 font-bold text-sm mt-6 hover:text-gray-600">Go Back</button>
+                </div>
+            </div>
+
+            <div id="step-success" class="step-content hidden text-center py-10">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="material-icons text-4xl text-green-600">check</span>
+                </div>
+                <h2 class="font-serif text-3xl text-gray-800 mb-4">Registration Complete!</h2>
+                <p class="text-gray-600 mb-8">Jai Swaminarayan!<br>Thank you for registering. We look forward to seeing you in Richmond, VA on December 25!</p>
+            </div>
+        </div>
+
+        <div class="text-center mt-12 text-gray-400 text-xs font-sans">
+            <p>Anoopam Mission &copy; 2026</p>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURATION
+        const LOOKUP_API_URL = "https://default6a3682358b304544aeac16b2bfa9cb.65.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a2b809137ebe4cacbb137c05414553db/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=rY6SIRrCaffT3a40ugkwHX_VhvTsvRMasvaqVKBGUQE"; 
+        const LOOKUP_INDEX_URL = "yylr-lookup-index.json";
+        
+        const YYLR_REGISTER_API_URL = "PASTE_YOUR_DEPLOYED_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+        
+        const FLIGHT_PROXY_URL = "https://default6a3682358b304544aeac16b2bfa9cb.65.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2b6587f3c7044fa79230e99f855129bd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Kwr2zyHS0lJ8wDANt8KLn0p6Yf8c-KGihZQDSfEfCb8";
+        const PREFERRED_AIRPORT_CODES = ["RIC", "IAD", "BWI"];
+
+        let flightData = { arr: null, dep: null };
+        let lookupIndex = [];
+        let selectedLookupEntry = null;
+        let lookupIndexLoaded = false;
+
+        function initRetreatScene() {
+            const canvas = document.getElementById('retreat-scene');
+            if (!canvas || !window.THREE) return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.z = 12;
+
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const group = new THREE.Group();
+            scene.add(group);
+
+            const makeRibbon = (color, yOffset, zOffset) => {
+                const segments = 80;
+                const positions = new Float32Array(segments * 3);
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const material = new THREE.LineBasicMaterial({
+                    color,
+                    transparent: true,
+                    opacity: 0.32,
+                });
+                const line = new THREE.Line(geometry, material);
+                line.userData = { yOffset, zOffset, segments };
+                group.add(line);
+                return line;
+            };
+
+            const ribbons = [
+                makeRibbon(0xf2b84b, -2.7, -2),
+                makeRibbon(0xf8d06a, -1.8, -3),
+                makeRibbon(0x38bdf8, -0.9, -4),
+            ];
+
+            const particleCount = window.innerWidth < 640 ? 70 : 130;
+            const particlePositions = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount; i++) {
+                particlePositions[i * 3] = (Math.random() - 0.5) * 18;
+                particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 12;
+                particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 8;
+            }
+            const particleGeometry = new THREE.BufferGeometry();
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+            const particles = new THREE.Points(
+                particleGeometry,
+                new THREE.PointsMaterial({
+                    color: 0xd9902d,
+                    size: 0.055,
+                    transparent: true,
+                    opacity: 0.45,
+                })
+            );
+            scene.add(particles);
+
+            const updateRibbons = (time) => {
+                const width = window.innerWidth < 640 ? 9 : 14;
+                ribbons.forEach((line, index) => {
+                    const { segments, yOffset, zOffset } = line.userData;
+                    const positions = line.geometry.attributes.position.array;
+                    for (let i = 0; i < segments; i++) {
+                        const progress = i / (segments - 1);
+                        const x = (progress - 0.5) * width;
+                        const y = yOffset + Math.sin(progress * Math.PI * 2 + time + index) * 0.32;
+                        positions[i * 3] = x;
+                        positions[i * 3 + 1] = y;
+                        positions[i * 3 + 2] = zOffset;
+                    }
+                    line.geometry.attributes.position.needsUpdate = true;
+                });
+            };
+
+            let animationFrame;
+            const animate = (timeMs) => {
+                const time = timeMs * 0.00045;
+                group.rotation.z = Math.sin(time * 0.7) * 0.025;
+                particles.rotation.y = time * 0.06;
+                particles.rotation.x = Math.sin(time * 0.4) * 0.035;
+                updateRibbons(time);
+                renderer.render(scene, camera);
+                animationFrame = requestAnimationFrame(animate);
+            };
+
+            const handleResize = () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            };
+
+            window.addEventListener('resize', handleResize);
+            animate(0);
+
+            window.addEventListener('beforeunload', () => {
+                cancelAnimationFrame(animationFrame);
+                window.removeEventListener('resize', handleResize);
+                renderer.dispose();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initRetreatScene();
+            initLookupTool();
+        });
+
+        function goToStep(stepId) {
+            document.querySelectorAll('.step-content').forEach(el => {
+                // Ignore tab contents when switching primary steps
+                if(el.id.startsWith('tab-')) return;
+                
+                el.classList.add('hidden');
+                el.classList.remove('block', 'animate-fade-in-up');
+            });
+            const target = document.getElementById(stepId);
+            target.classList.remove('hidden');
+            target.classList.add('block', 'animate-fade-in-up');
+            
+            const bar = document.getElementById('progress-bar');
+            if(stepId === 'step-lookup') bar.style.width = '15%';
+            if(stepId === 'step-personal') bar.style.width = '35%';
+            if(stepId === 'step-travel') bar.style.width = '55%';
+            if(stepId === 'step-accom') bar.style.width = '75%';
+            if(stepId === 'step-medical') bar.style.width = '90%';
+            if(stepId === 'step-success') bar.style.width = '100%';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleLoader(show) {
+            const loader = document.getElementById('loader');
+            if(show) loader.classList.remove('hidden');
+            else loader.classList.add('hidden');
+        }
+
+        // AUTO FORMATTING FOR PHONE NUMBERS
+        function formatPhoneNumberInput(e) {
+            if (e.inputType !== 'deleteContentBackward') {
+                let input = e.target.value.replace(/\D/g, '');
+                let formatted = '';
+                if (input.length > 0) {
+                    formatted = '(' + input.substring(0,3);
+                    if (input.length > 3) {
+                        formatted += ') ' + input.substring(3,6);
+                    }
+                    if (input.length > 6) {
+                        formatted += '-' + input.substring(6,10);
+                    }
+                }
+                e.target.value = formatted;
+            }
+        }
+
+        async function initLookupTool() {
+            setLookupStatus("Loading lookup list...");
+
+            try {
+                const data = window.YYLR_LOOKUP_INDEX || await fetchLookupIndex();
+                const rawEntries = Array.isArray(data) ? data : (data.entries || data.data || []);
+                lookupIndex = rawEntries.map(normalizeLookupEntry).filter(entry => entry.firstName && entry.lastName && entry.zip);
+                lookupIndexLoaded = true;
+                setLookupStatus(lookupIndex.length ? "Start typing at least 3 zip digits." : "No lookup entries are available. Use manual lookup below.");
+                if(!lookupIndex.length) showManualLookup(true);
+                handleZipLookupInput();
+            } catch(e) {
+                console.warn("Lookup index load failed", e);
+                lookupIndex = [];
+                lookupIndexLoaded = false;
+                setLookupStatus("Quick lookup is unavailable. Use manual lookup below.");
+                showManualLookup(true);
+            }
+        }
+
+        async function fetchLookupIndex() {
+            const response = await fetch(LOOKUP_INDEX_URL, { cache: 'no-store' });
+            if(!response.ok) throw new Error("Lookup index unavailable");
+            return response.json();
+        }
+
+        function normalizeLookupEntry(entry) {
+            const firstName = entry.firstName || entry.first || entry.givenName || "";
+            const lastName = entry.lastName || entry.last || entry.familyName || "";
+            const city = entry.city || "";
+            const state = entry.state || entry.province || "";
+            const zip = entry.zip || entry.postalCode || entry.postal || "";
+
+            return {
+                id: entry.id || entry.lookupId || entry.recordId || "",
+                firstName: String(firstName).trim(),
+                lastName: String(lastName).trim(),
+                city: String(city).trim(),
+                state: String(state).trim(),
+                zip: String(zip).trim(),
+                raw: entry
+            };
+        }
+
+        function setLookupStatus(message) {
+            const status = document.getElementById('lookup-status');
+            if(status) status.innerText = message;
+        }
+
+        function zipDigits(value) {
+            return String(value || "").replace(/\D/g, "");
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function handleZipLookupInput() {
+            const zipInput = document.getElementById('lookup-zip');
+            const query = zipDigits(zipInput.value);
+            selectedLookupEntry = null;
+            updateSelectedLookupCard();
+            setLookupContinueEnabled(false);
+
+            if(query.length < 3) {
+                hideLookupResults();
+                if(lookupIndexLoaded) setLookupStatus("Start typing at least 3 zip digits.");
+                return;
+            }
+
+            if(!lookupIndexLoaded) {
+                hideLookupResults();
+                setLookupStatus("Quick lookup is still loading. Use manual lookup if needed.");
+                return;
+            }
+
+            const matches = lookupIndex
+                .filter(entry => zipDigits(entry.zip).startsWith(query))
+                .sort((a, b) => `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`))
+                .slice(0, 12);
+
+            renderLookupMatches(matches, query);
+        }
+
+        function renderLookupMatches(matches, query) {
+            const results = document.getElementById('lookup-results');
+            if(!results) return;
+
+            if(!matches.length) {
+                results.innerHTML = `
+                    <div class="p-4 text-sm text-gray-600">
+                        <div class="font-bold text-yylr-dark mb-1">No profiles found for ${escapeHtml(query)}.</div>
+                        <button type="button" onclick="showManualLookup(true)" class="text-yylr-primary font-bold hover:text-yylr-sky">Enter details manually</button>
+                    </div>
+                `;
+                results.classList.remove('hidden');
+                setLookupStatus("No match found. Use manual lookup below.");
+                showManualLookup(true);
+                return;
+            }
+
+            results.innerHTML = matches.map((entry, index) => {
+                const name = `${entry.firstName} ${entry.lastName}`;
+                const location = [entry.city, entry.state].filter(Boolean).join(", ");
+                return `
+                    <button type="button" onclick="selectLookupEntry(${index})" class="w-full text-left px-4 py-3 hover:bg-yylr-softOrange transition-colors border-b border-orange-50 last:border-b-0">
+                        <span class="block font-bold text-yylr-dark">${escapeHtml(name)}</span>
+                        <span class="block text-xs text-gray-500 mt-1">${escapeHtml(location || entry.zip)}</span>
+                    </button>
+                `;
+            }).join('');
+            results.dataset.matches = JSON.stringify(matches);
+            results.classList.remove('hidden');
+            setLookupStatus(`${matches.length} matching profile${matches.length === 1 ? "" : "s"} found.`);
+        }
+
+        function hideLookupResults() {
+            const results = document.getElementById('lookup-results');
+            if(results) {
+                results.classList.add('hidden');
+                results.innerHTML = "";
+                delete results.dataset.matches;
+            }
+        }
+
+        function selectLookupEntry(index) {
+            const results = document.getElementById('lookup-results');
+            const matches = JSON.parse(results.dataset.matches || "[]");
+            selectedLookupEntry = matches[index] || null;
+            hideLookupResults();
+            updateSelectedLookupCard();
+            setLookupContinueEnabled(!!selectedLookupEntry);
+        }
+
+        function updateSelectedLookupCard() {
+            const card = document.getElementById('selected-lookup-card');
+            if(!card) return;
+
+            if(!selectedLookupEntry) {
+                card.classList.add('hidden');
+                return;
+            }
+
+            const name = `${selectedLookupEntry.firstName} ${selectedLookupEntry.lastName}`;
+            const location = [selectedLookupEntry.city, selectedLookupEntry.state].filter(Boolean).join(", ");
+            document.getElementById('selected-lookup-name').innerText = name;
+            document.getElementById('selected-lookup-location').innerText = location ? `${location} ${selectedLookupEntry.zip}` : selectedLookupEntry.zip;
+            card.classList.remove('hidden');
+        }
+
+        function setLookupContinueEnabled(enabled) {
+            const btn = document.getElementById('lookup-continue-btn');
+            if(!btn) return;
+
+            btn.classList.toggle('opacity-50', !enabled);
+            btn.classList.toggle('pointer-events-none', !enabled);
+            btn.disabled = !enabled;
+        }
+
+        function showManualLookup(show) {
+            const panel = document.getElementById('manual-lookup-panel');
+            if(!panel) return;
+
+            panel.classList.toggle('hidden', !show);
+            if(show) {
+                document.getElementById('manual-lookup-zip').value = document.getElementById('lookup-zip').value.trim().toUpperCase();
+            }
+        }
+
+        async function performSelectedLookup() {
+            if(!selectedLookupEntry) {
+                alert("Please select your name from the lookup list.");
+                return;
+            }
+
+            await performOldLookup({
+                first: selectedLookupEntry.firstName,
+                last: selectedLookupEntry.lastName,
+                zip: selectedLookupEntry.zip,
+                noMatchMessage: "We found your name in the quick list, but could not retrieve the full profile. Please verify your information manually."
+            });
+        }
+
+        async function performManualLookup() {
+            const first = document.getElementById('lookup-first').value.trim();
+            const last = document.getElementById('lookup-last').value.trim();
+            const zip = document.getElementById('manual-lookup-zip').value.trim().toUpperCase();
+
+            if(!first || !last || !zip) { alert("Please enter first name, last name, and zip code."); return; }
+
+            await performOldLookup({
+                first,
+                last,
+                zip,
+                noMatchMessage: "We couldn't find an existing profile matching those details. Please enter your information manually."
+            });
+        }
+
+        async function performLookup() {
+            await performSelectedLookup();
+        }
+
+        async function performOldLookup({ first, last, zip, noMatchMessage }) {
+            toggleLoader(true);
+            
+            document.getElementById('no-record-warning').classList.add('hidden');
+
+            try {
+                const data = await lookupProfileCaseInsensitive(first, last, zip);
+
+                if(data.found) {
+                    populateForm(data.data);
+                    goToStep('step-personal');
+                } else {
+                    document.getElementById('p-first').value = first;
+                    document.getElementById('p-last').value = last;
+                    document.getElementById('c-zip').value = zip;
+                    document.querySelector('#no-record-warning p').innerText = noMatchMessage;
+                    document.getElementById('no-record-warning').classList.remove('hidden');
+                    togglePersonalEdit(true);
+                    goToStep('step-personal');
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Connection Error. Please try again.");
+            } finally {
+                toggleLoader(false);
+            }
+        }
+
+        function titleCaseName(value) {
+            return value
+                .toLowerCase()
+                .replace(/(^|[\s'-])([a-z])/g, (match, prefix, letter) => prefix + letter.toUpperCase());
+        }
+
+        function uniqueValues(values) {
+            return [...new Set(values.filter(Boolean))];
+        }
+
+        function lookupNameVariants(value) {
+            return uniqueValues([
+                value,
+                titleCaseName(value),
+                value.toUpperCase(),
+                value.toLowerCase()
+            ]);
+        }
+
+        async function lookupProfileCaseInsensitive(first, last, zip) {
+            const firstVariants = lookupNameVariants(first);
+            const lastVariants = lookupNameVariants(last);
+
+            for (const firstName of firstVariants) {
+                for (const lastName of lastVariants) {
+                    const response = await fetch(LOOKUP_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'lookup', firstName, lastName, zip })
+                    });
+                    const data = await response.json();
+                    if (data.found) return data;
+                }
+            }
+
+            return { found: false };
+        }
+
+        function formatPhone(phone) {
+            if(!phone) return "";
+            const cleaned = ('' + phone).replace(/\D/g, '');
+            const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+            if (match) return '(' + match[1] + ') ' + match[2] + '-' + match[3];
+            return phone; 
+        }
+
+        function excelDateToJS(serial) {
+           if (!serial || isNaN(serial) || serial < 10000) return serial; 
+           const utc_days  = Math.floor(serial - 25569);
+           const utc_value = utc_days * 86400; 
+           return new Date((serial - 25569) * 86400 * 1000).toISOString().split('T')[0];
+        }
+
+        function populateForm(data) {
+            const setVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val || ""; };
+            
+            let dobVal = data.dob;
+            if (dobVal && !isNaN(dobVal) && dobVal > 10000) dobVal = excelDateToJS(dobVal);
+
+            setVal('p-first', data.firstName);
+            setVal('p-middle', data.middle);
+            setVal('p-last', data.lastName);
+            setVal('c-street', data.street);
+            setVal('c-street2', data.street2);
+            setVal('c-city', data.city);
+            setVal('c-state', data.state);
+            setVal('c-zip', data.zip);
+            setVal('p-gender', data.gender);
+            setVal('p-dob', dobVal); 
+            setVal('p-tshirt', data.tshirt);
+            setVal('c-phone', formatPhone(data.phone));
+            setVal('c-email', data.email);
+            setVal('e-name', data.emergencyName);
+            setVal('e-rel', data.emergencyRel);
+            setVal('e-phone', formatPhone(data.emergencyPhone));
+            setVal('e-email', data.emergencyEmail);
+            
+            setVal('m-conditions', data.medicalCond);
+            setVal('m-insurance', data.insurance);
+            setVal('m-group', data.group);
+            setVal('m-policy-holder', data.policyHolder);
+
+            refreshReadOnlyView();
+            togglePersonalEdit(false);
+        }
+
+        function refreshReadOnlyView() {
+            const getVal = (id) => document.getElementById(id).value || "";
+            
+            const first = getVal('p-first');
+            const middle = getVal('p-middle');
+            const last = getVal('p-last');
+
+            let fullName = `${first} ${last}`;
+            if(middle && middle.trim() !== "") fullName = `${first} ${middle} ${last}`;
+            document.getElementById('view-name').innerText = fullName;
+            
+            document.getElementById('view-dob').innerText = getVal('p-dob') || "--"; 
+            document.getElementById('view-gender').innerText = getVal('p-gender') || "--";
+            document.getElementById('view-tshirt').innerText = getVal('p-tshirt') || "--";
+            document.getElementById('view-email').innerText = getVal('c-email') || "--";
+            document.getElementById('view-phone').innerText = formatPhone(getVal('c-phone')) || "--";
+            
+            const s1 = getVal('c-street');
+            const s2 = document.getElementById('c-street2').value;
+            const line2 = s2 ? `, ${s2}` : "";
+            document.getElementById('view-address').innerText = s1 ? `${s1}${line2}, ${getVal('c-city')}, ${getVal('c-state')} ${getVal('c-zip')}` : "--";
+
+            document.getElementById('view-em-name').innerText = getVal('e-name') || "--";
+            document.getElementById('view-em-rel').innerText = getVal('e-rel') || "--";
+            document.getElementById('view-em-phone').innerText = formatPhone(getVal('e-phone')) || "--";
+        }
+
+        function togglePersonalEdit(isEdit) {
+            const viewMode = document.getElementById('personal-view-mode');
+            const editMode = document.getElementById('personal-edit-mode');
+            
+            if(isEdit) {
+                viewMode.classList.add('hidden');
+                editMode.classList.remove('hidden');
+                editMode.classList.add('animate-fade-in-up');
+            } else {
+                editMode.classList.add('hidden');
+                viewMode.classList.remove('hidden');
+                viewMode.classList.add('animate-fade-in-up');
+            }
+        }
+
+        // VALIDATION FUNCTION FOR PERSONAL FIELDS
+        function validatePersonalFields() {
+            const requiredFields = [
+                'p-first', 'p-last', 'p-dob', 'p-gender', 'p-tshirt', 
+                'c-street', 'c-city', 'c-state', 'c-zip', 'c-phone', 'c-email', 
+                'e-name', 'e-rel', 'e-phone', 'e-email'
+            ];
+            
+            for (let id of requiredFields) {
+                if (!document.getElementById(id).value.trim()) {
+                    alert("Please fill out all mandatory fields (marked with an asterisk *).");
+                    document.getElementById(id).focus();
+                    return false;
+                }
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const phoneRegex = /^\(\d{3}\) \d{3}-\d{4}$/;
+
+            if (!phoneRegex.test(document.getElementById('c-phone').value)) {
+                alert("Please enter a valid personal phone number in the format (###) ###-####.");
+                document.getElementById('c-phone').focus();
+                return false;
+            }
+            if (!emailRegex.test(document.getElementById('c-email').value)) {
+                alert("Please enter a valid personal email address (e.g., johndoe@example.com).");
+                document.getElementById('c-email').focus();
+                return false;
+            }
+            if (!phoneRegex.test(document.getElementById('e-phone').value)) {
+                alert("Please enter a valid emergency phone number in the format (###) ###-####.");
+                document.getElementById('e-phone').focus();
+                return false;
+            }
+            if (!emailRegex.test(document.getElementById('e-email').value)) {
+                alert("Please enter a valid emergency email address (e.g., johndoe@example.com).");
+                document.getElementById('e-email').focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        function saveAndToggle() {
+            if (!validatePersonalFields()) return;
+
+            document.getElementById('no-record-warning').classList.add('hidden');
+            refreshReadOnlyView();
+            togglePersonalEdit(false);
+        }
+
+        function validatePersonalAndGo() {
+            if (!validatePersonalFields()) {
+                alert("Missing or invalid required information. Please click 'EDIT DETAILS' and verify all fields.");
+                return;
+            }
+            goToStep('step-travel');
+        }
+
+        function toggleTravelMode() {
+            const mode = document.querySelector('input[name="travelType"]:checked').value;
+            const flightMod = document.getElementById('flight-module');
+            const carMod = document.getElementById('car-module');
+            const notBookedMod = document.getElementById('not-booked-module');
+
+            flightMod.classList.add('hidden');
+            carMod.classList.add('hidden');
+            if(notBookedMod) notBookedMod.classList.add('hidden');
+
+            if(mode === 'Flight') {
+                flightMod.classList.remove('hidden');
+            } else if(mode === 'Car') {
+                carMod.classList.remove('hidden');
+            } else if(mode === 'FlightNotBooked') {
+                if(notBookedMod) notBookedMod.classList.remove('hidden');
+            }
+        }
+
+        function formatTime(iso) {
+            if(!iso) return "";
+            const timePart = iso.split('T')[1].substring(0,5);
+            let [h, m] = timePart.split(':');
+            h = parseInt(h);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        }
+        
+        function formatDateTime12(dtVal) {
+             if(!dtVal) return "";
+             const [date, time] = dtVal.split('T');
+             let [h, m] = time.split(':');
+             h = parseInt(h);
+             const ampm = h >= 12 ? 'PM' : 'AM';
+             h = h % 12 || 12;
+             return `${date} ${h}:${m} ${ampm}`;
+        }
+
+        function selectRetreatFlight(scheduledFlights, type) {
+            for (const airportCode of PREFERRED_AIRPORT_CODES) {
+                const match = scheduledFlights.find(f => {
+                    const dep = (f.departureAirportFsCode || "").toUpperCase();
+                    const arr = (f.arrivalAirportFsCode || "").toUpperCase();
+                    return type === 'arr' ? arr === airportCode : dep === airportCode;
+                });
+
+                if (match) return match;
+            }
+
+            return null;
+        }
+
+        async function checkFlight(type, evt) {
+            const num = document.getElementById(`${type}-num`).value.replace(/\s/g, '').toUpperCase();
+            const date = document.getElementById(`${type}-date`).value;
+            if(!num || !date) { alert("Please enter flight number and date."); return; }
+            
+            const btn = evt.target; 
+            const originalText = btn.innerText;
+            btn.innerText = "..."; btn.disabled = true;
+
+            try {
+                const match = num.match(/^([A-Z0-9]{2})(\d{1,4})$/);
+                if(!match) throw new Error("Invalid format");
+                const [year, month, day] = date.split('-');
+
+                const response = await fetch(FLIGHT_PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ carrier: match[1], flight: match[2], direction: type === 'arr' ? 'arriving' : 'departing', year: year, month: month, day: day })
+                });
+                if(!response.ok) throw new Error("Flight not found");
+                const data = await response.json();
+                
+                if(data.scheduledFlights && data.scheduledFlights.length > 0) {
+                    const f = selectRetreatFlight(data.scheduledFlights, type);
+                    if (!f) {
+                        const routes = data.scheduledFlights
+                            .map(flight => `${flight.departureAirportFsCode || "?"}-${flight.arrivalAirportFsCode || "?"}`)
+                            .join(", ");
+                        throw new Error(`No preferred airport segment found. Returned routes: ${routes}`);
+                    }
+                    const depTime = formatTime(f.departureTime);
+                    const arrTime = formatTime(f.arrivalTime);
+                    
+                    document.getElementById(`${type}-result`).classList.remove('hidden');
+                    document.getElementById(`${type}-logo`).src = `https://pics.avs.io/200/100/${f.carrierFsCode}.png`;
+                    document.getElementById(`${type}-flight-display`).innerText = `${f.carrierFsCode} ${f.flightNumber}`;
+                    document.getElementById(`${type}-dep-code`).innerText = f.departureAirportFsCode;
+                    document.getElementById(`${type}-dep-time`).innerText = depTime;
+                    document.getElementById(`${type}-arr-code`).innerText = f.arrivalAirportFsCode;
+                    document.getElementById(`${type}-arr-time`).innerText = arrTime;
+                    
+                    flightData[type] = {
+                        flight: `${f.carrierFsCode}${f.flightNumber}`, date: date,
+                        dep: f.departureAirportFsCode, arr: f.arrivalAirportFsCode, time: type === 'arr' ? arrTime : depTime
+                    };
+                } else { throw new Error("Flight not found"); }
+            } catch(e) {
+                console.warn(e);
+                alert(`Could not find a preferred ${type === 'arr' ? 'arrival' : 'departure'} airport segment (${PREFERRED_AIRPORT_CODES.join(", ")}) for that flight. Please check the flight number/date.`);
+            } finally {
+                btn.innerText = originalText; btn.disabled = false;
+            }
+        }
+
+        function validateTravel() {
+            const mode = document.querySelector('input[name="travelType"]:checked');
+            if(!mode) { alert("Please select a travel method."); return; }
+            
+            if(mode.value === 'Car') {
+                if(!document.getElementById('car-arr-dt').value || !document.getElementById('car-dep-dt').value) {
+                    alert("Please specify your car arrival and departure times.");
+                    return;
+                }
+            } else if(mode.value === 'Flight') {
+                if(!flightData.arr || !flightData.arr.date || !flightData.dep || !flightData.dep.date) {
+                    alert("Please validate both your Arrival and Departure flight details before continuing.");
+                    return;
+                }
+            }
+            goToStep('step-accom');
+        }
+
+        function validateAccom() {
+            const accom = document.querySelector('input[name="accom"]:checked');
+            if(!accom) { alert("Please answer the accommodations question."); return; }
+            goToStep('step-medical');
+        }
+
+        async function submitRegistration() {
+            if(!document.getElementById('privacy-check').checked) {
+                alert("You must check the privacy notice box before submitting."); 
+                return;
+            }
+
+            if(!YYLR_REGISTER_API_URL || YYLR_REGISTER_API_URL.includes("PASTE_YOUR_DEPLOYED")) {
+                alert("The registration endpoint has not been configured yet. Please add the deployed Google Apps Script Web App URL.");
+                return;
+            }
+            
+            toggleLoader(true);
+            
+            const travelType = document.querySelector('input[name="travelType"]:checked').value;
+            let finalTravelData = {};
+
+            if (travelType === 'Car') {
+                const arrDT = document.getElementById('car-arr-dt').value;
+                const depDT = document.getElementById('car-dep-dt').value;
+                const arrStr = formatDateTime12(arrDT);
+                const depStr = formatDateTime12(depDT);
+                const arrParts = arrStr.split(' ');
+                const depParts = depStr.split(' ');
+                
+                finalTravelData = {
+                    arr: { date: arrParts[0], time: arrParts[1] + ' ' + arrParts[2], airport: "N/A", flight: "Car" },
+                    dep: { date: depParts[0], time: depParts[1] + ' ' + depParts[2], airport: "N/A", flight: "Car" }
+                };
+            } else if (travelType === 'FlightNotBooked') {
+                finalTravelData = {
+                    arr: { date: "pending", time: "tbd", airport: "tbd", flight: "tbd" },
+                    dep: { date: "pending", time: "tbd", airport: "tbd", flight: "tbd" }
+                };
+            } else {
+                finalTravelData = flightData;
+                if(!finalTravelData.arr) finalTravelData.arr = { date: "", time: "", airport: "", flight: "" };
+                if(!finalTravelData.dep) finalTravelData.dep = { date: "", time: "", airport: "", flight: "" };
+            }
+
+            const s1 = document.getElementById('c-street').value;
+            const s2 = document.getElementById('c-street2').value;
+            const fullAddress = s2 ? `${s1}, ${s2}` : s1;
+
+            let calcAge = "";
+            const dobInput = document.getElementById('p-dob').value;
+            if (dobInput) {
+                const birthDate = new Date(dobInput);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                calcAge = age.toString();
+            }
+
+            const payload = {
+                personal: {
+                    first: document.getElementById('p-first').value,
+                    middle: document.getElementById('p-middle').value,
+                    last: document.getElementById('p-last').value,
+                    dob: dobInput,
+                    age: calcAge,
+                    gender: document.getElementById('p-gender').value,
+                    tshirt: document.getElementById('p-tshirt').value,
+                    email: document.getElementById('c-email').value,
+                    phone: document.getElementById('c-phone').value,
+                    address: fullAddress,
+                    city: document.getElementById('c-city').value,
+                    state: document.getElementById('c-state').value,
+                    zip: document.getElementById('c-zip').value
+                },
+                medical: {
+                    emergencyName: document.getElementById('e-name').value,
+                    emergencyRel: document.getElementById('e-rel').value,
+                    emergencyPhone: document.getElementById('e-phone').value,
+                    emergencyEmail: document.getElementById('e-email').value,
+                    conditions: document.getElementById('m-conditions').value,
+                    insurance: document.getElementById('m-insurance').value,
+                    group: document.getElementById('m-group').value,
+                    policyHolder: document.getElementById('m-policy-holder').value
+                },
+                travel: {
+                    type: travelType,
+                    flightDetails: finalTravelData
+                },
+                accommodation: document.querySelector('input[name="accom"]:checked').value,
+                event: {
+                    name: "Yogi Youth Leadership Retreat 2026",
+                    dates: "December 25-30, 2026",
+                    location: "Richmond, VA"
+                },
+                privacyAccepted: document.getElementById('privacy-check').checked
+            };
+
+            try {
+                await fetch(YYLR_REGISTER_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                    body: JSON.stringify(payload)
+                });
+                goToStep('step-success');
+            } catch(e) {
+                console.error(e);
+                alert("Submission failed. Please try again.");
+            } finally {
+                toggleLoader(false);
+            }
+        }
+    </script>
+</body>
+</html>
