@@ -172,7 +172,7 @@
                 <div class="space-y-5">
                     <div class="relative">
                         <label class="form-label">Zip / Postal Code <span class="text-red-500">*</span></label>
-                        <input type="text" id="lookup-zip" class="glass-input w-full p-4" placeholder="Start typing your zip code" autocomplete="postal-code" oninput="handleZipLookupInput()" onfocus="handleZipLookupInput()">
+                        <input type="text" id="lookup-zip" class="glass-input w-full p-4" placeholder="Start typing your zip code" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]*" oninput="handleZipLookupInput()" onfocus="handleZipLookupInput()">
                         <div id="lookup-status" class="text-xs text-gray-400 mt-2 ml-1">Loading lookup list...</div>
                         <div id="lookup-results" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-orange-100 rounded-2xl shadow-xl overflow-hidden z-30 max-h-72 overflow-y-auto"></div>
                     </div>
@@ -209,7 +209,7 @@
                         </div>
                         <div>
                             <label class="form-label">Zip / Postal Code <span class="text-red-500">*</span></label>
-                            <input type="text" id="manual-lookup-zip" class="glass-input w-full p-3" placeholder="e.g. 18037 or A1A 1A1">
+                            <input type="text" id="manual-lookup-zip" class="glass-input w-full p-3" placeholder="e.g. 18037" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]*">
                         </div>
                         <button onclick="performManualLookup()" class="btn-secondary w-full">
                             Search Manually
