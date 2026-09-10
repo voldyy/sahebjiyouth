@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YYLR 2026 Packing List</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Lato:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['"Lato"', 'sans-serif'],
+                    },
+                    colors: {
+                        yylr: {
+                            primary: '#9A5A18',
+                            dark: '#2F2418',
+                            amber: '#F2B84B',
+                            gold: '#F8D06A',
+                            softOrange: '#FFF1DE',
+                            sky: '#38BDF8',
+                            skyLight: '#EAF8FF',
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass {
+                @apply bg-white/90 backdrop-blur-xl border border-white/70 shadow-[0_24px_70px_rgba(154,90,24,0.14)];
+            }
+            .section-title {
+                @apply font-serif text-2xl md:text-3xl text-yylr-dark;
+            }
+            .packing-card {
+                @apply bg-white/85 border border-orange-100 rounded-2xl p-5 shadow-sm;
+            }
+            .item-row {
+                @apply flex items-center gap-3 py-2.5 text-yylr-dark;
+            }
+            .item-icon {
+                @apply w-9 h-9 rounded-xl bg-yylr-softOrange text-yylr-primary flex items-center justify-center shrink-0;
+            }
+        }
+
+        body {
+            background: linear-gradient(145deg, #fff9ef 0%, #fff6e8 44%, #ebf9ff 100%);
+        }
+
+        #packing-scene {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden font-sans text-gray-700">
+    <canvas id="packing-scene" aria-hidden="true"></canvas>
+
+    <main class="container mx-auto px-4 py-8 md:py-12 max-w-5xl relative z-10">
+        <header class="text-center mb-8 md:mb-10 animate-fade-in-up">
+            <div class="inline-flex items-center justify-center h-24 w-56 max-w-[72vw] rounded-2xl bg-white/85 border border-orange-100 shadow-sm mb-4 p-4">
+                <img src="amlogo_sm.png" alt="Anoopam Mission Logo" class="h-full w-full object-contain">
+            </div>
+            <h1 class="font-serif text-4xl md:text-6xl text-yylr-primary font-bold mt-5 mb-4 leading-tight">YYLR Packing List</h1>
+            <div class="w-16 h-px bg-yylr-primary/20 mx-auto mb-6"></div>
+            <div class="inline-flex flex-wrap items-center justify-center gap-2 text-xs md:text-sm font-black text-yylr-dark uppercase tracking-widest bg-white/80 py-3 px-4 rounded-xl shadow-sm border border-orange-100">
+                <span>December 25-30, 2026</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-yylr-primary mx-2"></span>
+                <span>Richmond, VA</span>
+            </div>
+        </header>
+
+        <section class="glass rounded-2xl p-5 md:p-8 mb-6 animate-fade-in-up">
+            <div class="grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr] gap-5 md:gap-6">
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-11 h-11 rounded-2xl bg-yylr-softOrange text-yylr-primary flex items-center justify-center">
+                            <span class="material-icons">luggage</span>
+                        </div>
+                        <div>
+                            <h2 class="section-title">General Packing List</h2>
+                            <p class="text-sm text-gray-500 mt-1">Bring what you need for six days of retreat activities.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5">
+                        <div class="item-row"><div class="item-icon"><span class="material-icons text-lg">self_improvement</span></div><span class="font-bold">Puja</span></div>
+                        <div class="item-row"><div class="item-icon"><span class="material-icons text-lg">checkroom</span></div><span class="font-bold">6 days of clothing</span></div>
+                        <div class="item-row"><div class="item-icon"><span class="material-icons text-lg">ac_unit</span></div><span class="font-bold">Sweaters, hoodies</span></div>
+                        <div class="item-row"><div class="item-icon"><span class="material-icons text-lg">directions_run</span></div><span class="font-bold">Sneakers</span></div>
+                        <div class="item-row"><div class="item-icon"><span class="material-icons text-lg">soap</span></div><span class="font-bold">Toiletries</span></div>
+                        <div class="item-row"><div class="item-icon"><span class="material-icons text-lg">laptop_mac</span></div><span class="font-bold">Laptop</span></div>
+                    </div>
+                </div>
+
+                <aside class="packing-card bg-gradient-to-br from-yylr-softOrange to-yylr-skyLight">
+                    <div class="flex items-center gap-2 text-yylr-primary font-black uppercase tracking-widest text-xs mb-3">
+                        <span class="material-icons text-base">thermostat</span>
+                        Weather Note
+                    </div>
+                    <p class="text-yylr-dark text-lg font-black leading-snug">Richmond in December averages 35°F to 50°F.</p>
+                    <p class="text-sm text-gray-600 leading-relaxed mt-3">Pack warm layers that can be worn indoors and outdoors throughout the retreat.</p>
+                </aside>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6 animate-fade-in-up" style="animation-delay: 0.08s;">
+            <div class="packing-card">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-yylr-skyLight text-yylr-sky flex items-center justify-center">
+                        <span class="material-icons">water_drop</span>
+                    </div>
+                    <div>
+                        <h2 class="font-serif text-xl text-yylr-dark font-bold">Optional</h2>
+                        <p class="text-xs text-gray-500 font-bold uppercase tracking-widest">Recommended</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div class="item-row"><span class="material-icons text-yylr-primary">check_circle</span><span>Water bottle</span></div>
+                    <div class="item-row"><span class="material-icons text-yylr-primary">check_circle</span><span>Backpack or tote bag</span></div>
+                </div>
+            </div>
+
+            <div class="packing-card">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-yylr-softOrange text-yylr-primary flex items-center justify-center">
+                        <span class="material-icons">card_giftcard</span>
+                    </div>
+                    <div>
+                        <h2 class="font-serif text-xl text-yylr-dark font-bold">White Elephant</h2>
+                        <p class="text-xs text-gray-500 font-bold uppercase tracking-widest">Gift Exchange</p>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-600 leading-relaxed">A fun gift exchange game where everyone brings a gift to swap with others.</p>
+                <div class="mt-4 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-yylr-primary bg-yylr-softOrange px-3 py-2 rounded-lg">
+                    Price limit: TBD
+                </div>
+            </div>
+
+            <div class="packing-card bg-yylr-dark text-white border-yylr-dark min-h-[210px] flex items-center justify-center text-center overflow-hidden relative">
+                <p class="relative z-10 text-[2.25rem] md:text-[2.55rem] font-black text-yylr-gold leading-[0.98] mx-auto">
+                    Don't forget your positive attitude
+                </p>
+            </div>
+        </section>
+
+        <section class="glass rounded-2xl overflow-hidden animate-fade-in-up" style="animation-delay: 0.16s;">
+            <button type="button" onclick="toggleDressCode()" class="w-full px-5 md:px-8 py-5 flex items-center justify-between text-left hover:bg-white/60 transition-colors">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-yylr-softOrange text-yylr-primary flex items-center justify-center">
+                        <span class="material-icons">rule</span>
+                    </div>
+                    <div>
+                        <h2 class="section-title">Dress Code</h2>
+                        <p class="text-sm text-gray-500 mt-1">Tap to view retreat clothing guidelines.</p>
+                    </div>
+                </div>
+                <span id="dress-code-icon" class="material-icons text-yylr-primary transition-transform">expand_more</span>
+            </button>
+
+            <div id="dress-code-content" class="hidden px-5 md:px-8 pb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-orange-100 pt-5">
+                    <div class="packing-card">
+                        <h3 class="font-serif text-2xl text-yylr-primary font-bold mb-3">Boys</h3>
+                        <p class="text-xs md:text-sm text-gray-600 leading-relaxed">No sleeveless shirts. Shirts must be below the waistband. Pants must tie at the waistband and nothing above the knees while in the seated position.</p>
+                    </div>
+                    <div class="packing-card">
+                        <h3 class="font-serif text-2xl text-yylr-primary font-bold mb-3">Girls</h3>
+                        <p class="text-xs md:text-sm text-gray-600 leading-relaxed">No sleeveless, low-cut, or tight-fitting shirts. Shirts must be below the waistband. For pants, no low-rise styles and nothing above the knees while in the seated position.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center mt-10 text-gray-400 text-xs">
+            <p>Anoopam Mission &copy; 2026</p>
+        </footer>
+    </main>
+
+    <script>
+        function toggleDressCode() {
+            const content = document.getElementById('dress-code-content');
+            const icon = document.getElementById('dress-code-icon');
+            const isHidden = content.classList.contains('hidden');
+
+            content.classList.toggle('hidden', !isHidden);
+            icon.innerText = isHidden ? 'expand_less' : 'expand_more';
+            icon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+
+        function initPackingScene() {
+            const canvas = document.getElementById('packing-scene');
+            if (!canvas || !window.THREE) return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.z = 12;
+
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const group = new THREE.Group();
+            scene.add(group);
+
+            const makeLine = (color, yOffset, zOffset) => {
+                const segments = 70;
+                const positions = new Float32Array(segments * 3);
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.28 });
+                const line = new THREE.Line(geometry, material);
+                line.userData = { segments, yOffset, zOffset };
+                group.add(line);
+                return line;
+            };
+
+            const lines = [
+                makeLine(0xf2b84b, -2.2, -2),
+                makeLine(0x38bdf8, -1.1, -3),
+            ];
+
+            const particleCount = window.innerWidth < 640 ? 55 : 110;
+            const particlePositions = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount; i++) {
+                particlePositions[i * 3] = (Math.random() - 0.5) * 18;
+                particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 12;
+                particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 8;
+            }
+            const particles = new THREE.Points(
+                new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(particlePositions, 3)),
+                new THREE.PointsMaterial({ color: 0xd9902d, size: 0.055, transparent: true, opacity: 0.38 })
+            );
+            scene.add(particles);
+
+            function animate(timeMs) {
+                const time = timeMs * 0.00045;
+                const width = window.innerWidth < 640 ? 9 : 14;
+                lines.forEach((line, index) => {
+                    const positions = line.geometry.attributes.position.array;
+                    for (let i = 0; i < line.userData.segments; i++) {
+                        const progress = i / (line.userData.segments - 1);
+                        positions[i * 3] = (progress - 0.5) * width;
+                        positions[i * 3 + 1] = line.userData.yOffset + Math.sin(progress * Math.PI * 2 + time + index) * 0.28;
+                        positions[i * 3 + 2] = line.userData.zOffset;
+                    }
+                    line.geometry.attributes.position.needsUpdate = true;
+                });
+                particles.rotation.y = time * 0.05;
+                renderer.render(scene, camera);
+                requestAnimationFrame(animate);
+            }
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            animate(0);
+        }
+
+        document.addEventListener('DOMContentLoaded', initPackingScene);
+    </script>
+</body>
+</html>
