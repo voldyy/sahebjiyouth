@@ -140,6 +140,12 @@
                 <p class="mb-3">
                     YYLR is a journey of seva, learning, and leadership. It is a chance to bond with our USA santo, with one another, and to gain skills that will serve you both at mandir and beyond.
                 </p>
+                <p class="mb-3">
+                    Please review the <a href="https://sahebjiyouth.blob.core.windows.net/$web/yylr-packing-list.html" target="_blank" rel="noopener" class="font-bold text-yylr-primary underline decoration-yylr-gold decoration-2 underline-offset-4 hover:text-yylr-sky">YYLR packing list</a> before you travel so you are prepared for the retreat.
+                </p>
+                <p class="mb-3">
+                    For flights, the preferred airport is <strong>RIC (Richmond International Airport)</strong>. <strong>IAD</strong> or <strong>BWI</strong> are acceptable as well.
+                </p>
                 <p>
                     <strong>Please complete this form by November 15, 2026.</strong>
                 </p>
@@ -435,6 +441,18 @@
                             <span class="text-[10px] leading-tight font-bold text-gray-500 peer-checked:text-yylr-dark">Flight Not Booked</span>
                         </div>
                     </label>
+                </div>
+
+                <div id="flight-airport-note" class="hidden max-w-md mx-auto -mt-4 mb-8 bg-white/90 border border-orange-100 rounded-2xl p-4 shadow-lg animate-fade-in-up text-left">
+                    <div class="flex items-start gap-3">
+                        <span class="material-icons text-yylr-sky text-xl mt-0.5">flight_takeoff</span>
+                        <div>
+                            <div class="font-bold text-yylr-dark text-sm">Preferred Airport</div>
+                            <p class="text-sm text-gray-600 leading-relaxed mt-1">
+                                Please use <strong>RIC</strong> when possible. <strong>IAD</strong> and <strong>BWI</strong> are acceptable alternatives.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="flight-module" class="hidden space-y-8 animate-fade-in-up">
@@ -1203,13 +1221,16 @@
             const flightMod = document.getElementById('flight-module');
             const carMod = document.getElementById('car-module');
             const notBookedMod = document.getElementById('not-booked-module');
+            const airportNote = document.getElementById('flight-airport-note');
 
             flightMod.classList.add('hidden');
             carMod.classList.add('hidden');
             if(notBookedMod) notBookedMod.classList.add('hidden');
+            if(airportNote) airportNote.classList.add('hidden');
 
             if(mode === 'Flight') {
                 flightMod.classList.remove('hidden');
+                if(airportNote) airportNote.classList.remove('hidden');
             } else if(mode === 'Car') {
                 carMod.classList.remove('hidden');
             } else if(mode === 'FlightNotBooked') {
