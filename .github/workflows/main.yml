@@ -1,1 +1,53 @@
-${{ secrets.GEMINI_API_KEY }}
+name: Deploy registration site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'reg/**'
+      - 'apps-script/**'
+      - 'scripts/deploy_registration.py'
+      - 'tests/**'
+      - 'api/src/**'
+      - 'api/test/**'
+      - '.github/workflows/main.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: registration-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test registration and Apps Script
+        run: node --test tests/*.test.cjs api/test/*.test.js
+      - name: Sign in to Azure with workload identity
+        uses: azure/login@v2
+        with:
+          client-id: cb02d409-0a73-4905-b043-4243fe5be95f
+          tenant-id: 6a368235-8b30-4544-aeac-16b2bfa9cb65
+          subscription-id: 3ea15ce6-cff0-4596-ba70-3d88d8e2dbbe
+      - name: Publish registration assets and switch the index
+        run: python3 scripts/deploy_registration.py
+      - name: Preserve index rollback copy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: registration-index-backup
+          path: .private/site-deploy/index-before-*.html
+          if-no-files-found: ignore
+          retention-days: 14

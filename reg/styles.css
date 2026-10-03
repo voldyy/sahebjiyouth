@@ -330,3 +330,35 @@ h1 {
     max-width: 16ch;
   }
 }
+
+.yajman-choice {
+  margin: 24px 0 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.yajman-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--field-line);
+  border-radius: 8px;
+  background: var(--field-bg);
+  cursor: pointer;
+}
+.yajman-option input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.yajman-option:focus-within {
+  outline: 3px solid rgba(183, 121, 31, 0.2);
+}
+
+.required-asterisk {
+  color: #b42318;
+}

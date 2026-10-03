@@ -1,0 +1,11 @@
+# Private exports and credentials remain excluded. The public registration database is intentionally included.
+.private/
+**/contacts.json
+*.xlsx
+**/local.settings.json
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules/
+**/__pycache__/
+*.zip
