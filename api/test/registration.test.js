@@ -54,3 +54,9 @@ test('Twilio request uses server template and exact variables; Apps Script gets 
  assert.equal(body.get('ContentSid'),env.TWILIO_CONTENT_SID);assert.equal(body.get('To'),'whatsapp:+14435550123');
  assert.deepEqual(JSON.parse(body.get('ContentVariables')),{'1':input.name,'2':env.REGISTRATION_EVENT_NAME,'3':input.email});assert.equal(body.has('Body'),false);
 });
+
+test('Twilio Content templates may return MM message IDs',async()=>{
+ const env={TWILIO_ACCOUNT_SID:'AC'+'1'.repeat(32),TWILIO_API_KEY:'test-key',TWILIO_API_SECRET:'test-secret',TWILIO_CONTENT_SID:'HX'+'2'.repeat(32),TWILIO_WHATSAPP_FROM:'whatsapp:+15551234567',REGISTRATION_EVENT_NAME:'Dhan Teras Puja 2026'};
+ const svc=createServices(env,async()=>({ok:true,json:async()=>({sid:'MM'+'4'.repeat(32)})}));
+ assert.equal((await svc.sendWhatsApp(input)).sid,'MM'+'4'.repeat(32));
+});

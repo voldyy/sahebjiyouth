@@ -120,7 +120,7 @@ function createServices(env, fetchImpl=fetch) {
       });
       if (!response.ok) throw Object.assign(Error('WhatsApp request rejected'),{definiteFailure:response.status<500});
       const data=await response.json();
-      if (!/^SM[0-9a-f]{32}$/i.test(data.sid||'')) throw Error('Unexpected WhatsApp response');
+      if (!/^(SM|MM)[0-9a-f]{32}$/i.test(data.sid||'')) throw Error('Unexpected WhatsApp response');
       return {sid:data.sid};
     },
   };
