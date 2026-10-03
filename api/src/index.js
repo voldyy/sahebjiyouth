@@ -21,3 +21,15 @@ app.http('lookup', {
   route: 'lookup', methods: ['POST', 'OPTIONS'], authLevel: 'anonymous',
   handler: createHandler({ getIndex, allowRequest: createRateLimiter(table), origins }),
 });
+
+const {createRegistrationHandler, createServices} = require('./registration');
+const registrationTable = new TableClient(`https://${account}.table.core.windows.net`, 'RegRegistrations', credential, {retryOptions:{maxRetries:2}});
+app.http('register', {
+  route:'register', methods:['POST','OPTIONS'], authLevel:'anonymous',
+  handler:createRegistrationHandler({
+    table:registrationTable,
+    allowRequest:createRateLimiter(registrationTable,Date.now,{partitionKey:'registration-ip'}),
+    allowRecipient:createRateLimiter(registrationTable,Date.now,{partitionKey:'registration-phone',limit:3,windowMs:24*60*60*1000}),
+    ...createServices(process.env), origins,
+  }),
+});

@@ -12,6 +12,7 @@ function setup(database = { version: 1, contacts: fixtures }) {
   const requests = [];
   const context = vm.createContext({
     window: {REG_CONTACTS_DB: database},
+    crypto: require("node:crypto").webcrypto, TextEncoder, AbortController, setTimeout, clearTimeout,
     fetch: async (url, options) => {
       requests.push({ url, ...options });
       if (url.includes('/api/lookup')) {
@@ -145,7 +146,7 @@ test('only RSVP submission uses the network', async () => {
   app.findAll(n => n.type === 'input' && n.props.value === 'Yajman Couple')[0].props.onChange(); app.render();
   await app.findAll(n => n.type === 'form')[0].props.onSubmit({preventDefault() {}});
   assert.equal(app.requests.length,1);
-  assert.ok(app.requests[0].url.includes('script.google.com'));
+  assert.ok(app.requests[0].url.endsWith('/api/register'));
   assert.equal(JSON.parse(app.requests[0].body).name,'Third');
 });
 
@@ -159,4 +160,22 @@ test('participation choice starts empty, blocks submission, and is included in p
  assert.equal(button().props.disabled,false);
  await app.findAll(n=>n.type==='form')[0].props.onSubmit({preventDefault(){}});
  assert.equal(JSON.parse(app.requests[0].body).yajmanType,'Yajman Single');
+});
+
+test('WhatsApp consent requires email and is sent in registration payload', async () => {
+ const app=component();app.field('phone').props.onChange('5559876543');app.render();app.lookup();app.render();
+ app.findAll(n=>n.type==='input' && n.props.value==='Yajman Couple')[0].props.onChange();app.render();
+ app.findAll(n=>n.type==='input' && n.props.name==='whatsappOptIn')[0].props.onChange({target:{checked:true}});app.render();
+ app.field('email').props.onChange('');app.render();
+ assert.equal(app.findAll(n=>n.type==='button' && n.props.type==='submit')[0].props.disabled,true);
+ app.field('email').props.onChange('test@example.com');app.render();
+ await app.findAll(n=>n.type==='form')[0].props.onSubmit({preventDefault(){}});
+ assert.equal(JSON.parse(app.requests[0].body).whatsappOptIn,true);
+ assert.ok(JSON.parse(app.requests[0].body).requestId);
+});
+test('network retries keep the same registration ID',async()=>{
+ const app=setup();
+ await app.run('submitRsvp({phone:"5559876543",name:"Test",yajmanType:"Yajman Single",whatsappOptIn:false})');
+ await app.run('submitRsvp({phone:"5559876543",name:"Test",yajmanType:"Yajman Single",whatsappOptIn:false})');
+ assert.equal(JSON.parse(app.requests[0].body).requestId,JSON.parse(app.requests[1].body).requestId);
 });

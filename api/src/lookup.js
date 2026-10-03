@@ -48,12 +48,12 @@ function clientAddress(request) {
   return isIP(value) ? value : 'unknown';
 }
 
-function createRateLimiter(table, now = Date.now) {
+function createRateLimiter(table, now = Date.now, options = {}) {
   return async (address) => {
     // One durable counter per hashed IP, shared across all Function instances.
-    const partitionKey = 'lookup';
+    const partitionKey = options.partitionKey || 'lookup';
     const rowKey = createHash('sha256').update(address).digest('hex');
-    const windowMs = 10 * 60 * 1000;
+    const windowMs = options.windowMs || 10 * 60 * 1000;
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
         let previous;
@@ -61,7 +61,7 @@ function createRateLimiter(table, now = Date.now) {
         catch (error) { if (error.statusCode !== 404) throw error; }
         const currentTime = now();
         const active = previous && currentTime < previous.resetAt;
-        if (active && previous.count >= 30) return false;
+        if (active && previous.count >= (options.limit || 30)) return false;
         const entity = { partitionKey, rowKey, count: active ? previous.count + 1 : 1, resetAt: active ? previous.resetAt : currentTime + windowMs };
         if (previous) await table.updateEntity(entity, 'Replace', { etag: previous.etag });
         else await table.createEntity(entity);

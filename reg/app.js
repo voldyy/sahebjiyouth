@@ -11,6 +11,7 @@ function App() {
   const [suggestions, setSuggestions] = useState([]);
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [confirmation, setConfirmation] = useState(null);
 
   const phoneDigits = normalizePhone(form.phone);
 
@@ -19,7 +20,8 @@ function App() {
       detailsVisible &&
       phoneDigits.length === 10 &&
       form.name.trim() &&
-      ["Yajman Couple", "Yajman Single"].includes(form.yajmanType)
+      ["Yajman Couple", "Yajman Single"].includes(form.yajmanType) &&
+      (!form.whatsappOptIn || form.email.trim())
     );
   }, [detailsVisible, phoneDigits, form]);
 
@@ -49,6 +51,7 @@ function App() {
         zipCode: "",
         cityState: "",
         yajmanType: "",
+        whatsappOptIn: false,
       }));
     }
   }
@@ -62,6 +65,7 @@ function App() {
       zipCode: contact.zipCode ? String(contact.zipCode) : "",
       cityState: contact.cityState || "",
       yajmanType: "",
+      whatsappOptIn: false,
     }));
     setLookupMatched(matched);
     setDetailsVisible(true);
@@ -135,11 +139,13 @@ function App() {
       cityState: form.cityState.trim(),
       yajman: "Yes",
       yajmanType: form.yajmanType,
+      whatsappOptIn: form.whatsappOptIn,
       lookupStatus: lookupMatched ? "Matched" : "Manual",
     };
 
     try {
-      await submitRsvp(payload);
+      const result = await submitRsvp(payload);
+      setConfirmation(result);
       setSubmitState("success");
       setSubmitted(true);
       setSubmitMessage("");
@@ -180,7 +186,9 @@ function App() {
             "h1",
             { id: "confirmationTitle" },
             "Jai Swaminarayan! Thank you for your RSVP. See you on November 6, 2026."
-          )
+          ),
+          confirmation?.whatsappStatus === "queued" && React.createElement("p", { className: "status success" }, "Your confirmation email was sent, and your WhatsApp confirmation has been queued."),
+          confirmation?.warning && React.createElement("p", { className: "status info" }, confirmation.warning)
         )
       )
     );
@@ -287,6 +295,7 @@ function App() {
                   value: form.email,
                   onChange: (value) => updateField("email", value),
                   autoComplete: "email",
+                  required: form.whatsappOptIn,
                 }),
                 React.createElement(Field, {
                   id: "zipCode",
@@ -325,6 +334,16 @@ function App() {
                 )
               )
             ),
+            React.createElement(
+              "label",
+              { className: "yajman-option whatsapp-option" },
+              React.createElement("input", {
+                type: "checkbox", name: "whatsappOptIn", checked: form.whatsappOptIn,
+                onChange: (event) => updateField("whatsappOptIn", event.target.checked),
+              }),
+              React.createElement("span", null, "Send me a WhatsApp confirmation at this phone number.")
+            ),
+            form.whatsappOptIn && React.createElement("p", { className: "assistive" }, "Please provide your email address. Your WhatsApp confirmation will refer to the confirmation email."),
             submitMessage &&
               React.createElement("p", { className: `status ${submitStatusClass}` }, submitMessage),
             React.createElement(

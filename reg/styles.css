@@ -362,3 +362,13 @@ h1 {
 .required-asterisk {
   color: #b42318;
 }
+
+.whatsapp-option {
+  margin-top: 22px;
+  align-items: flex-start;
+  line-height: 1.45;
+}
+.whatsapp-option input {
+  flex-shrink: 0;
+  margin-top: 2px;
+}

@@ -7,6 +7,7 @@ const initialForm = {
   zipCode: "",
   cityState: "",
   yajmanType: "",
+  whatsappOptIn: false,
 };
 
 function normalizePhone(value) {
@@ -68,16 +69,35 @@ function loadContact(phone) {
   return {found: contacts.length > 0, contacts, contact: contacts.length === 1 ? contacts[0] : null};
 }
 
-// Google Apps Script is used only for saving RSVP submissions.
+// Submit through Azure so Twilio credentials never reach the browser.
+const REGISTRATION_API_URL = "https://sahebjiyouth-reg-api.azurewebsites.net/api/register";
+const registrationRequestIds = new Map();
 async function submitRsvp(payload) {
-  const response = await fetch(GOOGLE_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload),
-  });
-  const data = await response.json();
-  if (!response.ok || !data.ok) {
-    throw new Error(data.error || "The RSVP service could not process the request.");
-  }
-  return data;
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(payload)));
+  const key = "mahapuja-request-v1:" + Array.from(new Uint8Array(digest), value => value.toString(16).padStart(2, "0")).join("");
+  let requestId = registrationRequestIds.get(key);
+  try { requestId = requestId || window.sessionStorage.getItem(key); } catch (_) {}
+  if (!requestId) requestId = crypto.randomUUID();
+  registrationRequestIds.set(key, requestId);
+  // Persist only a payload hash and random ID, not the person's form fields.
+  try { window.sessionStorage.setItem(key, requestId); } catch (_) {}
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 90000);
+  try {
+    const response = await fetch(REGISTRATION_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, requestId }),
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "The RSVP service could not process the request.");
+    return data;
+  } catch (error) {
+    if (error.name === "AbortError" || error instanceof TypeError) {
+      throw new Error("We could not confirm the result. Keep this page open and retry with the same details to avoid a duplicate registration.");
+    }
+    throw error;
+  } finally { clearTimeout(timer); }
 }
