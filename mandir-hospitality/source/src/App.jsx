@@ -33,10 +33,14 @@ import Temple from "./components/Temple";
 import Sheet from "./components/Sheet";
 import GuestForm from "./components/GuestForm";
 import Guests from "./views/Guests";
+import { useSheetWorkspace } from "./lib/useSheetWorkspace";
+import { SHEET_URL } from "./lib/sheets";
+import "./styles/sheets.css";
 
 const Transport = lazy(() => import("./views/Transport"));
 const Accommodation = lazy(() => import("./views/Accommodation"));
 const Kitchen = lazy(() => import("./views/Kitchen"));
+const SheetAccommodation = lazy(() => import("./views/SheetAccommodation"));
 const navigation = [
   { id: "guests", label: "Guest roster", short: "Guests", icon: Users },
   {
@@ -59,8 +63,11 @@ const currentRoute = () =>
     : "guests";
 
 export default function App() {
+  const demoMode = import.meta.env.VITE_DEMO_MODE === "true";
+  const sheetWorkspace = useSheetWorkspace(!demoMode);
   const [route, setRoute] = useState(currentRoute);
-  const [guests, setGuests] = useLocalStorage("seva.guests.v1", seedGuests);
+  const [demoGuests, setGuests] = useLocalStorage("seva.guests.v1", () => demoMode ? seedGuests : [], demoMode);
+  const guests = demoMode ? demoGuests : sheetWorkspace.guests;
   const [linen, setLinen] = useLocalStorage("mandir-linen-v1", initialLinen);
   const [activity, setActivity] = useLocalStorage("seva.activity.v1", []);
   const [modal, setModal] = useState(null);
@@ -68,6 +75,7 @@ export default function App() {
   const [notification, setNotification] = useState(null);
   const toastTimer = useRef();
   const [storageError, setStorageError] = useState(false);
+  const [clientIdDraft, setClientIdDraft] = useState(sheetWorkspace.clientId);
   const toast = useCallback((message) => {
     setNotification(message);
     clearTimeout(toastTimer.current);
@@ -103,6 +111,10 @@ export default function App() {
       ].slice(0, 30),
     );
   const onUpdateGuest = (id, patch) => {
+    if (!demoMode) {
+      toast("Use Accommodation to save lodging to the sheet. Other guest fields are read-only.");
+      return false;
+    }
     const guest = guests.find((g) => g.id === id);
     if (!guest) return false;
     const nextPatch = { ...patch };
@@ -153,6 +165,7 @@ export default function App() {
     return true;
   };
   const addGuest = (form) => {
+    if (!demoMode) { toast("Add attendees in the source sheet, then refresh the roster."); return; }
     const guest = {
       ...form,
       id: `G-${Date.now().toString().slice(-6)}`,
@@ -181,14 +194,14 @@ export default function App() {
     toast(`${guest.name} added. A warm welcome awaits.`);
   };
   const checkIn = (guest) => {
-    onUpdateGuest(guest.id, { status: "Checked in" });
+    if (onUpdateGuest(guest.id, { status: "Checked in" }) === false) return;
     toast(`${guest.name} checked in successfully.`);
   };
   const pendingRooms = guests.filter(
-    (g) => g.stay !== "Day visitor" && !g.room && g.status !== "Departed",
+    (g) => g.stay !== "Day visitor" && !g.room && !["Departed", "Cancelled"].includes(g.status),
   );
   const pendingTransport = guests.filter(
-    (g) => g.transport === "Needed" && g.status !== "Departed",
+    (g) => g.transport === "Needed" && !["Departed", "Cancelled"].includes(g.status),
   );
   const dateLabel = new Intl.DateTimeFormat("en-US", {
     weekday: "short",
@@ -241,6 +254,7 @@ export default function App() {
         </nav>
         <button
           className="quick-checkin button secondary"
+          disabled={!demoMode}
           onClick={() => {
             setQuickQuery("");
             setModal("quick");
@@ -293,9 +307,9 @@ export default function App() {
           <div className="topbar-actions">
             <span className="local-status">
               <span className="status-dot" />
-              {storageError ? "Session only" : "Saved on this device"}
+              {!demoMode ? "Google Sheets source" : storageError ? "Session only" : "Saved on this device"}
             </span>
-            <span className="demo-label">DEMO</span>
+            <span className="demo-label">{demoMode ? "DEMO" : "SHEET"}</span>
             <span className="topbar-divider" />
             <button
               className="icon-button notification-button"
@@ -314,6 +328,12 @@ export default function App() {
             </button>
           </div>
         </header>
+        {!demoMode && <section className="sheet-connection" aria-label="Google Sheets connection">
+          <div><strong>Google Sheets guest roster</strong><p>{sheetWorkspace.loading ? "Refreshing attendee data…" : sheetWorkspace.refreshedAt ? `Last refreshed ${sheetWorkspace.refreshedAt.toLocaleTimeString()}` : "Waiting for source data"} · {sheetWorkspace.connected ? "Google authorized; sheet edit access is required" : "Read-only until Google sign-in"}</p></div>
+          <button className="button secondary small" disabled={sheetWorkspace.loading || sheetWorkspace.saving} onClick={sheetWorkspace.refresh}>Refresh sheet</button>
+          {sheetWorkspace.connected ? <button className="button secondary small" disabled={sheetWorkspace.saving} onClick={sheetWorkspace.disconnect}>Sign out</button> : <button className="button primary small" onClick={() => { if (!sheetWorkspace.clientId) setModal("settings"); else sheetWorkspace.connect(); }}>Sign in with Google</button>}
+          {sheetWorkspace.error && <p className="sheet-connection-error" role="alert">{sheetWorkspace.error}</p>}
+        </section>}
         {storageError && (
           <div className="storage-banner">
             <CloudOff size={16} /> Browser storage is unavailable. Changes will
@@ -341,20 +361,23 @@ export default function App() {
             {route === "guests" && (
               <Guests
                 guests={guests}
+                readOnly={!demoMode}
                 onUpdateGuest={onUpdateGuest}
                 toast={toast}
-                onAdd={() => setModal("add")}
+                onAdd={() => demoMode ? setModal("add") : toast("Add attendees in the Google source sheet, then refresh.")}
                 onNavigate={navigate}
               />
             )}
             {route === "transport" && (
               <Transport
                 guests={guests}
+                sheetMode={!demoMode}
                 onUpdateGuest={onUpdateGuest}
                 toast={toast}
               />
             )}
-            {route === "rooms" && (
+            {route === "rooms" && !demoMode && <SheetAccommodation workspace={sheetWorkspace} toast={toast} />}
+            {route === "rooms" && demoMode && (
               <Accommodation
                 guests={guests}
                 onUpdateGuest={onUpdateGuest}
@@ -366,6 +389,7 @@ export default function App() {
             {route === "kitchen" && (
               <Kitchen
                 guests={guests}
+                sheetMode={!demoMode}
                 onUpdateGuest={onUpdateGuest}
                 toast={toast}
               />
@@ -376,8 +400,7 @@ export default function App() {
               <Temple size={16} /> Seva, thoughtfully connected.
             </span>
             <span>
-              Mandir Hospitality <span className="footer-dot">·</span> Sample
-              workspace
+              Mandir Hospitality <span className="footer-dot">·</span> {demoMode ? "Sample workspace" : "Google Sheets roster"}
             </span>
           </footer>
         </main>
@@ -532,18 +555,19 @@ export default function App() {
               <h3>Sevak team</h3>
               <p>Hospitality volunteer</p>
             </div>
-            <span className="badge amber">Demo</span>
+            <span className="badge amber">{demoMode ? "Demo" : "Sheet source"}</span>
           </div>
           <div className="settings-section">
             <h3>About this workspace</h3>
-            <p>
-              This interactive workspace uses sample guests. Your updates are
-              saved in this browser and remain available when you return.
-            </p>
-            <p>
-              Live team synchronization, sign-in and Google Sheets are not
-              connected yet.
-            </p>
+            {demoMode ? <p>This demo uses sample guests, saved in this browser.</p> : <>
+              <p>Guest data comes from the source sheet. Lodging changes write only AD (location), AE (room number), and AF (custom code). Other fields are read-only. Guest records and Google access tokens are not saved to browser storage.</p>
+              <p>Kitchen headcount adjustments remain device-local. Transport dispatch plans are session-only and clear on reload. Neither is written to this sheet.</p>
+              <a className="button secondary" href={SHEET_URL} target="_blank" rel="noreferrer">Open source sheet</a>
+              <label className="field">Google OAuth client ID<input value={clientIdDraft} onChange={(e) => setClientIdDraft(e.target.value)} placeholder="…apps.googleusercontent.com" /></label>
+              <p>A Google web OAuth client ID is public configuration, not a password or client secret. The project must enable Google Sheets API and allow this website’s origin. Google’s Sheets permission can cover all spreadsheets accessible to your account; this app targets only the configured source sheet.</p>
+              <button className="button secondary" onClick={() => { try { sheetWorkspace.configureClientId(clientIdDraft); toast("Google sign-in configuration saved. Now sign in to enable lodging writes."); } catch (error) { toast(error.message); } }}>Save Google sign-in configuration</button>
+              <button className="button primary" onClick={sheetWorkspace.connect}>Sign in with Google</button>
+            </>}
           </div>
           <button
             className="button secondary full-width"

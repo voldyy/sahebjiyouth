@@ -134,8 +134,8 @@ function departureTime(flight) {
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
-export default function Transport({ guests, onUpdateGuest, toast }) {
-  const [trips, setTrips] = useLocalStorage("mandir-trips-v1", INITIAL_TRIPS);
+export default function Transport({ guests, onUpdateGuest, toast, sheetMode = false }) {
+  const [trips, setTrips] = useLocalStorage(sheetMode ? "mandir-sheet-trips-v1" : "mandir-trips-v1", () => sheetMode ? [] : INITIAL_TRIPS, !sheetMode);
   const [direction, setDirection] = useState("pickup");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All statuses");
@@ -203,7 +203,7 @@ export default function Transport({ guests, onUpdateGuest, toast }) {
     }
     const nextStatus = trip.status === "Scheduled" ? "On the way" : "Completed";
     updateTrip(trip, { status: nextStatus });
-    if (trip.guestId && guestById.has(trip.guestId))
+    if (!sheetMode && trip.guestId && guestById.has(trip.guestId))
       onUpdateGuest(trip.guestId, {
         transport: nextStatus === "Completed" ? "Not needed" : "Assigned",
       });
@@ -234,7 +234,7 @@ export default function Transport({ guests, onUpdateGuest, toast }) {
       return;
     }
     updateTrip(sheet.trip, { driverId });
-    if (sheet.trip.guestId)
+    if (!sheetMode && sheet.trip.guestId)
       onUpdateGuest(sheet.trip.guestId, { transport: "Assigned" });
     setSheet(null);
     toast("Driver assigned. This trip is ready for dispatch.");
@@ -278,7 +278,7 @@ export default function Transport({ guests, onUpdateGuest, toast }) {
         status: "Scheduled",
       },
     ]);
-    onUpdateGuest(guestId, {
+    if (!sheetMode) onUpdateGuest(guestId, {
       transport: assignedDriver ? "Assigned" : "Needed",
     });
     setDirection(newDirection);
@@ -308,6 +308,7 @@ export default function Transport({ guests, onUpdateGuest, toast }) {
           <Plus size={17} /> New trip
         </button>
       </div>
+      {sheetMode && <p className="sheet-data-note">Guest pickup requests come from the sheet. Dispatch plans are session-only; they are not saved to the sheet and are cleared on reload.</p>}
 
       <div className="op-stat-grid">
         <div className="card op-stat">

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
-export function useLocalStorage(key, initialValue) {
+export function useLocalStorage(key, initialValue, persist = true) {
   const [value, setValue] = useState(() => {
     try {
-      const saved = localStorage.getItem(key);
+      const saved = persist ? localStorage.getItem(key) : null;
       if (saved !== null) return JSON.parse(saved);
     } catch {
       /* Browser storage may be restricted. Keep the app usable in memory. */
@@ -11,13 +11,15 @@ export function useLocalStorage(key, initialValue) {
     return typeof initialValue === "function" ? initialValue() : initialValue;
   });
   useEffect(() => {
+    if (!persist) return;
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch {
       window.dispatchEvent(new Event("seva-storage-unavailable"));
     }
-  }, [key, value]);
+  }, [key, value, persist]);
   useEffect(() => {
+    if (!persist) return;
     const sync = (event) => {
       if (event.key === key && event.newValue !== null) {
         try {
@@ -29,7 +31,7 @@ export function useLocalStorage(key, initialValue) {
     };
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
-  }, [key]);
+  }, [key, persist]);
   return [value, setValue];
 }
 

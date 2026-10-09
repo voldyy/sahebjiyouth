@@ -46,11 +46,11 @@ const TODAY_ESTIMATES = {
   lunch: { volunteers: 45, visitors: 90, buffer: 10 },
   dinner: { volunteers: 40, visitors: 65, buffer: 10 },
 };
-function defaultPlans(day) {
+function defaultPlans(day, sheetMode = false) {
   return Object.fromEntries(
     MEALS.map((meal) => [
       meal.id,
-      day === dateISO()
+      !sheetMode && day === dateISO()
         ? { ...TODAY_ESTIMATES[meal.id] }
         : { volunteers: 0, visitors: 0, buffer: 10 },
     ]),
@@ -67,6 +67,8 @@ function arrivalMinutes(value) {
 function getForecast(guests, meal, plan, day) {
   const attending = guests.filter((guest) => {
     if (guest.status === "Departed") return false;
+    if (guest.status === "Cancelled") return false;
+    if (guest.sourceIdentity && (!guest.arrivalDate || !guest.departureDate)) return false;
     if (guest.arrivalDate && guest.arrivalDate > day) return false;
     if (guest.departureDate && guest.departureDate < day) return false;
     if (guest.stay === "Day visitor" && guest.arrivalDate !== day) return false;
@@ -89,7 +91,7 @@ function getForecast(guests, meal, plan, day) {
   };
 }
 
-export default function Kitchen({ guests = [], toast = () => {} }) {
+export default function Kitchen({ guests = [], toast = () => {}, sheetMode = false }) {
   const [planningDate, setPlanningDate] = useState(() => dateISO());
   const [selectedMeal, setSelectedMeal] = useState("lunch");
   return (
@@ -112,18 +114,19 @@ export default function Kitchen({ guests = [], toast = () => {} }) {
         selected={selectedMeal}
         setSelected={setSelectedMeal}
         toast={toast}
+        sheetMode={sheetMode}
       />
     </div>
   );
 }
 
-function DailyKitchenPlan({ day, guests, selected, setSelected, toast }) {
+function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode }) {
   const [savedPlans, setPlans] = useLocalStorage(
-    `seva-kitchen-plans-v1-${day}`,
-    () => defaultPlans(day),
+    `${sheetMode ? "sheet" : "seva"}-kitchen-plans-v1-${day}`,
+    () => defaultPlans(day, sheetMode),
   );
   const [activity, setActivity] = useLocalStorage(
-    `seva-kitchen-activity-v1-${day}`,
+    `${sheetMode ? "sheet" : "seva"}-kitchen-activity-v1-${day}`,
     [],
   );
   const [draft, setDraft] = useState(null);
@@ -133,13 +136,14 @@ function DailyKitchenPlan({ day, guests, selected, setSelected, toast }) {
       Object.fromEntries(
         MEALS.map((meal) => [
           meal.id,
-          { ...defaultPlans(day)[meal.id], ...savedPlans?.[meal.id] },
+          { ...defaultPlans(day, sheetMode)[meal.id], ...savedPlans?.[meal.id] },
         ]),
       ),
-    [savedPlans, day],
+    [savedPlans, day, sheetMode],
   );
   const meal = MEALS.find((item) => item.id === selected);
   const plan = plans[selected];
+  const undatedGuests = guests.filter((guest) => guest.sourceIdentity && guest.status !== "Cancelled" && (!guest.arrivalDate || !guest.departureDate)).length;
   const forecasts = useMemo(
     () =>
       Object.fromEntries(
@@ -233,6 +237,7 @@ function DailyKitchenPlan({ day, guests, selected, setSelected, toast }) {
   }
   return (
     <>
+      {undatedGuests > 0 && <p className="sheet-data-note" role="status">{undatedGuests} attendees are excluded from meal forecasts because arrival or departure dates are missing. Complete those dates in the source sheet.</p>}
       <div className="kit-plan-toolbar">
         <span className="kit-roster-note">
           <span />

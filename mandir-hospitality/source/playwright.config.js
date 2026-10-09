@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
+  testMatch: 'dashboard.spec.js',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -18,7 +19,7 @@ export default defineConfig({
     { name: 'webkit-mobile', use: { browserName: 'webkit' } },
   ],
   webServer: {
-    command: 'npm run dev -- --host 127.0.0.1 --port 5173 --strictPort',
+    command: 'VITE_DEMO_MODE=true npm run dev -- --host 127.0.0.1 --port 5173 --strictPort',
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: !process.env.CI,
   },

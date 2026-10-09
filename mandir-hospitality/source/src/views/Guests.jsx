@@ -39,6 +39,7 @@ export default function Guests({
   toast,
   onAdd,
   onNavigate,
+  readOnly = false,
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All guests");
@@ -51,6 +52,8 @@ export default function Guests({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const selected = guests.find((g) => g.id === selectedId);
   const total = guests.reduce((n, g) => n + g.count, 0);
+  const stayOptions = readOnly ? ["Samarpan", "Comfort Inn", "Hawthorn", "Pending lodging", "Day visitor"] : ["Samarpan", "Offsite", "Day visitor"];
+  const visibleStatuses = readOnly ? ["All guests", "Registered", "Cancelled", "Needs room"] : statuses;
   const checked = guests
     .filter((g) => g.status === "Checked in")
     .reduce((n, g) => n + g.count, 0);
@@ -58,19 +61,19 @@ export default function Guests({
     .filter((g) => g.status === "Arriving")
     .reduce((n, g) => n + g.count, 0);
   const pendingRooms = guests.filter(
-    (g) => g.stay !== "Day visitor" && !g.room && g.status !== "Departed",
+    (g) => g.stay !== "Day visitor" && !g.room && !["Departed", "Cancelled"].includes(g.status),
   );
   const filtered = useMemo(() => {
     const normalized = query.toLowerCase().trim();
     const list = guests.filter(
       (g) =>
         (!normalized ||
-          `${g.name} ${g.city} ${g.id} ${g.phone} ${g.room}`
+          `${g.name} ${g.city} ${g.registrationId || g.id} ${g.phone} ${g.room} ${g.lodging || ""}`
             .toLowerCase()
             .includes(normalized)) &&
         (filter === "All guests" ||
           (filter === "Needs room"
-            ? g.stay !== "Day visitor" && !g.room && g.status !== "Departed"
+            ? g.stay !== "Day visitor" && !g.room && !["Departed", "Cancelled"].includes(g.status)
             : g.status === filter)) &&
         (stay === "All stays" || g.stay === stay) &&
         (!arrivalDate || g.arrivalDate === arrivalDate),
@@ -90,7 +93,7 @@ export default function Guests({
     setLimit(6);
   };
   const checkIn = (g) => {
-    onUpdateGuest(g.id, { status: "Checked in" });
+    if (onUpdateGuest(g.id, { status: "Checked in" }) === false) return;
     toast(`${g.name} checked in. Jai Swaminarayan!`);
   };
   const exportGuests = () => {
@@ -106,10 +109,11 @@ export default function Guests({
         "Status",
         "Stay",
         "Room",
+        "Custom room code",
         "Diet",
       ],
       ...filtered.map((g) => [
-        g.id,
+        g.registrationId || g.id,
         g.name,
         g.city,
         g.phone,
@@ -118,13 +122,16 @@ export default function Guests({
         g.arrivalTime,
         g.status,
         g.stay,
-        g.room,
+        g.roomNo || g.room,
+        g.roomCode || "",
         g.diet,
       ]),
     ]);
     toast(`${filtered.length} guest groups exported.`);
   };
   const counts = {
+    Registered: guests.filter((g) => g.status === "Registered").length,
+    Cancelled: guests.filter((g) => g.status === "Cancelled").length,
     "All guests": guests.length,
     Arriving: guests.filter((g) => g.status === "Arriving").length,
     "Checked in": guests.filter((g) => g.status === "Checked in").length,
@@ -150,7 +157,7 @@ export default function Guests({
             <Download size={17} />
             <span>Export</span>
           </button>
-          <button className="button primary add-guest" onClick={onAdd}>
+          <button className="button primary add-guest" disabled={readOnly} onClick={onAdd}>
             <Plus size={18} /> Add guest
           </button>
         </div>
@@ -161,23 +168,23 @@ export default function Guests({
             label: "Total guests",
             value: total,
             icon: Users,
-            foot: `Across ${guests.length} registered groups`,
+            foot: readOnly ? `Across ${guests.length} attendee rows` : `Across ${guests.length} registered groups`,
             tone: "amber",
             tiny: "REGISTERED",
           },
           {
-            label: "Checked in",
-            value: checked,
+            label: readOnly ? "Registered" : "Checked in",
+            value: readOnly ? counts.Registered : checked,
             icon: UserRoundCheck,
-            foot: "Welcomed to the mandir",
+            foot: readOnly ? "Check-in is not recorded in this sheet" : "Welcomed to the mandir",
             tone: "green",
-            tiny: `${Math.round((checked / Math.max(total, 1)) * 100)}% ARRIVED`,
+            tiny: readOnly ? "SOURCE" : `${Math.round((checked / Math.max(total, 1)) * 100)}% ARRIVED`,
           },
           {
-            label: "Arriving",
-            value: arriving,
+            label: readOnly ? "Lodging assigned" : "Arriving",
+            value: readOnly ? guests.filter((g) => g.room).length : arriving,
             icon: Clock3,
-            foot: "A warm welcome awaits",
+            foot: readOnly ? "Room assignments from AD–AF" : "A warm welcome awaits",
             tone: "blue",
             tiny: "EXPECTED",
           },
@@ -185,7 +192,7 @@ export default function Guests({
             label: "Needs a room",
             value: pendingRooms.reduce((n, g) => n + g.count, 0),
             icon: BedDouble,
-            foot: `${pendingRooms.length} groups awaiting allocation`,
+            foot: `${pendingRooms.length} ${readOnly ? "attendees" : "groups"} awaiting allocation`,
             tone: "rose",
             tiny: "TO COORDINATE",
           },
@@ -213,7 +220,7 @@ export default function Guests({
           <div>
             <strong>Let’s make every stay feel like home.</strong>
             <span>
-              {pendingRooms.length} arriving groups are waiting for room
+              {pendingRooms.length} {readOnly ? "attendees" : "arriving groups"} are waiting for room
               assignments.
             </span>
           </div>
@@ -240,7 +247,7 @@ export default function Guests({
             role="group"
             aria-label="Filter by guest status"
           >
-            {statuses.map((status) => (
+            {visibleStatuses.map((status) => (
               <button
                 key={status}
                 className={filter === status ? "active" : ""}
@@ -284,9 +291,7 @@ export default function Guests({
                 }}
               >
                 <option>All stays</option>
-                <option>Samarpan</option>
-                <option>Offsite</option>
-                <option>Day visitor</option>
+                {stayOptions.map((option) => <option key={option}>{option}</option>)}
               </select>
               <ChevronDown size={15} />
             </div>
@@ -351,16 +356,16 @@ export default function Guests({
                         }
                       >
                         {g.room
-                          ? g.stay === "Offsite"
+                          ? g.lodging || (g.stay === "Offsite"
                             ? "Fairfield Inn"
-                            : "Samarpan Sadan"
+                            : "Samarpan Sadan")
                           : g.stay === "Day visitor"
                             ? "Day visitor"
                             : "Room pending"}
                       </strong>
                       <span>
                         {g.room
-                          ? `Room ${g.room}`
+                          ? `Room ${g.roomNo || g.room}${g.roomCode ? ` · ${g.roomCode}` : ""}`
                           : g.stay === "Day visitor"
                             ? "No overnight stay"
                             : "Awaiting assignment"}
@@ -445,14 +450,14 @@ export default function Guests({
                 >
                   <BedDouble size={14} />
                   {g.room
-                    ? `${g.stay === "Offsite" ? "Fairfield Inn" : "Samarpan"} · ${g.room}`
+                    ? `${g.lodging || (g.stay === "Offsite" ? "Fairfield Inn" : "Samarpan")} · ${g.roomNo || g.room}${g.roomCode ? ` · ${g.roomCode}` : ""}`
                     : g.stay === "Day visitor"
                       ? "Day visitor"
                       : "Room assignment pending"}
                 </span>
               </div>
               <div className="mobile-guest-bottom">
-                <span className="guest-id">{g.id}</span>
+                <span className="guest-id">{g.registrationId || g.id}</span>
                 <button
                   className="mobile-details"
                   onClick={() => {
@@ -605,9 +610,7 @@ export default function Guests({
               Accommodation
               <select value={stay} onChange={(e) => setStay(e.target.value)}>
                 <option>All stays</option>
-                <option>Samarpan</option>
-                <option>Offsite</option>
-                <option>Day visitor</option>
+                {stayOptions.map((option) => <option key={option}>{option}</option>)}
               </select>
             </label>
             <label className="field">
@@ -639,7 +642,7 @@ export default function Guests({
       {selected && (
         <Sheet
           title={edit ? "Edit guest details" : "A thoughtful welcome"}
-          subtitle={edit ? selected.name : `Guest details · ${selected.id}`}
+          subtitle={edit ? selected.name : `Guest details · ${selected.registrationId || selected.id}`}
           onClose={() => {
             setSelectedId(null);
             setEdit(false);
@@ -694,7 +697,7 @@ export default function Guests({
                     Accommodation
                     <strong>
                       {selected.stay}
-                      {selected.room ? ` · Room ${selected.room}` : ""}
+                      {selected.room ? ` · Room ${selected.roomNo || selected.room}${selected.roomCode ? ` · ${selected.roomCode}` : ""}` : ""}
                     </strong>
                     {!selected.room && selected.stay !== "Day visitor" && (
                       <button
@@ -765,6 +768,7 @@ export default function Guests({
               <div className="form-footer">
                 <button
                   className="button secondary"
+                  disabled={readOnly}
                   onClick={() => setEdit(true)}
                 >
                   <Pencil size={16} />
@@ -782,7 +786,7 @@ export default function Guests({
                   <button
                     className="button secondary"
                     onClick={() => {
-                      onUpdateGuest(selected.id, { status: "Departed" });
+                      if (onUpdateGuest(selected.id, { status: "Departed" }) === false) return;
                       toast(`${selected.name} checked out. Safe travels!`);
                     }}
                   >
@@ -790,7 +794,7 @@ export default function Guests({
                     Check out
                   </button>
                 ) : (
-                  <span className="badge gray">Stay completed</span>
+                  <span className="badge gray">{readOnly ? "Source fields are read-only" : "Stay completed"}</span>
                 )}
               </div>
             </>

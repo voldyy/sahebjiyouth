@@ -1,0 +1,17 @@
+.sheet-connection { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 20px; background: #eef5f0; border-bottom: 1px solid #d8e5dc; }
+.sheet-connection > div { flex: 1 1 220px; min-width: 0; }
+.sheet-connection p, .sheet-data-note { color: #586674; font-size: 13px; line-height: 1.6; }
+.sheet-connection-error { width: 100%; color: #9f3030 !important; }
+.sheet-summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.sheet-filter-bar { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; }
+.sheet-filter-bar .search-field { flex: 1 1 220px; }
+.sheet-filter-bar .field { flex: 0 1 180px; }
+.sheet-attendee-list { display: grid; gap: 12px; }
+.sheet-attendee { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; padding: 20px; }
+.sheet-attendee > div { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.sheet-attendee h3 { font-size: 16px; }
+.sheet-attendee p { color: #667585; font-size: 12px; line-height: 1.6; }
+.sheet-room-details { display: grid; gap: 6px; font-size: 13px; }
+.settings-section .field { margin-top: 16px; }
+.settings-section .button { margin-top: 12px; }
+@media (max-width: 640px) { .sheet-summary-grid { grid-template-columns: 1fr; } .sheet-connection { padding: 12px 16px; gap: 8px; } .sheet-attendee { padding: 16px; gap: 12px; } }
