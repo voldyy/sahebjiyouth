@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background text-on-background" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mandir Seva Hospitality - Master Guest Roster &amp; Operations Overview</title>
+<!-- Google Fonts: Inter & Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms and Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-highest": "#d3e4fe",
+            "secondary": "#545f73",
+            "on-surface-variant": "#564338",
+            "on-primary-fixed": "#331200",
+            "error-container": "#ffdad6",
+            "inverse-primary": "#ffb68e",
+            "on-secondary-fixed": "#111c2d",
+            "primary-fixed": "#ffdbca",
+            "on-tertiary": "#ffffff",
+            "tertiary-fixed": "#85f8c4",
+            "primary": "#903f00",
+            "primary-container": "#b45309",
+            "on-surface": "#0b1c30",
+            "surface-variant": "#d3e4fe",
+            "on-tertiary-fixed-variant": "#005137",
+            "on-error": "#ffffff",
+            "surface-container-low": "#eff4ff",
+            "outline-variant": "#ddc1b3",
+            "on-secondary": "#ffffff",
+            "on-primary-container": "#fff1eb",
+            "secondary-fixed-dim": "#bcc7de",
+            "on-background": "#0b1c30",
+            "inverse-on-surface": "#eaf1ff",
+            "tertiary": "#006444",
+            "tertiary-fixed-dim": "#68dba9",
+            "on-primary-fixed-variant": "#763300",
+            "surface-container-lowest": "#ffffff",
+            "on-error-container": "#93000a",
+            "surface-bright": "#f8f9ff",
+            "on-secondary-container": "#586377",
+            "tertiary-container": "#007f58",
+            "on-secondary-fixed-variant": "#3c475a",
+            "primary-fixed-dim": "#ffb68e",
+            "surface-dim": "#cbdbf5",
+            "surface-tint": "#9b4500",
+            "on-tertiary-fixed": "#002114",
+            "on-tertiary-container": "#ccffe3",
+            "secondary-fixed": "#d8e3fb",
+            "on-primary": "#ffffff",
+            "surface": "#f8f9ff",
+            "error": "#ba1a1a",
+            "background": "#f8f9ff",
+            "secondary-container": "#d5e0f8",
+            "inverse-surface": "#213145",
+            "surface-container-high": "#dce9ff",
+            "surface-container": "#e5eeff",
+            "outline": "#897267"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "1rem",
+            "gutter-md": "1.5rem",
+            "space-xl": "2rem",
+            "margin-lg": "2rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "gutter-lg": "1.5rem",
+            "margin-md": "1.5rem",
+            "margin": "1rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "label-sm": ["Inter"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "body-lg": ["Inter"],
+            "label-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "data-tabular": ["Inter"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "label-lg": ["Inter"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-sm": ["15px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "data-tabular": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+            "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="h-full flex flex-col font-body-md text-on-surface bg-surface overflow-x-hidden">
+<!-- ========================================================================= -->
+<!-- TOP APP BAR (Executed strictly via Shared Components JSON & Style Anchor)  -->
+<!-- ========================================================================= -->
+<header class="docked full-width top-0 z-50 bg-surface-container-lowest dark:bg-surface shadow-sm dark:shadow-none w-full px-6 py-2 flex items-center justify-between border-b border-outline-variant dark:border-outline">
+<!-- Brand Anchor & Search (on left) -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center font-headline-md shadow-sm">
+<span class="material-symbols-outlined text-[20px]" data-icon="temple_hindu">temple_hindu</span>
+</div>
+<div>
+<span class="text-headline-md font-headline-md text-primary dark:text-inverse-primary tracking-tight leading-tight block">
+            Mandir Seva Hospitality
+          </span>
+<span class="text-label-sm font-label-sm text-secondary block">
+            Central Hospitality Operations Cell
+          </span>
+</div>
+</div>
+<!-- Quick Search inside Header (JSON search_bar: 'on_left') -->
+<div class="hidden lg:flex items-center relative w-72">
+<span class="material-symbols-outlined absolute left-3 text-secondary text-[18px]" data-icon="search">search</span>
+<input class="w-full pl-9 pr-3 py-1.5 bg-surface-bright border border-secondary-fixed text-on-surface rounded-lg text-body-sm font-body-sm focus:border-primary-container focus:ring-1 focus:ring-primary-container placeholder:text-secondary outline-none transition-all" placeholder="Search Aksharmukto, PNR, Room..." type="text"/>
+</div>
+</div>
+<!-- Center Navigation Links (Exact Match: Overview is Active) -->
+<nav class="hidden md:flex items-center gap-8 pt-2">
+<!-- 1. Overview (ACTIVE) -->
+<a class="border-b-2 border-primary-container text-primary-container dark:text-inverse-primary font-bold pb-3 text-label-md font-label-md flex items-center gap-1.5" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="dashboard">dashboard</span>
+        Overview
+      </a>
+<!-- 2. Transport Logistics (INACTIVE) -->
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-inverse-on-surface pb-3 transition-colors text-label-md font-label-md flex items-center gap-1.5 hover:bg-surface-container-low dark:hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="local_shipping">local_shipping</span>
+        Transport Logistics
+      </a>
+<!-- 3. Accommodation (INACTIVE) -->
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-inverse-on-surface pb-3 transition-colors text-label-md font-label-md flex items-center gap-1.5 hover:bg-surface-container-low dark:hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="hotel">hotel</span>
+        Accommodation
+      </a>
+<!-- 4. Mahaprasad Kitchen (INACTIVE) -->
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-inverse-on-surface pb-3 transition-colors text-label-md font-label-md flex items-center gap-1.5 hover:bg-surface-container-low dark:hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="restaurant">restaurant</span>
+        Mahaprasad Kitchen
+      </a>
+</nav>
+<!-- Trailing Actions (JSON trailing_secondary_action, trailing_primary_action, trailing_icon_actions) -->
+<div class="flex items-center gap-3">
+<!-- Secondary Action Pill / Event Tag -->
+<div class="hidden xl:flex items-center gap-1.5 px-3 py-1 bg-surface-container rounded-full border border-secondary-fixed">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span class="text-label-sm font-label-sm text-primary font-semibold">Shri Akshar-Purushottam Mahotsav 2025</span>
+</div>
+<!-- Sync Live Status Badge -->
+<div class="flex items-center gap-1.5 px-2.5 py-1 bg-tertiary/10 text-tertiary border border-tertiary/20 rounded-full text-label-sm font-label-sm" title="Google Sheets API Connected">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+<span class="font-medium hidden sm:inline">Synced with Google Sheet (2m ago)</span>
+</div>
+<!-- Trailing Primary Action button: Sync Now -->
+<button class="bg-primary-container hover:bg-primary text-on-primary-container px-3 py-1.5 rounded-lg text-label-sm font-label-sm flex items-center gap-1.5 shadow-sm transition-all duration-150 active:scale-95 cursor-pointer">
+<span class="material-symbols-outlined text-[16px]" data-icon="sync">sync</span>
+<span>Sync Now</span>
+</button>
+<!-- Trailing Icon Actions: notifications, help -->
+<div class="flex items-center gap-1 pl-1 border-l border-outline-variant">
+<button class="p-1.5 text-secondary hover:text-on-surface rounded-lg hover:bg-surface-container transition-colors" title="Notifications">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+</button>
+<button class="p-1.5 text-secondary hover:text-on-surface rounded-lg hover:bg-surface-container transition-colors" title="Help">
+<span class="material-symbols-outlined text-[20px]" data-icon="help">help</span>
+</button>
+</div>
+<!-- Sevak Lead Avatar (JSON profile_image_alt) -->
+<div class="flex items-center pl-2">
+<div class="w-8 h-8 rounded-full bg-surface-container border border-primary-container/40 flex items-center justify-center text-primary font-bold text-label-md" title="P.P. Sevak Lead">
+          SK
+        </div>
+</div>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- MAIN WORKSPACE: Fixed Rail SideNav + Dynamic Operational Canvas          -->
+<!-- ========================================================================= -->
+<div class="flex flex-1 overflow-hidden relative">
+<!-- COMMAND RAIL SIDENAV (Executed strictly via Shared Components JSON) -->
+<aside class="w-64 bg-surface-container-lowest dark:bg-surface border-r border-outline-variant dark:border-outline flex flex-col justify-between p-4 shrink-0 overflow-y-auto">
+<div>
+<!-- SideNav Header -->
+<div class="flex items-center gap-3 px-2 py-3 mb-3 border-b border-surface-container">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[20px]" data-icon="shield">shield</span>
+</div>
+<div>
+<h2 class="text-headline-sm font-headline-sm text-primary dark:text-inverse-primary leading-tight">Hospitality Ops</h2>
+<p class="text-label-sm font-label-sm text-secondary">Central Command</p>
+</div>
+</div>
+<!-- CTA: Quick Check-In -->
+<button class="w-full bg-primary-container hover:bg-primary text-on-primary-container text-label-md font-label-md font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all duration-150 active:scale-95 mb-5 cursor-pointer" onclick="openCheckInModal()">
+<span class="material-symbols-outlined text-[18px]" data-icon="how_to_reg">how_to_reg</span>
+<span>Quick Check-In</span>
+</button>
+<!-- Command Rail Tabs (4 tabs from JSON) -->
+<div class="space-y-1">
+<p class="text-[10px] font-bold text-secondary uppercase tracking-wider px-3 mb-2">Hospitality Sections</p>
+<!-- 1. Guest Roster (ACTIVE) -->
+<a class="bg-surface-container text-primary-container dark:text-inverse-primary font-bold rounded-lg border-l-4 border-primary-container px-3 py-2 flex items-center gap-3 text-label-sm font-label-sm transition-all duration-150" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="group">group</span>
+<span>Guest Roster</span>
+<span class="ml-auto bg-primary-container/15 text-primary text-[10px] font-bold px-1.5 py-0.5 rounded">1,420</span>
+</a>
+<!-- 2. Transport Dispatch (INACTIVE) -->
+<a class="text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container px-3 py-2 flex items-center gap-3 text-label-sm font-label-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="local_shipping">local_shipping</span>
+<span>Transport Dispatch</span>
+<span class="ml-auto text-secondary text-[11px]">118 Req</span>
+</a>
+<!-- 3. Room Matrix (INACTIVE) -->
+<a class="text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container px-3 py-2 flex items-center gap-3 text-label-sm font-label-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="hotel">hotel</span>
+<span>Room Matrix</span>
+<span class="ml-auto text-secondary text-[11px]">85%</span>
+</a>
+<!-- 4. Kitchen Headcount (INACTIVE) -->
+<a class="text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container px-3 py-2 flex items-center gap-3 text-label-sm font-label-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="restaurant">restaurant</span>
+<span>Kitchen Headcount</span>
+<span class="ml-auto text-secondary text-[11px]">940 Dnr</span>
+</a>
+</div>
+</div>
+<!-- SideNav Footer Tabs (JSON footer_tab_labels: ["Sync Logs", "Settings"]) -->
+<div class="pt-4 border-t border-surface-container space-y-1">
+<a class="text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container px-3 py-2 flex items-center gap-3 text-label-sm font-label-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="cloud_done">cloud_done</span>
+<span>Sync Logs</span>
+</a>
+<a class="text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container px-3 py-2 flex items-center gap-3 text-label-sm font-label-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<!-- Emergency Sevak Hotline mini-card -->
+<div class="mt-3 p-2.5 rounded-lg bg-surface-container-low border border-surface-container text-on-surface">
+<div class="flex items-center gap-2 text-primary font-semibold text-label-sm font-label-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="call">call</span>
+<span>Camp Sevak Desk</span>
+</div>
+<p class="text-[11px] text-secondary mt-0.5">Ext: 4402 (24x7 Control Room)</p>
+</div>
+</div>
+</aside>
+<!-- CONTENT CANVAS -->
+<main class="flex-1 flex flex-col overflow-y-auto bg-surface p-6 space-y-6">
+<!-- ========================================================================= -->
+<!-- SECTION 1: TOP KPI METRIC BANNER (Bento Flow Architecture)                -->
+<!-- ========================================================================= -->
+<section>
+<div class="flex items-center justify-between mb-3">
+<div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">Aksharmukto Arrival &amp; Roster Command</h1>
+<p class="text-body-sm font-body-sm text-secondary">Real-time status across Airport Dispatches, Samarpan Sadan, and Prasadam Seva.</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="bg-surface-container-lowest border border-secondary-fixed hover:bg-surface-container text-on-surface px-3 py-1.5 rounded-lg text-label-sm font-label-sm flex items-center gap-1.5 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="download">download</span>
+<span>Export CSV</span>
+</button>
+<button class="bg-surface-container-lowest border border-secondary-fixed hover:bg-surface-container text-on-surface px-3 py-1.5 rounded-lg text-label-sm font-label-sm flex items-center gap-1.5 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="print">print</span>
+<span>Print Run-Sheets</span>
+</button>
+</div>
+</div>
+<!-- 6 Responsive Metric KPI Cards -->
+<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3.5">
+<!-- KPI 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-3.5 shadow-sm">
+<div class="flex items-center justify-between text-secondary mb-1">
+<span class="text-label-sm font-label-sm">Total Aksharmukto</span>
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="groups">groups</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-on-surface font-bold">1,420</div>
+<div class="text-[11px] text-tertiary flex items-center gap-0.5 mt-1 font-medium">
+<span class="material-symbols-outlined text-[13px]" data-icon="trending_up">trending_up</span>
+              100% Registered
+            </div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-3.5 shadow-sm">
+<div class="flex items-center justify-between text-secondary mb-1">
+<span class="text-label-sm font-label-sm">Arrived / Checked-In</span>
+<span class="material-symbols-outlined text-[18px] text-tertiary" data-icon="verified">verified</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-on-surface font-bold">684</div>
+<div class="text-[11px] text-tertiary flex items-center gap-0.5 mt-1 font-medium">
+<span class="material-symbols-outlined text-[13px]" data-icon="check_circle">check_circle</span>
+              48.2% on campus
+            </div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-3.5 shadow-sm">
+<div class="flex items-center justify-between text-secondary mb-1">
+<span class="text-label-sm font-label-sm">Pending Transport</span>
+<span class="material-symbols-outlined text-[18px] text-primary-container" data-icon="airport_shuttle">airport_shuttle</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-primary-container font-bold">118</div>
+<div class="text-[11px] text-secondary flex items-center gap-0.5 mt-1">
+<span>24 shuttles in route</span>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-3.5 shadow-sm">
+<div class="flex items-center justify-between text-secondary mb-1">
+<span class="text-label-sm font-label-sm">Samarpan Beds</span>
+<span class="material-symbols-outlined text-[18px] text-secondary" data-icon="single_bed">single_bed</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-on-surface font-bold">340<span class="text-body-sm font-body-sm text-secondary font-normal">/400</span></div>
+<div class="text-[11px] text-primary-container flex items-center gap-0.5 mt-1 font-medium">
+<span>85% occupied (60 free)</span>
+</div>
+</div>
+<!-- KPI 5 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-3.5 shadow-sm">
+<div class="flex items-center justify-between text-secondary mb-1">
+<span class="text-label-sm font-label-sm">Hotel Rooms</span>
+<span class="material-symbols-outlined text-[18px] text-secondary" data-icon="apartment">apartment</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-on-surface font-bold">85<span class="text-body-sm font-body-sm text-secondary font-normal">/100</span></div>
+<div class="text-[11px] text-secondary flex items-center gap-0.5 mt-1">
+<span>15 rooms buffer</span>
+</div>
+</div>
+<!-- KPI 6 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-3.5 shadow-sm">
+<div class="flex items-center justify-between text-secondary mb-1">
+<span class="text-label-sm font-label-sm">Dinner Headcount</span>
+<span class="material-symbols-outlined text-[18px] text-tertiary" data-icon="soup_kitchen">soup_kitchen</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-on-surface font-bold">940</div>
+<div class="text-[11px] text-tertiary flex items-center gap-0.5 mt-1 font-medium">
+<span>Kitchen prep verified</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 2: ADVANCED FILTER BAR                                            -->
+<!-- ========================================================================= -->
+<section class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-3.5 shadow-sm">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 items-center">
+<!-- Filter 1: Name / ID Search -->
+<div class="relative">
+<label class="text-[10px] font-bold text-secondary uppercase block mb-1">Search Aksharmukto</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-2.5 top-2 text-secondary text-[16px]" data-icon="search">search</span>
+<input class="w-full pl-8 pr-2 py-1.5 text-body-sm font-body-sm rounded-lg border border-secondary-fixed bg-surface-bright focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none" placeholder="Name or Reg #" type="text"/>
+</div>
+</div>
+<!-- Filter 2: Mandir / Center / City -->
+<div>
+<label class="text-[10px] font-bold text-secondary uppercase block mb-1">Mandir / Center</label>
+<select class="w-full py-1.5 px-2.5 text-body-sm font-body-sm rounded-lg border border-secondary-fixed bg-surface-bright focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none">
+<option value="">All Mandirs / Cities</option>
+<option value="Robbinsville">Robbinsville</option>
+<option value="Edison">Edison</option>
+<option value="Toronto">Toronto</option>
+<option value="London">London (Neasden)</option>
+<option value="Chicago">Chicago</option>
+<option value="Ahmedabad">Ahmedabad</option>
+</select>
+</div>
+<!-- Filter 3: Arrival Date -->
+<div>
+<label class="text-[10px] font-bold text-secondary uppercase block mb-1">Arrival Date</label>
+<select class="w-full py-1.5 px-2.5 text-body-sm font-body-sm rounded-lg border border-secondary-fixed bg-surface-bright focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none">
+<option value="today">Today, Oct 18 (Peak)</option>
+<option value="tomorrow">Tomorrow, Oct 19</option>
+<option value="all">Full Mahotsav Duration</option>
+</select>
+</div>
+<!-- Filter 4: Mode of Travel -->
+<div>
+<label class="text-[10px] font-bold text-secondary uppercase block mb-1">Travel Mode</label>
+<select class="w-full py-1.5 px-2.5 text-body-sm font-body-sm rounded-lg border border-secondary-fixed bg-surface-bright focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none">
+<option value="">All Modes</option>
+<option value="Flight">Commercial Flight (EWR/JFK)</option>
+<option value="Bus">Charter / Greyhound Bus</option>
+<option value="Car">Personal Car / Self-Drive</option>
+</select>
+</div>
+<!-- Filter 5: Accommodation Type -->
+<div>
+<label class="text-[10px] font-bold text-secondary uppercase block mb-1">Accommodation</label>
+<select class="w-full py-1.5 px-2.5 text-body-sm font-body-sm rounded-lg border border-secondary-fixed bg-surface-bright focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none">
+<option value="">All Accommodations</option>
+<option value="Samarpan">Samarpan Sadan (On-campus)</option>
+<option value="Offsite">Fairfield / Offsite Hotel</option>
+<option value="Local">Local Resident / Host</option>
+</select>
+</div>
+<!-- Filter 6: Dietary & Action Buttons -->
+<div>
+<label class="text-[10px] font-bold text-secondary uppercase block mb-1">Dietary Special</label>
+<div class="flex items-center gap-2">
+<select class="w-full py-1.5 px-2 text-body-sm font-body-sm rounded-lg border border-secondary-fixed bg-surface-bright focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none">
+<option value="">Any Diet</option>
+<option value="jain">Swaminarayan Jain</option>
+<option value="elderly">Mild / Elderly</option>
+<option value="diabetic">Diabetic Friendly</option>
+</select>
+<button class="p-1.5 rounded-lg border border-secondary-fixed hover:bg-surface-container text-secondary transition-colors shrink-0" title="Reset Filters">
+<span class="material-symbols-outlined text-[18px]" data-icon="filter_alt_off">filter_alt_off</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 3: COMPREHENSIVE OPERATIONAL DATA TABLE                           -->
+<!-- ========================================================================= -->
+<section class="bg-surface-container-lowest border border-outline-variant/50 rounded-xl shadow-sm overflow-hidden flex flex-col flex-1">
+<!-- Table Toolbar & Quick Tab Count -->
+<div class="px-4 py-3 border-b border-surface-container flex flex-wrap items-center justify-between gap-3">
+<div class="flex items-center gap-6">
+<span class="text-label-md font-label-md font-bold text-on-surface">Active Roster Entries (8 of 1,420 displayed)</span>
+<div class="flex items-center gap-2 text-label-sm font-label-sm text-secondary">
+<span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-tertiary"></span> Ready / Arrived</span>
+<span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary-container"></span> In Transit</span>
+<span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-secondary"></span> Self-Drive</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-label-sm text-secondary">Auto-refresh: 30s</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="autorenew">autorenew</span>
+</div>
+</div>
+<!-- Master Table Component -->
+<div class="overflow-x-auto flex-1">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant/60 text-secondary text-label-sm font-label-sm uppercase tracking-wider">
+<th class="py-2.5 px-4 font-semibold">Aksharmukto Name &amp; Center</th>
+<th class="py-2.5 px-3 font-semibold">Contact</th>
+<th class="py-2.5 px-2.5 font-semibold text-center">Group</th>
+<th class="py-2.5 px-3 font-semibold">Travel Mode &amp; Ref</th>
+<th class="py-2.5 px-3 font-semibold">Mandir ETA</th>
+<th class="py-2.5 px-3 font-semibold">Transport Status</th>
+<th class="py-2.5 px-3 font-semibold">Accommodation</th>
+<th class="py-2.5 px-3 font-semibold">Mahaprasad</th>
+<th class="py-2.5 px-4 font-semibold text-right">Quick Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container text-body-sm font-body-sm">
+<!-- ROW 1 -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openDrawer('Girishbhai &amp; Taraben Patel', 'Robbinsville, NJ', '+1 (609) 555-0192', 'UA 1422 (EWR Terminal C)', '13:45 EST', 'Driver Assigned (Sevak Harikrishna)', 'Samarpan Block B - Rm 204 Bed 2', '3 Luggage Bags, Wheelchair needed at Mandir Gate 2', 'Elderly - Diabetic Diet, Ground floor bed prefer.')">
+<td class="py-2.5 px-4">
+<div class="font-bold text-on-surface flex items-center gap-1.5">
+                    Girishbhai &amp; Taraben Patel
+                    <span class="text-[10px] bg-primary/10 text-primary font-bold px-1.5 rounded">VIP</span>
+</div>
+<div class="text-[12px] text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="location_on">location_on</span>
+                    Robbinsville, NJ
+                  </div>
+</td>
+<td class="py-2.5 px-3 text-data-tabular font-data-tabular text-on-surface">+1 (609) 555-0192</td>
+<td class="py-2.5 px-2.5 text-center">
+<span class="inline-block px-2 py-0.5 rounded bg-surface-container font-semibold text-[12px]">2</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="font-medium text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-secondary" data-icon="flight">flight</span>
+                    UA 1422 @ EWR
+                  </div>
+<div class="text-[11px] text-secondary">Gate C112 • Landed</div>
+</td>
+<td class="py-2.5 px-3 text-data-tabular font-data-tabular font-medium text-on-surface">13:45 EST</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-amber-50 text-amber-800 border border-amber-200">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                    Driver Assigned
+                  </span>
+</td>
+<td class="py-2.5 px-3">
+<div class="font-medium text-on-surface">Samarpan Block B</div>
+<div class="text-[11px] text-secondary">Rm 204 • Bed 1 &amp; 2</div>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-1.5 text-[11px]">
+<span class="inline-flex items-center text-tertiary" title="Breakfast Served"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> B</span>
+<span class="inline-flex items-center text-tertiary" title="Lunch Verified"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> L</span>
+<span class="inline-flex items-center text-tertiary" title="Dinner Packaged"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> D</span>
+</div>
+</td>
+<td class="py-2.5 px-4 text-right">
+<div class="inline-flex items-center gap-1" onclick="event.stopPropagation()">
+<button class="px-2 py-1 text-label-sm font-label-sm bg-primary-container text-on-primary-container rounded hover:bg-primary transition-colors">Check In</button>
+<button class="p-1 text-secondary hover:text-on-surface rounded hover:bg-surface-container" title="Edit Roster"><span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span></button>
+</div>
+</td>
+</tr>
+<!-- ROW 2 -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openDrawer('Mukeshbhai Shah &amp; Family', 'Edison, NJ', '+1 (732) 555-8831', 'Personal Car (Honda Odyssey)', '11:15 EST (Arrived)', 'Self-Drive (Parked Lot C)', 'Samarpan Block A - Rm 102 Bed 1-4', '4 Suitcases, 2 Prasadam boxes', 'Strict Swaminarayan Jain, no garlic/onion.')">
+<td class="py-2.5 px-4">
+<div class="font-bold text-on-surface">Mukeshbhai Shah &amp; Family</div>
+<div class="text-[12px] text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="location_on">location_on</span>
+                    Edison, NJ
+                  </div>
+</td>
+<td class="py-2.5 px-3 text-data-tabular font-data-tabular text-on-surface">+1 (732) 555-8831</td>
+<td class="py-2.5 px-2.5 text-center">
+<span class="inline-block px-2 py-0.5 rounded bg-surface-container font-semibold text-[12px]">4</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="font-medium text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-secondary" data-icon="directions_car">directions_car</span>
+                    Personal Car
+                  </div>
+<div class="text-[11px] text-secondary">Honda Odyssey (NJ: K92-TYU)</div>
+</td>
+<td class="py-2.5 px-3 text-data-tabular font-data-tabular font-medium text-tertiary">Arrived 11:15</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-emerald-50 text-emerald-800 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                    Checked In
+                  </span>
+</td>
+<td class="py-2.5 px-3">
+<div class="font-medium text-on-surface">Samarpan Block A</div>
+<div class="text-[11px] text-secondary">Rm 102 • Beds 1–4</div>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-1.5 text-[11px]">
+<span class="inline-flex items-center text-tertiary"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> B</span>
+<span class="inline-flex items-center text-tertiary"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> L</span>
+<span class="inline-flex items-center text-tertiary"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> D</span>
+</div>
+</td>
+<td class="py-2.5 px-4 text-right">
+<div class="inline-flex items-center gap-1" onclick="event.stopPropagation()">
+<span class="px-2 py-1 text-label-sm font-label-sm text-tertiary font-semibold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]" data-icon="done_all">done_all</span> Complete
+                    </span>
+<button class="p-1 text-secondary hover:text-on-surface rounded hover:bg-surface-container"><span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span></button>
+</div>
+</td>
+</tr>
+<!-- ROW 3 -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openDrawer('Jatinbhai &amp; Dharmishtaben Vora', 'Toronto, Canada', '+1 (416) 555-4920', 'Air Canada AC 712 @ EWR', '14:20 EST', 'Picked Up (Shuttle #4)', 'Fairfield Inn - Rm 312', '2 Large check-in bags', 'Hypertension medication in hand carry.')">
+<td class="py-2.5 px-4">
+<div class="font-bold text-on-surface">Jatinbhai &amp; Dharmishtaben Vora</div>
+<div class="text-[12px] text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="location_on">location_on</span>
+                    Toronto, Canada
+                  </div>
+</td>
+<td class="py-2.5 px-3 text-data-tabular font-data-tabular text-on-surface">+1 (416) 555-4920</td>
+<td class="py-2.5 px-2.5 text-center">
+<span class="inline-block px-2 py-0.5 rounded bg-surface-container font-semibold text-[12px]">2</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="font-medium text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-secondary" data-icon="flight">flight</span>
+                    AC 712 @ EWR
+                  </div>
+<div class="text-[11px] text-secondary">Terminal B • En route Mandir</div>
+</td>
+<td class="py-2.5 px-3 text-data-tabular font-data-tabular font-medium text-on-surface">14:20 EST</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-blue-50 text-blue-800 border border-blue-200">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                    Picked Up
+                  </span>
+</td>
+<td class="py-2.5 px-3">
+<div class="font-medium text-on-surface">Fairfield Inn</div>
+<div class="text-[11px] text-secondary">Rm 312 (Offsite Voucher)</div>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-1.5 text-[11px]">
+<span class="inline-flex items-center text-secondary"><span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> B</span>
+<span class="inline-flex items-center text-tertiary"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> L</span>
+<span class="inline-flex items-center text-tertiary"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> D</span>
+</div>
+</td>
+<td class="py-2.5 px-4 text-right">
+<div class="inline-flex items-center gap-1" onclick="event.stopPropagation()">
+<button class="px-2 py-1 text-label-sm font-label-sm bg-surface-container text-on-surface rounded hover:bg-surface-variant transition-colors">Reassign</button>
+<button class="p-1 text-secondary hover:text-on-surface rounded hover:bg-surface-container"><span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span></button>
+</div>
+</td>
+</tr>
+<!-- ROW 4 -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openDrawer('Dr. Hiteshbhai &amp; Bhavnabhai Dave', 'London (Neasden), UK', '+44 20 7946 0912', 'BA 189 @ EWR', '15:10 EST', 'Driver Assigned (Sevak Nilkanth)', 'Samarpan Block C - Rm 105 Bed 1-2', '4 Luggage, CPAP Machine', 'General Swaminarayan Mahaprasad')">
+<td class="py-2.5 px-4">
+<div class="font-bold text-on-surface flex items-center gap-1.5">
+                    Dr. Hiteshbhai &amp; Bhavnabhai Dave
+                    <span class="text-[10px] bg-tertiary/10 text-tertiary font-bold px-1.5 rounded">Sant Seva</span>
+</div>
+<div class="text-[12px] text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="location_on">location_on</span>
+                    London (Neasden), UK
+                  </div>
+</td>
+<td class="py-2.5 px-3 text-data-tabular font-data-tabular text-on-surface">+44 20 7946 0912</td>
+<td class="py-2.5 px-2.5 text-center">
+<span class="inline-block px-2 py-0.5 rounded bg-surface-container font-semibold text-[12px]">2</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="font-medium text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-secondary" data-icon="flight">flight</span>
+                    BA 189 @ EWR
+                  </div>
+<div class="text-[11px] text-secondary">Terminal B • In Customs</div>
+</td>
+<td class="py-2.5 px-3 text-data-tabular font-data-tabular font-medium text-on-surface">15:10 EST</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-amber-50 text-amber-800 border border-amber-200">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                    Driver Assigned
+                  </span>
+</td>
+<td class="py-2.5 px-3">
+<div class="font-medium text-on-surface">Samarpan Block C</div>
+<div class="text-[11px] text-secondary">Rm 105 • Beds 1 &amp; 2</div>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-1.5 text-[11px]">
+<span class="inline-flex items-center text-secondary"><span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> B</span>
+<span class="inline-flex items-center text-tertiary"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> L</span>
+<span class="inline-flex items-center text-tertiary"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> D</span>
+</div>
+</td>
+<td class="py-2.5 px-4 text-right">
+<div class="inline-flex items-center gap-1" onclick="event.stopPropagation()">
+<button class="px-2 py-1 text-label-sm font-label-sm bg-primary-container text-on-primary-container rounded hover:bg-primary transition-colors">Check In</button>
+<button class="p-1 text-secondary hover:text-on-surface rounded hover:bg-surface-container"><span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span></button>
+</div>
+</td>
+</tr>
+<!-- ROW 5 -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openDrawer('Chicago Yuvak Mandal (8 Sevaks)', 'Chicago, IL', '+1 (630) 555-2144', 'Charter Coach Bus 402', '16:00 EST', 'In Transit (NJ Turnpike Exit 8)', 'Samarpan Youth Dormitory D3', '16 Duffels, Sound Equipment', 'Youth late dinner allocation needed')">
+<td class="py-2.5 px-4">
+<div class="font-bold text-on-surface">Chicago Yuvak Mandal (8 Sevaks)</div>
+<div class="text-[12px] text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="location_on">location_on</span>
+                    Chicago, IL
+                  </div>
+</td>
+<td class="py-2.5 px-3 text-data-tabular font-data-tabular text-on-surface">+1 (630) 555-2144</td>
+<td class="py-2.5 px-2.5 text-center">
+<span class="inline-block px-2 py-0.5 rounded bg-surface-container font-semibold text-[12px]">8</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="font-medium text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-secondary" data-icon="directions_bus">directions_bus</span>
+                    Charter Bus 402
+                  </div>
+<div class="text-[11px] text-secondary">NJ Turnpike • Exit 8</div>
+</td>
+<td class="py-2.5 px-3 text-data-tabular font-data-tabular font-medium text-on-surface">16:00 EST</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-purple-50 text-purple-800 border border-purple-200">
+<span class="w-1.5 h-1.5 rounded-full bg-purple-600"></span>
+                    Charter In-Transit
+                  </span>
+</td>
+<td class="py-2.5 px-3">
+<div class="font-medium text-on-surface">Youth Dorm D3</div>
+<div class="text-[11px] text-secondary">Beds 01 through 08</div>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-1.5 text-[11px]">
+<span class="inline-flex items-center text-secondary"><span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> B</span>
+<span class="inline-flex items-center text-secondary"><span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> L</span>
+<span class="inline-flex items-center text-tertiary"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> D</span>
+</div>
+</td>
+<td class="py-2.5 px-4 text-right">
+<div class="inline-flex items-center gap-1" onclick="event.stopPropagation()">
+<button class="px-2 py-1 text-label-sm font-label-sm bg-surface-container text-on-surface rounded hover:bg-surface-variant transition-colors">Group Check In</button>
+<button class="p-1 text-secondary hover:text-on-surface rounded hover:bg-surface-container"><span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span></button>
+</div>
+</td>
+</tr>
+<!-- ROW 6 -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer group" onclick="openDrawer('Pravinbhai &amp; Anitaben Joshi', 'Ahmedabad, India', '+91 98250 11200', 'AI 191 @ EWR', '17:30 EST', 'Pending Driver Assignment', 'Fairfield Inn - Rm 218', '3 Suitcases', 'No special medical alerts.')">
+<td class="py-2.5 px-4">
+<div class="font-bold text-on-surface">Pravinbhai &amp; Anitaben Joshi</div>
+<div class="text-[12px] text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]" data-icon="location_on">location_on</span>
+                    Ahmedabad, India
+                  </div>
+</td>
+<td class="py-2.5 px-3 text-data-tabular font-data-tabular text-on-surface">+91 98250 11200</td>
+<td class="py-2.5 px-2.5 text-center">
+<span class="inline-block px-2 py-0.5 rounded bg-surface-container font-semibold text-[12px]">2</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="font-medium text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-secondary" data-icon="flight">flight</span>
+                    AI 191 @ EWR
+                  </div>
+<div class="text-[11px] text-secondary">In Flight • Landing 16:15</div>
+</td>
+<td class="py-2.5 px-3 text-data-tabular font-data-tabular font-medium text-primary-container">17:30 EST</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-rose-50 text-rose-800 border border-rose-200">
+<span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
+                    Driver Pending
+                  </span>
+</td>
+<td class="py-2.5 px-3">
+<div class="font-medium text-on-surface">Fairfield Inn</div>
+<div class="text-[11px] text-secondary">Rm 218 (Offsite Voucher)</div>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-1.5 text-[11px]">
+<span class="inline-flex items-center text-secondary"><span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> B</span>
+<span class="inline-flex items-center text-secondary"><span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> L</span>
+<span class="inline-flex items-center text-tertiary"><span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span> D</span>
+</div>
+</td>
+<td class="py-2.5 px-4 text-right">
+<div class="inline-flex items-center gap-1" onclick="event.stopPropagation()">
+<button class="px-2 py-1 text-label-sm font-label-sm bg-primary-container text-on-primary-container rounded hover:bg-primary transition-colors">Assign Cab</button>
+<button class="p-1 text-secondary hover:text-on-surface rounded hover:bg-surface-container"><span class="material-symbols-outlined text-[16px]" data-icon="edit">edit</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination & Footer Status -->
+<div class="px-4 py-2.5 border-t border-surface-container bg-surface-container-lowest flex items-center justify-between text-body-sm font-body-sm text-secondary">
+<div class="flex items-center gap-2">
+<span>Showing 1 to 6 of 1,420 registered devotees</span>
+<span class="text-secondary/40">|</span>
+<span class="text-[11px] bg-tertiary/10 text-tertiary px-2 py-0.5 rounded">All Mahaprasad pass codes pre-validated</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="px-2 py-1 border border-secondary-fixed rounded text-label-sm font-label-sm hover:bg-surface-container disabled:opacity-40" disabled="">Previous</button>
+<button class="px-2.5 py-1 bg-primary-container text-on-primary-container rounded text-label-sm font-label-sm font-bold">1</button>
+<button class="px-2.5 py-1 hover:bg-surface-container rounded text-label-sm font-label-sm">2</button>
+<button class="px-2.5 py-1 hover:bg-surface-container rounded text-label-sm font-label-sm">3</button>
+<span class="px-1 text-secondary">...</span>
+<button class="px-2.5 py-1 hover:bg-surface-container rounded text-label-sm font-label-sm">142</button>
+<button class="px-2 py-1 border border-secondary-fixed rounded text-label-sm font-label-sm hover:bg-surface-container">Next</button>
+</div>
+</div>
+</section>
+</main>
+<!-- ========================================================================= -->
+<!-- SLIDE-OUT DETAIL PREVIEW DRAWER (For Selected Devotee)                     -->
+<!-- ========================================================================= -->
+<aside class="w-96 bg-surface-container-lowest border-l border-outline-variant/60 shadow-xl flex flex-col justify-between transform translate-x-full transition-transform duration-300 ease-in-out z-40 fixed top-16 right-0 bottom-0" id="guestDrawer">
+<!-- Drawer Header -->
+<div class="p-4 border-b border-surface-container flex items-center justify-between bg-surface-container-low">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="badge">badge</span>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Aksharmukto File</h3>
+</div>
+<button class="p-1 text-secondary hover:text-on-surface rounded-lg hover:bg-surface-container transition-colors" onclick="closeDrawer()">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</div>
+<!-- Drawer Body -->
+<div class="p-5 flex-1 overflow-y-auto space-y-4">
+<!-- Guest Identity Card -->
+<div class="bg-surface rounded-xl p-3.5 border border-surface-container">
+<h2 class="text-headline-md font-headline-md text-on-surface font-bold" id="drawerGuestName">Girishbhai Patel</h2>
+<p class="text-body-sm font-body-sm text-secondary flex items-center gap-1 mt-0.5" id="drawerGuestMandir">
+<span class="material-symbols-outlined text-[14px]" data-icon="temple_hindu">temple_hindu</span>
+            Robbinsville, NJ
+          </p>
+<div class="mt-2.5 flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-tertiary/10 text-tertiary font-semibold">Registered ID: #M25-0842</span>
+<span class="px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-primary/10 text-primary font-semibold">Senior Devotee</span>
+</div>
+</div>
+<!-- Contact & Emergency -->
+<div class="space-y-2">
+<h4 class="text-[11px] font-bold uppercase tracking-wider text-secondary">Contact &amp; Emergency Coordinates</h4>
+<div class="bg-surface-bright rounded-lg p-3 border border-secondary-fixed/50 space-y-1.5 text-body-sm font-body-sm">
+<div class="flex justify-between">
+<span class="text-secondary">Direct Mobile:</span>
+<span class="font-data-tabular font-data-tabular font-medium text-on-surface" id="drawerContact">+1 (609) 555-0192</span>
+</div>
+<div class="flex justify-between">
+<span class="text-secondary">Emergency Sevak:</span>
+<span class="text-on-surface font-medium">Bhavin Patel (+1 609-555-9011)</span>
+</div>
+<div class="flex justify-between">
+<span class="text-secondary">Relationship:</span>
+<span class="text-on-surface">Son / Local Sevak</span>
+</div>
+</div>
+</div>
+<!-- Logistics & Arrival -->
+<div class="space-y-2">
+<h4 class="text-[11px] font-bold uppercase tracking-wider text-secondary">Travel &amp; Transport Status</h4>
+<div class="bg-surface-bright rounded-lg p-3 border border-secondary-fixed/50 space-y-1.5 text-body-sm font-body-sm">
+<div class="flex justify-between">
+<span class="text-secondary">Mode / Flight:</span>
+<span class="text-on-surface font-medium" id="drawerTravel">UA 1422 @ EWR</span>
+</div>
+<div class="flex justify-between">
+<span class="text-secondary">Mandir ETA:</span>
+<span class="text-on-surface font-medium" id="drawerETA">13:45 EST</span>
+</div>
+<div class="flex justify-between">
+<span class="text-secondary">Dispatch Unit:</span>
+<span class="text-primary font-medium" id="drawerTransport">Driver Assigned (Sevak Nilkanth)</span>
+</div>
+</div>
+</div>
+<!-- Room Allocation -->
+<div class="space-y-2">
+<h4 class="text-[11px] font-bold uppercase tracking-wider text-secondary">Assigned Accommodation</h4>
+<div class="bg-surface-bright rounded-lg p-3 border border-secondary-fixed/50 space-y-1.5 text-body-sm font-body-sm">
+<div class="flex justify-between">
+<span class="text-secondary">Block / Location:</span>
+<span class="text-on-surface font-medium" id="drawerRoom">Samarpan Block B - Rm 204</span>
+</div>
+<div class="flex justify-between">
+<span class="text-secondary">Bed Type / Linen:</span>
+<span class="text-on-surface font-medium">2 Twin Beds • Linen Pre-set</span>
+</div>
+<div class="flex justify-between">
+<span class="text-secondary">Keycard Status:</span>
+<span class="text-tertiary font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="key">key</span> Ready at Welcome Desk
+              </span>
+</div>
+</div>
+</div>
+<!-- Baggage & Medical Notes -->
+<div class="space-y-2">
+<h4 class="text-[11px] font-bold uppercase tracking-wider text-secondary">Baggage &amp; Medical Observances</h4>
+<div class="bg-amber-50/60 rounded-lg p-3 border border-amber-200/60 space-y-2">
+<div>
+<span class="text-[11px] font-semibold text-amber-900 block">Baggage Count &amp; Tagging:</span>
+<p class="text-body-sm font-body-sm text-amber-950 mt-0.5" id="drawerBaggage">3 Luggage Bags, Wheelchair needed at Gate 2</p>
+</div>
+<div class="pt-1.5 border-t border-amber-200/50">
+<span class="text-[11px] font-semibold text-amber-900 block">Medical / Diet Notes:</span>
+<p class="text-body-sm font-body-sm text-amber-950 mt-0.5" id="drawerMedical">Elderly - Diabetic Diet, Ground floor bed prefer.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Drawer Actions Footer -->
+<div class="p-4 border-t border-surface-container bg-surface-container-low flex items-center gap-2">
+<button class="flex-1 bg-primary-container hover:bg-primary text-on-primary-container py-2 px-3 rounded-lg text-label-md font-label-md font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95">
+<span class="material-symbols-outlined text-[16px]" data-icon="check">check</span>
+<span>Confirm Room Check-in</span>
+</button>
+<button class="p-2 border border-secondary-fixed rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container transition-colors" title="Print Key Receipt">
+<span class="material-symbols-outlined text-[18px]" data-icon="receipt">receipt</span>
+</button>
+</div>
+</aside>
+</div>
+<!-- ========================================================================= -->
+<!-- MODAL: QUICK CHECK-IN POPUP                                                -->
+<!-- ========================================================================= -->
+<div class="fixed inset-0 bg-on-surface/40 backdrop-blur-[2px] z-50 flex items-center justify-center hidden" id="checkInModal">
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-xl shadow-2xl w-full max-w-lg p-6 space-y-4">
+<div class="flex items-center justify-between pb-3 border-b border-surface-container">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]" data-icon="how_to_reg">how_to_reg</span>
+</div>
+<div>
+<h3 class="text-headline-md font-headline-md text-on-surface font-bold">Fast Devotee Check-In</h3>
+<p class="text-label-sm font-label-sm text-secondary">Mahotsav Gate 2 Arrival Reception</p>
+</div>
+</div>
+<button class="text-secondary hover:text-on-surface p-1 rounded-lg" onclick="closeCheckInModal()">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</div>
+<div class="space-y-3">
+<div>
+<label class="text-label-sm font-label-sm font-semibold text-on-surface block mb-1">Scan Badge QR or Enter Registration #</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-secondary text-[18px]" data-icon="qr_code_scanner">qr_code_scanner</span>
+<input autofocus="" class="w-full pl-9 pr-3 py-2 text-body-md font-body-md rounded-lg border border-secondary-fixed bg-surface-bright focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none" placeholder="e.g. M25-0842 or Phone" type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="text-label-sm font-label-sm font-semibold text-on-surface block mb-1">Linen / Welcome Kit Issued</label>
+<select class="w-full py-2 px-2.5 text-body-sm font-body-sm rounded-lg border border-secondary-fixed bg-surface-bright">
+<option>Yes - Handed 2 Kits</option>
+<option>Pending - Room pre-placed</option>
+</select>
+</div>
+<div>
+<label class="text-label-sm font-label-sm font-semibold text-on-surface block mb-1">Keycard Handover</label>
+<select class="w-full py-2 px-2.5 text-body-sm font-body-sm rounded-lg border border-secondary-fixed bg-surface-bright">
+<option>Issued 2 RFID Cards</option>
+<option>Accompanied by Sevak</option>
+</select>
+</div>
+</div>
+<div class="p-3 bg-surface-container rounded-lg text-body-sm font-body-sm text-on-surface">
+<div class="flex items-center gap-1.5 text-primary font-semibold mb-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="info">info</span>
+<span>Mahaprasad Lunch Hall Access Active</span>
+</div>
+<p class="text-secondary text-[12px]">All registered devotees in this party have meal passes active on their festival lanyards.</p>
+</div>
+</div>
+<div class="flex items-center justify-end gap-3 pt-3 border-t border-surface-container">
+<button class="px-4 py-2 border border-secondary-fixed text-on-surface rounded-lg text-label-md font-label-md hover:bg-surface-container transition-colors" onclick="closeCheckInModal()">
+          Cancel
+        </button>
+<button class="px-4 py-2 bg-primary-container hover:bg-primary text-on-primary-container rounded-lg text-label-md font-label-md font-semibold transition-all" onclick="closeCheckInModal()">
+          Complete Check-In
+        </button>
+</div>
+</div>
+</div>
+<!-- Micro-interactions JavaScript for Drawer & Modal State -->
+<script>
+    function openDrawer(name, mandir, contact, travel, eta, transport, room, baggage, medical) {
+      document.getElementById('drawerGuestName').innerText = name;
+      document.getElementById('drawerGuestMandir').innerHTML = `<span class="material-symbols-outlined text-[14px]">location_on</span> ${mandir}`;
+      document.getElementById('drawerContact').innerText = contact;
+      document.getElementById('drawerTravel').innerText = travel;
+      document.getElementById('drawerETA').innerText = eta;
+      document.getElementById('drawerTransport').innerText = transport;
+      document.getElementById('drawerRoom').innerText = room;
+      document.getElementById('drawerBaggage').innerText = baggage;
+      document.getElementById('drawerMedical').innerText = medical;
+
+      const drawer = document.getElementById('guestDrawer');
+      drawer.classList.remove('translate-x-full');
+      drawer.classList.add('translate-x-0');
+    }
+
+    function closeDrawer() {
+      const drawer = document.getElementById('guestDrawer');
+      drawer.classList.remove('translate-x-0');
+      drawer.classList.add('translate-x-full');
+    }
+
+    function openCheckInModal() {
+      document.getElementById('checkInModal').classList.remove('hidden');
+    }
+
+    function closeCheckInModal() {
+      document.getElementById('checkInModal').classList.add('hidden');
+    }
+  </script>
+</body></html>

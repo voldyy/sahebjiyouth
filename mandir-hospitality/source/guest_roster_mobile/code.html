@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Mandir Hospitality - Guest Roster</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline-variant": "#ddc1b3",
+            "on-background": "#0b1c30",
+            "primary-fixed-dim": "#ffb68e",
+            "secondary-container": "#d5e0f8",
+            "surface-dim": "#cbdbf5",
+            "outline": "#897267",
+            "tertiary-fixed": "#85f8c4",
+            "tertiary": "#006444",
+            "primary": "#903f00",
+            "on-secondary-fixed-variant": "#3c475a",
+            "on-primary": "#ffffff",
+            "on-surface-variant": "#564338",
+            "on-tertiary-fixed-variant": "#005137",
+            "surface-container-high": "#dce9ff",
+            "secondary-fixed": "#d8e3fb",
+            "secondary-fixed-dim": "#bcc7de",
+            "on-primary-fixed-variant": "#763300",
+            "error-container": "#ffdad6",
+            "on-tertiary": "#ffffff",
+            "inverse-primary": "#ffb68e",
+            "surface-container-highest": "#d3e4fe",
+            "surface": "#f8f9ff",
+            "surface-variant": "#d3e4fe",
+            "primary-fixed": "#ffdbca",
+            "surface-container": "#e5eeff",
+            "on-secondary-container": "#586377",
+            "surface-container-low": "#eff4ff",
+            "background": "#f8f9ff",
+            "on-surface": "#0b1c30",
+            "surface-bright": "#f8f9ff",
+            "primary-container": "#b45309",
+            "on-tertiary-fixed": "#002114",
+            "on-primary-container": "#fff1eb",
+            "on-secondary": "#ffffff",
+            "on-tertiary-container": "#ccffe3",
+            "surface-tint": "#9b4500",
+            "on-error": "#ffffff",
+            "tertiary-fixed-dim": "#68dba9",
+            "on-primary-fixed": "#331200",
+            "inverse-surface": "#213145",
+            "inverse-on-surface": "#eaf1ff",
+            "tertiary-container": "#007f58",
+            "secondary": "#545f73",
+            "on-error-container": "#93000a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin": "1rem",
+            "space-md": "1rem",
+            "gutter-lg": "1.5rem",
+            "margin-lg": "2rem",
+            "space-lg": "1.5rem",
+            "margin-md": "1.5rem",
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "gutter-md": "1.5rem",
+            "space-xl": "2rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "data-tabular": ["Inter"],
+            "label-sm": ["Inter"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "body-sm": ["Inter"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "label-md": ["Inter"],
+            "body-md": ["Inter"],
+            "label-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-sm": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "data-tabular": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+            "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+            "headline-lg-mobile": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "headline-md": ["18px", {"lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "headline-xl-mobile": ["26px", {"lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+            "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+            "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+            "label-lg": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "headline-sm": ["15px", {"lineHeight": "22px", "fontWeight": "600"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="min-h-screen bg-background text-on-surface antialiased flex flex-col justify-between selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TOP APP BAR -->
+<header class="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant dark:border-outline shadow-sm docked full-width top-0 sticky z-40">
+<div class="flex justify-between items-center w-full px-space-md py-space-sm h-14">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary" data-icon="temple_hindu">temple_hindu</span>
+<span class="text-headline-md font-headline-md text-primary dark:text-inverse-primary tracking-tight">Mandir Hospitality</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container active:opacity-80 transition-all duration-150 relative">
+<span class="material-symbols-outlined text-[22px]" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary-container"></span>
+</button>
+</div>
+</div>
+</header>
+<!-- MAIN SCROLLABLE CONTENT CANVAS -->
+<main class="flex-1 w-full max-w-md mx-auto pb-24">
+<!-- HEADER SUMMARY STRIP (HORIZONTAL SCROLL PILLS) -->
+<section class="pt-3 pb-2 px-space-md bg-surface-container-lowest shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface font-semibold tracking-tight">Guest Roster</h1>
+<div class="flex items-center gap-1 text-label-sm font-label-sm text-secondary bg-surface-container-low px-2 py-0.5 rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+<span>Live Sync</span>
+</div>
+</div>
+<!-- STAT METRIC PILLS SCROLLER -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-space-md px-space-md">
+<!-- Arrived Stat -->
+<div class="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container border border-surface-container-high shadow-sm">
+<span class="material-symbols-outlined text-tertiary text-[18px]" data-icon="check_circle">check_circle</span>
+<div class="flex items-baseline gap-1">
+<span class="text-label-sm font-label-sm text-secondary">Arrived</span>
+<span class="text-data-tabular font-data-tabular text-on-surface font-semibold">684</span>
+</div>
+</div>
+<!-- En Route Stat -->
+<div class="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container border border-surface-container-high shadow-sm">
+<span class="material-symbols-outlined text-primary-container text-[18px]" data-icon="commute">commute</span>
+<div class="flex items-baseline gap-1">
+<span class="text-label-sm font-label-sm text-secondary">En Route</span>
+<span class="text-data-tabular font-data-tabular text-on-surface font-semibold">118</span>
+</div>
+</div>
+<!-- Samarpan Beds Stat -->
+<div class="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container border border-surface-container-high shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="hotel">hotel</span>
+<div class="flex items-baseline gap-1">
+<span class="text-label-sm font-label-sm text-secondary">Samarpan Beds</span>
+<span class="text-data-tabular font-data-tabular text-on-surface font-semibold">340<span class="text-secondary font-normal">/400</span></span>
+</div>
+</div>
+</div>
+</section>
+<!-- SEARCH & QUICK FILTER PILLS -->
+<section class="px-space-md pt-4 pb-2 space-y-3">
+<!-- Search Bar -->
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-secondary text-[20px]" data-icon="search">search</span>
+<input class="w-full h-10 pl-10 pr-10 bg-surface-container-lowest border border-outline-variant rounded-xl text-body-md font-body-md placeholder-secondary focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" placeholder="Search devotee, PNR, room or phone..." type="text"/>
+<button class="absolute right-2.5 top-2 p-1 text-secondary hover:text-on-surface" title="Scan Pass">
+<span class="material-symbols-outlined text-[20px]" data-icon="qr_code_scanner">qr_code_scanner</span>
+</button>
+</div>
+<!-- Quick Filter Pills -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-space-md px-space-md pb-1">
+<!-- Active Filter -->
+<button class="flex-shrink-0 px-3.5 py-1.5 rounded-full bg-primary-container text-on-primary text-label-md font-label-md shadow-sm active:scale-95 transition-transform">
+          All
+        </button>
+<!-- In Transit -->
+<button class="flex-shrink-0 px-3.5 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant border border-outline-variant text-label-md font-label-md hover:bg-surface-container active:scale-95 transition-transform">
+          In Transit
+        </button>
+<!-- Checked In -->
+<button class="flex-shrink-0 px-3.5 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant border border-outline-variant text-label-md font-label-md hover:bg-surface-container active:scale-95 transition-transform">
+          Checked In
+        </button>
+<!-- Needs Room -->
+<button class="flex-shrink-0 px-3.5 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant border border-outline-variant text-label-md font-label-md hover:bg-surface-container active:scale-95 transition-transform">
+          Needs Room
+        </button>
+</div>
+</section>
+<!-- DEVOTEE ROSTER CARDS LIST -->
+<section class="px-space-md pt-2 space-y-3.5">
+<!-- CARD 1: IN TRANSIT / DRIVER ASSIGNED -->
+<article class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant shadow-sm hover:border-primary-container transition-all">
+<!-- Header Row -->
+<div class="flex items-start justify-between gap-2">
+<div class="flex-1">
+<h2 class="text-headline-sm font-headline-sm text-on-surface font-semibold tracking-tight">Girishbhai Patel</h2>
+<div class="flex items-center gap-1.5 mt-0.5 text-secondary text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-[15px]" data-icon="location_on">location_on</span>
+<span>Robbinsville, NJ</span>
+<span class="text-outline">•</span>
+<span class="text-label-sm font-label-sm bg-surface-container px-1.5 py-0.5 rounded text-secondary">Group of 3</span>
+</div>
+</div>
+<!-- Status Pill: Driver Assigned -->
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-label-sm bg-amber-50 text-amber-800 border border-amber-200">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+            Driver Assigned
+          </span>
+</div>
+<!-- Metadata Icon Badges Matrix -->
+<div class="mt-3.5 pt-3 border-t border-surface-container grid grid-cols-1 gap-2 bg-surface-container-low/40 rounded-lg p-2.5">
+<!-- Travel ETA -->
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="flight_land">flight_land</span>
+<span class="font-data-tabular font-medium text-on-surface">UA 1422</span>
+<span class="text-outline">•</span>
+<span class="text-secondary">ETA 13:45 (EWR Terminal C)</span>
+</div>
+<!-- Bed Assignment -->
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="bed">bed</span>
+<span class="font-medium text-on-surface">Samarpan B-204</span>
+<span class="text-secondary text-label-sm font-label-sm bg-surface-container-high px-1.5 rounded">Key Prepared</span>
+</div>
+<!-- Meals Badge -->
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="restaurant">restaurant</span>
+<span class="text-secondary">Mahaprasad:</span>
+<span class="text-label-sm font-label-sm font-semibold text-primary-container">B • L • D</span>
+</div>
+</div>
+<!-- Action Row -->
+<div class="mt-3.5 pt-2 flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-secondary text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="directions_car">directions_car</span>
+<span class="text-label-sm font-label-sm">Van #4 (Sev. Krunal)</span>
+</div>
+<!-- One Tap Button -->
+<button class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-all text-label-md font-label-md font-medium">
+<span class="material-symbols-outlined text-[16px]" data-icon="info">info</span>
+<span>View Details</span>
+</button>
+</div>
+</article>
+<!-- CARD 2: READY TO CHECK IN (ARRIVED) -->
+<article class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant shadow-sm hover:border-primary-container transition-all">
+<!-- Header Row -->
+<div class="flex items-start justify-between gap-2">
+<div class="flex-1">
+<h2 class="text-headline-sm font-headline-sm text-on-surface font-semibold tracking-tight">Pravinbhai &amp; Hansaben Shah</h2>
+<div class="flex items-center gap-1.5 mt-0.5 text-secondary text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-[15px]" data-icon="location_on">location_on</span>
+<span>London, UK</span>
+<span class="text-outline">•</span>
+<span class="text-label-sm font-label-sm bg-surface-container px-1.5 py-0.5 rounded text-secondary">Couple</span>
+</div>
+</div>
+<!-- Status Pill: Ready at Lobby -->
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-label-sm bg-amber-50 text-amber-800 border border-amber-200">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-ping"></span>
+            At Welcome Desk
+          </span>
+</div>
+<!-- Metadata Icon Badges Matrix -->
+<div class="mt-3.5 pt-3 border-t border-surface-container grid grid-cols-1 gap-2 bg-surface-container-low/40 rounded-lg p-2.5">
+<!-- Travel Mode -->
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="directions_bus">directions_bus</span>
+<span class="font-data-tabular font-medium text-on-surface">Campus Shuttle #2</span>
+<span class="text-outline">•</span>
+<span class="text-tertiary font-medium">Arrived 11:20</span>
+</div>
+<!-- Bed Assignment -->
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="bed">bed</span>
+<span class="font-medium text-on-surface">Samarpan A-108</span>
+<span class="text-label-sm font-label-sm text-secondary bg-surface-container px-1.5 rounded">Ground Floor</span>
+</div>
+<!-- Meals Badge -->
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="restaurant">restaurant</span>
+<span class="text-secondary">Mahaprasad:</span>
+<span class="text-label-sm font-label-sm font-semibold text-primary-container">L • D (No Garlic)</span>
+</div>
+</div>
+<!-- Action Row -->
+<div class="mt-3.5 pt-2 flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-secondary text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="verified">verified</span>
+<span class="text-label-sm font-label-sm text-tertiary font-medium">Luggage in B-Bay</span>
+</div>
+<!-- Prominent Primary Action Button -->
+<button class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-primary-container text-on-primary hover:bg-primary active:scale-95 transition-all text-label-md font-label-md font-medium shadow-sm">
+<span class="material-symbols-outlined text-[17px]" data-icon="key">key</span>
+<span>Check In</span>
+</button>
+</div>
+</article>
+<!-- CARD 3: CHECKED IN -->
+<article class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant shadow-sm hover:border-primary-container transition-all">
+<!-- Header Row -->
+<div class="flex items-start justify-between gap-2">
+<div class="flex-1">
+<h2 class="text-headline-sm font-headline-sm text-on-surface font-semibold tracking-tight">Rameshbhai Choksi</h2>
+<div class="flex items-center gap-1.5 mt-0.5 text-secondary text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-[15px]" data-icon="location_on">location_on</span>
+<span>Ahmedabad, Gujarat</span>
+<span class="text-outline">•</span>
+<span class="text-label-sm font-label-sm bg-surface-container px-1.5 py-0.5 rounded text-secondary">Individual</span>
+</div>
+</div>
+<!-- Status Pill: Checked In -->
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-label-sm bg-emerald-50 text-emerald-800 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+            Checked In
+          </span>
+</div>
+<!-- Metadata Icon Badges Matrix -->
+<div class="mt-3.5 pt-3 border-t border-surface-container grid grid-cols-1 gap-2 bg-surface-container-low/40 rounded-lg p-2.5">
+<!-- Travel ETA -->
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="train">train</span>
+<span class="font-data-tabular font-medium text-on-surface">Amtrak Metroliner</span>
+<span class="text-outline">•</span>
+<span class="text-secondary">Arrived Yesterday</span>
+</div>
+<!-- Bed Assignment -->
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="bed">bed</span>
+<span class="font-medium text-on-surface">Samarpan C-312</span>
+<span class="text-label-sm font-label-sm text-tertiary bg-emerald-50 border border-emerald-100 px-1.5 rounded">Occupied</span>
+</div>
+<!-- Meals Badge -->
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="restaurant">restaurant</span>
+<span class="text-secondary">Mahaprasad:</span>
+<span class="text-label-sm font-label-sm font-semibold text-primary-container">B • L • D</span>
+</div>
+</div>
+<!-- Action Row -->
+<div class="mt-3.5 pt-2 flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-secondary text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="badge">badge</span>
+<span class="text-label-sm font-label-sm">Yatri Pass Issued #8841</span>
+</div>
+<!-- One Tap Button -->
+<button class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-all text-label-md font-label-md font-medium">
+<span class="material-symbols-outlined text-[16px]" data-icon="folder_open">folder_open</span>
+<span>View Details</span>
+</button>
+</div>
+</article>
+<!-- CARD 4: NEEDS ROOM ALLOCATION -->
+<article class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant shadow-sm hover:border-primary-container transition-all">
+<!-- Header Row -->
+<div class="flex items-start justify-between gap-2">
+<div class="flex-1">
+<h2 class="text-headline-sm font-headline-sm text-on-surface font-semibold tracking-tight">Kiritbhai &amp; Family</h2>
+<div class="flex items-center gap-1.5 mt-0.5 text-secondary text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-[15px]" data-icon="location_on">location_on</span>
+<span>Atlanta, GA</span>
+<span class="text-outline">•</span>
+<span class="text-label-sm font-label-sm bg-surface-container px-1.5 py-0.5 rounded text-secondary">Family of 4</span>
+</div>
+</div>
+<!-- Status Pill: Needs Room -->
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-label-sm bg-rose-50 text-rose-800 border border-rose-200">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+            Needs Room
+          </span>
+</div>
+<!-- Metadata Icon Badges Matrix -->
+<div class="mt-3.5 pt-3 border-t border-surface-container grid grid-cols-1 gap-2 bg-surface-container-low/40 rounded-lg p-2.5">
+<!-- Travel ETA -->
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="flight_land">flight_land</span>
+<span class="font-data-tabular font-medium text-on-surface">DL 0892</span>
+<span class="text-outline">•</span>
+<span class="text-secondary">ETA 15:10 (JFK)</span>
+</div>
+<!-- Bed Assignment Warning -->
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-error text-[18px]" data-icon="warning">warning</span>
+<span class="font-medium text-error">Unassigned (Samarpan Full)</span>
+</div>
+<!-- Meals Badge -->
+<div class="flex items-center gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="restaurant">restaurant</span>
+<span class="text-secondary">Mahaprasad:</span>
+<span class="text-label-sm font-label-sm font-semibold text-primary-container">Dinner Only</span>
+</div>
+</div>
+<!-- Action Row -->
+<div class="mt-3.5 pt-2 flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-secondary text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="hotel_class">hotel_class</span>
+<span class="text-label-sm font-label-sm">Suggest Offsite B-Wing</span>
+</div>
+<!-- Prominent Primary Action Button -->
+<button class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary-container text-on-primary hover:bg-primary active:scale-95 transition-all text-label-md font-label-md font-medium shadow-sm">
+<span class="material-symbols-outlined text-[17px]" data-icon="add_home">add_home</span>
+<span>Assign Room</span>
+</button>
+</div>
+</article>
+</section>
+</main>
+<!-- BOTTOM NAVIGATION BAR (Anchored Shared Component) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant dark:border-outline shadow-md">
+<!-- Tab 1: Roster (ACTIVE TAB) -->
+<a class="flex flex-col items-center justify-center text-primary-container dark:text-primary-fixed bg-surface-container dark:bg-on-secondary-fixed-variant rounded-full px-space-md py-1 active:scale-95 transition-transform duration-100" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="badge" style="font-variation-settings: 'FILL' 1;">badge</span>
+<span class="text-label-sm font-label-sm font-medium mt-0.5">Roster</span>
+</a>
+<!-- Tab 2: Transport (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-secondary-fixed-dim px-space-sm py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="local_shipping">local_shipping</span>
+<span class="text-label-sm font-label-sm mt-0.5">Transport</span>
+</a>
+<!-- Tab 3: Rooms (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-secondary-fixed-dim px-space-sm py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="bed">bed</span>
+<span class="text-label-sm font-label-sm mt-0.5">Rooms</span>
+</a>
+<!-- Tab 4: Kitchen (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-secondary-fixed-dim px-space-sm py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="restaurant">restaurant</span>
+<span class="text-label-sm font-label-sm mt-0.5">Kitchen</span>
+</a>
+</nav>
+</body></html>

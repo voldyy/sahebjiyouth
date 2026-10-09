@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mandir Hospitality - Accommodation &amp; Bed Matrix</title>
+<!-- Google Fonts: Inter & Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with forms & container-queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration Injection -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline-variant": "#ddc1b3",
+            "on-background": "#0b1c30",
+            "primary-fixed-dim": "#ffb68e",
+            "secondary-container": "#d5e0f8",
+            "surface-dim": "#cbdbf5",
+            "outline": "#897267",
+            "tertiary-fixed": "#85f8c4",
+            "tertiary": "#006444",
+            "primary": "#903f00",
+            "on-secondary-fixed-variant": "#3c475a",
+            "on-primary": "#ffffff",
+            "on-surface-variant": "#564338",
+            "on-tertiary-fixed-variant": "#005137",
+            "surface-container-high": "#dce9ff",
+            "secondary-fixed": "#d8e3fb",
+            "secondary-fixed-dim": "#bcc7de",
+            "on-primary-fixed-variant": "#763300",
+            "error-container": "#ffdad6",
+            "on-tertiary": "#ffffff",
+            "inverse-primary": "#ffb68e",
+            "surface-container-highest": "#d3e4fe",
+            "surface": "#f8f9ff",
+            "surface-variant": "#d3e4fe",
+            "primary-fixed": "#ffdbca",
+            "surface-container": "#e5eeff",
+            "on-secondary-container": "#586377",
+            "surface-container-low": "#eff4ff",
+            "background": "#f8f9ff",
+            "on-surface": "#0b1c30",
+            "surface-bright": "#f8f9ff",
+            "primary-container": "#b45309",
+            "on-tertiary-fixed": "#002114",
+            "surface-container-lowest": "#ffffff",
+            "error": "#ba1a1a",
+            "on-secondary-fixed": "#111c2d",
+            "on-primary-container": "#fff1eb",
+            "on-secondary": "#ffffff",
+            "on-tertiary-container": "#ccffe3",
+            "surface-tint": "#9b4500",
+            "on-error": "#ffffff",
+            "tertiary-fixed-dim": "#68dba9",
+            "on-primary-fixed": "#331200",
+            "inverse-surface": "#213145",
+            "inverse-on-surface": "#eaf1ff",
+            "tertiary-container": "#007f58",
+            "secondary": "#545f73",
+            "on-error-container": "#93000a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin": "1rem",
+            "space-md": "1rem",
+            "gutter-lg": "1.5rem",
+            "margin-lg": "2rem",
+            "space-lg": "1.5rem",
+            "margin-md": "1.5rem",
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "gutter-md": "1.5rem",
+            "space-xl": "2rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "data-tabular": ["Inter"],
+            "label-sm": ["Inter"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "body-sm": ["Inter"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "label-md": ["Inter"],
+            "body-md": ["Inter"],
+            "label-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-sm": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "data-tabular": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-sm": ["15px", { "lineHeight": "22px", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col font-body-md text-body-md selection:bg-primary selection:text-on-primary pb-28">
+<!-- SHARED COMPONENT: TopAppBar (docked, full-width, sticky) -->
+<header class="bg-surface-container-lowest text-primary docked full-width top-0 sticky z-40 shadow-sm flex justify-between items-center w-full px-space-md py-space-sm h-14">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="temple_hindu">temple_hindu</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-primary">Mandir Hospitality</h1>
+</div>
+<div class="flex items-center gap-1">
+<button aria-label="Notifications" class="p-2 rounded-xl text-primary hover:bg-surface-container active:opacity-80 transition-all duration-150 relative" type="button">
+<span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-error"></span>
+</button>
+</div>
+</header>
+<!-- MAIN MOBILE CANVAS: Fast inspection accommodation matrix -->
+<main class="w-full max-w-md mx-auto px-margin pt-space-md space-y-space-md">
+<!-- Screen Sub-header / Context -->
+<div class="flex items-center justify-between">
+<div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Bed Matrix</h2>
+<p class="font-body-sm text-body-sm text-secondary">Samarpan Sadan • Ground Floor</p>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-container-lowest border border-outline-variant/50 rounded-xl px-2.5 py-1 shadow-sm">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="check_circle">check_circle</span>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold">Live Synced</span>
+</div>
+</div>
+<!-- Top Summary Status Pills (Dual metric overview) -->
+<section aria-label="Campus Bed Summary" class="grid grid-cols-2 gap-2.5">
+<!-- Summary 1: Beds Open -->
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-xl p-3 shadow-sm flex items-center justify-between">
+<div class="space-y-0.5">
+<p class="font-label-sm text-label-sm text-secondary tracking-wide">Samarpan Onsite</p>
+<p class="font-headline-sm text-headline-sm text-primary-container font-bold">42 Beds Open</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-base" data-icon="bed">bed</span>
+</div>
+</div>
+<!-- Summary 2: Linen Queue -->
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-xl p-3 shadow-sm flex items-center justify-between">
+<div class="space-y-0.5">
+<p class="font-label-sm text-label-sm text-secondary tracking-wide">Linen Queue</p>
+<p class="font-headline-sm text-headline-sm text-error font-bold">14 Beds</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-error-container/60 flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-base" data-icon="laundry">laundry</span>
+</div>
+</div>
+</section>
+<!-- Segmented Wing Filter Pills -->
+<section aria-label="Wing &amp; Task Filters" class="overflow-x-auto scrollbar-none -mx-margin px-margin flex items-center gap-2 py-1">
+<button class="whitespace-nowrap px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all duration-150 bg-primary-container text-on-primary font-semibold shadow-sm active:scale-95" type="button">
+        Sant &amp; Seniors
+      </button>
+<button class="whitespace-nowrap px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all duration-150 bg-surface-container-lowest border border-outline-variant/70 text-on-surface-variant hover:bg-surface-container active:scale-95" type="button">
+        Families
+      </button>
+<button class="whitespace-nowrap px-3.5 py-1.5 rounded-full font-label-md text-label-md transition-all duration-150 bg-surface-container-lowest border border-outline-variant/70 text-on-surface-variant hover:bg-surface-container flex items-center gap-1.5 active:scale-95" type="button">
+<span>Linen Tasks</span>
+<span class="bg-error/10 text-error font-bold px-1.5 py-0.2 rounded-full font-label-sm text-label-sm">14</span>
+</button>
+</section>
+<!-- Search & Fast Filter Bar -->
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-secondary">
+<span class="material-symbols-outlined text-base" data-icon="search">search</span>
+</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/80 rounded-xl pl-9 pr-10 py-2 font-body-sm text-body-sm text-on-surface placeholder:text-secondary/70 focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all shadow-sm" placeholder="Search devotee, room or linen tag..." type="text"/>
+<span class="absolute inset-y-0 right-0 pr-3 flex items-center text-secondary">
+<span class="material-symbols-outlined text-sm" data-icon="tune">tune</span>
+</span>
+</div>
+<!-- Vertical Room Cards Feed -->
+<div class="space-y-space-md pt-1">
+<!-- ROOM CARD 1: Room 101 (The requested exemplar) -->
+<article class="bg-surface-container-lowest rounded-xl border border-outline-variant/80 shadow-sm p-4 space-y-3.5">
+<!-- Room Header -->
+<div class="flex items-center justify-between border-b border-surface-container pb-2.5">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-headline-sm text-headline-sm font-bold text-on-surface">
+              101
+            </div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Room 101</h3>
+<p class="font-label-sm text-label-sm text-secondary">Wing A • Ground Floor (4 Bunk)</p>
+</div>
+</div>
+<!-- Room Status Badge -->
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-tertiary-container/15 text-tertiary border border-tertiary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+            1 Bed Available
+          </span>
+</div>
+<!-- 4 Visual Bed Slots Chips Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+<!-- Bed 1: Ramesh Patel (Occupied) -->
+<div class="bg-surface-container-low border border-outline-variant/40 rounded-lg p-2.5 flex items-center justify-between">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded-full bg-surface-container-high flex items-center justify-center text-secondary flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold">B1</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-md text-label-md text-on-surface truncate">Ramesh Patel</p>
+<span class="inline-flex items-center font-label-sm text-label-sm text-secondary">
+                  Occupied • Dep. 18:00
+                </span>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-sm flex-shrink-0" data-icon="check">check</span>
+</div>
+<!-- Bed 2: Suresh Patel (Occupied) -->
+<div class="bg-surface-container-low border border-outline-variant/40 rounded-lg p-2.5 flex items-center justify-between">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded-full bg-surface-container-high flex items-center justify-center text-secondary flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold">B2</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-md text-label-md text-on-surface truncate">Suresh Patel</p>
+<span class="inline-flex items-center font-label-sm text-label-sm text-secondary">
+                  Occupied • 3 Nights
+                </span>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-sm flex-shrink-0" data-icon="check">check</span>
+</div>
+<!-- Bed 3: Empty Bed with one-tap '+ Assign' button -->
+<div class="bg-surface-bright border border-dashed border-primary-container/60 rounded-lg p-2.5 flex items-center justify-between">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center text-primary flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold">B3</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-primary-container font-semibold">Empty Bed</p>
+<p class="font-label-sm text-label-sm text-secondary">Clean &amp; Ready</p>
+</div>
+</div>
+<button class="inline-flex items-center gap-1 bg-primary-container text-on-primary px-2.5 py-1 rounded-md font-label-sm text-label-sm font-semibold active:opacity-80 transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-xs" data-icon="add">add</span>
+              Assign
+            </button>
+</div>
+<!-- Bed 4: Linen Refresh Needed with warning badge -->
+<div class="bg-error-container/20 border border-error/30 rounded-lg p-2.5 flex items-center justify-between">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded-full bg-error-container flex items-center justify-center text-error flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold">B4</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-md text-label-md text-error font-semibold truncate">Linen Refresh</p>
+<span class="inline-flex items-center font-label-sm text-label-sm text-secondary">
+                  Vacated at 10:15
+                </span>
+</div>
+</div>
+<span class="inline-flex items-center gap-0.5 bg-error/10 text-error font-label-sm text-label-sm font-bold px-1.5 py-0.5 rounded-full border border-error/20 flex-shrink-0">
+<span class="material-symbols-outlined text-xs" data-icon="warning">warning</span>
+              Queue
+            </span>
+</div>
+</div>
+</article>
+<!-- ROOM CARD 2: Room 102 (Complementary Operational Context) -->
+<article class="bg-surface-container-lowest rounded-xl border border-outline-variant/80 shadow-sm p-4 space-y-3.5">
+<!-- Room Header -->
+<div class="flex items-center justify-between border-b border-surface-container pb-2.5">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-headline-sm text-headline-sm font-bold text-on-surface">
+              102
+            </div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Room 102</h3>
+<p class="font-label-sm text-label-sm text-secondary">Wing A • Ground Floor (2 Single)</p>
+</div>
+</div>
+<!-- Room Status Badge -->
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm font-semibold bg-secondary-container/60 text-secondary border border-outline-variant/50">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Full (2/2)
+          </span>
+</div>
+<!-- 2 Visual Bed Slots Chips Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+<!-- Bed 1 -->
+<div class="bg-surface-container-low border border-outline-variant/40 rounded-lg p-2.5 flex items-center justify-between">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded-full bg-surface-container-high flex items-center justify-center text-secondary flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold">B1</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-md text-label-md text-on-surface truncate">Ghanshyamdas Swami</p>
+<span class="font-label-sm text-label-sm text-secondary">Occupied • Sant Seva</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-sm flex-shrink-0" data-icon="verified">verified</span>
+</div>
+<!-- Bed 2 -->
+<div class="bg-surface-container-low border border-outline-variant/40 rounded-lg p-2.5 flex items-center justify-between">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded-full bg-surface-container-high flex items-center justify-center text-secondary flex-shrink-0">
+<span class="font-label-sm text-label-sm font-bold">B2</span>
+</div>
+<div class="min-w-0">
+<p class="font-label-md text-label-md text-on-surface truncate">Brahmavihari Swami</p>
+<span class="font-label-sm text-label-sm text-secondary">Occupied • Sant Seva</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-sm flex-shrink-0" data-icon="verified">verified</span>
+</div>
+</div>
+</article>
+</div>
+<!-- Quick Linen Checklist floating/sticky task banner -->
+<div class="pt-2">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-3.5 shadow-md flex items-center justify-between gap-3 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-container"></div>
+<div class="flex items-center gap-3 pl-1 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-xl" data-icon="dry_cleaning">dry_cleaning</span>
+</div>
+<div class="min-w-0">
+<h4 class="font-label-lg text-label-lg text-on-surface font-bold leading-snug">Quick Linen Checklist</h4>
+<p class="font-label-sm text-label-sm text-secondary truncate">14 pending turnovers across campus</p>
+</div>
+</div>
+<button class="flex-shrink-0 inline-flex items-center gap-1 bg-surface-container text-primary font-label-md text-label-md font-semibold px-3 py-2 rounded-lg hover:bg-primary-container hover:text-on-primary transition-colors duration-150 active:scale-95" type="button">
+<span>Open Tasks</span>
+<span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</main>
+<!-- SHARED COMPONENT: BottomNavBar (docked, full-width, bottom-0 fixed)
+       Destination items: Roster, Transport, Rooms, Kitchen
+       ACTIVE TAB: 'Rooms' (Matches Accommodation & Bed Matrix screen)
+  -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface-container-lowest text-primary shadow-md">
+<!-- Tab 1: Roster (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-1 hover:text-primary transition-colors duration-150 active:scale-95" type="button">
+<span class="material-symbols-outlined text-xl" data-icon="badge">badge</span>
+<span class="font-label-sm text-label-sm mt-0.5">Roster</span>
+</button>
+<!-- Tab 2: Transport (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-1 hover:text-primary transition-colors duration-150 active:scale-95" type="button">
+<span class="material-symbols-outlined text-xl" data-icon="local_shipping">local_shipping</span>
+<span class="font-label-sm text-label-sm mt-0.5">Transport</span>
+</button>
+<!-- Tab 3: Rooms (ACTIVE - Matches page intent) -->
+<button aria-current="page" class="flex flex-col items-center justify-center text-primary-container bg-surface-container rounded-full px-space-md py-1 shadow-sm active:scale-95 transition-transform duration-100" type="button">
+<span class="material-symbols-outlined text-xl" data-icon="bed" style="font-variation-settings: 'FILL' 1;">bed</span>
+<span class="font-label-sm text-label-sm font-bold mt-0.5">Rooms</span>
+</button>
+<!-- Tab 4: Kitchen (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-1 hover:text-primary transition-colors duration-150 active:scale-95" type="button">
+<span class="material-symbols-outlined text-xl" data-icon="restaurant">restaurant</span>
+<span class="font-label-sm text-label-sm mt-0.5">Kitchen</span>
+</button>
+</nav>
+</body></html>

@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Transport Dispatch &amp; Fleet Logistics - Mandir Seva Hospitality</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-highest": "#d3e4fe",
+            "secondary": "#545f73",
+            "on-surface-variant": "#564338",
+            "on-primary-fixed": "#331200",
+            "error-container": "#ffdad6",
+            "inverse-primary": "#ffb68e",
+            "on-secondary-fixed": "#111c2d",
+            "primary-fixed": "#ffdbca",
+            "on-tertiary": "#ffffff",
+            "tertiary-fixed": "#85f8c4",
+            "primary": "#903f00",
+            "primary-container": "#b45309",
+            "on-surface": "#0b1c30",
+            "surface-variant": "#d3e4fe",
+            "on-tertiary-fixed-variant": "#005137",
+            "on-error": "#ffffff",
+            "surface-container-low": "#eff4ff",
+            "outline-variant": "#ddc1b3",
+            "on-secondary": "#ffffff",
+            "on-primary-container": "#fff1eb",
+            "secondary-fixed-dim": "#bcc7de",
+            "on-background": "#0b1c30",
+            "inverse-on-surface": "#eaf1ff",
+            "tertiary": "#006444",
+            "tertiary-fixed-dim": "#68dba9",
+            "on-primary-fixed-variant": "#763300",
+            "surface-container-lowest": "#ffffff",
+            "on-error-container": "#93000a",
+            "surface-bright": "#f8f9ff",
+            "on-secondary-container": "#586377",
+            "tertiary-container": "#007f58",
+            "on-secondary-fixed-variant": "#3c475a",
+            "primary-fixed-dim": "#ffb68e",
+            "surface-dim": "#cbdbf5",
+            "surface-tint": "#9b4500",
+            "on-tertiary-fixed": "#002114",
+            "on-tertiary-container": "#ccffe3",
+            "secondary-fixed": "#d8e3fb",
+            "on-primary": "#ffffff",
+            "surface": "#f8f9ff",
+            "error": "#ba1a1a",
+            "background": "#f8f9ff",
+            "secondary-container": "#d5e0f8",
+            "inverse-surface": "#213145",
+            "surface-container-high": "#dce9ff",
+            "surface-container": "#e5eeff",
+            "outline": "#897267"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "1rem",
+            "gutter-md": "1.5rem",
+            "space-xl": "2rem",
+            "margin-lg": "2rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "gutter-lg": "1.5rem",
+            "margin-md": "1.5rem",
+            "margin": "1rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "label-sm": ["Inter"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "body-lg": ["Inter"],
+            "label-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "data-tabular": ["Inter"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "label-lg": ["Inter"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-sm": ["15px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "data-tabular": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+            "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-on-surface antialiased h-full flex flex-col font-body-md overflow-x-hidden">
+<!-- TopNavBar (Shared Component Injected with JSON Specs) -->
+<header class="docked full-width top-0 z-50 bg-surface-container-lowest dark:bg-surface border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none w-full">
+<div class="w-full px-6 py-2 flex items-center justify-between">
+<!-- Left: Logo & Search -->
+<div class="flex items-center space-x-6">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined text-[20px]" data-icon="temple_hindu">temple_hindu</span>
+</div>
+<div>
+<span class="text-headline-md font-headline-md text-primary dark:text-inverse-primary tracking-tight block">Mandir Seva Hospitality</span>
+<span class="text-label-sm font-label-sm text-secondary uppercase tracking-wider block">Central Logistics Control</span>
+</div>
+</div>
+<!-- Global Search Bar (on_left) -->
+<div class="relative w-80 hidden lg:block">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-secondary">
+<span class="material-symbols-outlined text-[18px]" data-icon="search">search</span>
+</div>
+<input class="w-full pl-9 pr-4 py-1.5 bg-surface-bright border border-outline-variant rounded-xl text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-all" placeholder="Search devotee name, flight #, driver phone..." type="text"/>
+<kbd class="absolute right-2.5 top-2 text-[10px] text-secondary font-semibold bg-surface-container px-1.5 py-0.5 rounded border border-outline-variant">⌘K</kbd>
+</div>
+</div>
+<!-- Center: Main Navigation Links -->
+<nav class="hidden md:flex items-center space-x-8 pt-2">
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-inverse-on-surface pb-3 transition-colors text-label-md font-label-md" href="#">Overview</a>
+<a class="border-b-2 border-primary-container text-primary-container dark:text-inverse-primary font-bold pb-3 text-label-md font-label-md flex items-center gap-1.5" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="local_shipping">local_shipping</span>
+          Transport Logistics
+        </a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-inverse-on-surface pb-3 transition-colors text-label-md font-label-md" href="#">Accommodation</a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-inverse-on-surface pb-3 transition-colors text-label-md font-label-md" href="#">Mahaprasad Kitchen</a>
+</nav>
+<!-- Right: Mahotsav Badge, Sync & Profile -->
+<div class="flex items-center space-x-4">
+<!-- Mahotsav Event Pill -->
+<div class="hidden xl:flex items-center space-x-2 bg-surface-container px-3 py-1.5 rounded-full border border-outline-variant">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="text-label-sm font-label-sm text-on-surface font-semibold">Shri Akshar-Purushottam Mahotsav 2025</span>
+</div>
+<!-- Sync Button -->
+<button class="flex items-center space-x-1.5 bg-primary-container hover:bg-primary text-on-primary px-3.5 py-1.5 rounded-xl shadow-sm text-label-md font-label-md cursor-pointer active:scale-95 duration-150 transition-all">
+<span class="material-symbols-outlined text-[16px]" data-icon="sync">sync</span>
+<span>Sync Now</span>
+</button>
+<div class="h-6 w-px bg-outline-variant hidden sm:block"></div>
+<!-- Trailing Icon Actions -->
+<div class="flex items-center space-x-1 text-secondary">
+<button class="p-2 rounded-xl hover:bg-surface-container-low transition-colors relative" title="Notifications">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+<button class="p-2 rounded-xl hover:bg-surface-container-low transition-colors" title="Dispatch Manual &amp; Help">
+<span class="material-symbols-outlined text-[20px]" data-icon="help">help</span>
+</button>
+</div>
+<!-- Profile Avatar -->
+<div class="flex items-center space-x-2 pl-2">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center font-bold text-primary-container border border-outline-variant">
+            SL
+          </div>
+<div class="hidden sm:block text-left">
+<div class="text-label-sm font-label-sm font-semibold text-on-surface">Pravinbhai S.</div>
+<div class="text-[10px] text-secondary">Dispatch Lead</div>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Workspace Body with Command Rail + Data Canvas -->
+<div class="flex-1 flex overflow-hidden">
+<!-- SideNavBar (Shared Component Rail) -->
+<aside class="w-64 bg-surface-container-lowest dark:bg-surface border-r border-outline-variant dark:border-outline flex flex-col justify-between p-4 shrink-0 hidden md:flex">
+<div>
+<!-- SideNav Brand / Lead -->
+<div class="flex items-center space-x-3 mb-6 px-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[20px]" data-icon="alt_route">alt_route</span>
+</div>
+<div>
+<h2 class="text-headline-sm font-headline-sm text-primary dark:text-inverse-primary leading-tight">Hospitality Ops</h2>
+<p class="text-label-sm font-label-sm text-secondary">Central Command</p>
+</div>
+</div>
+<!-- Quick Action CTA -->
+<button class="w-full mb-6 bg-primary-container hover:bg-primary text-on-primary py-2.5 px-4 rounded-xl font-label-md text-label-md flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-98">
+<span class="material-symbols-outlined text-[18px]" data-icon="directions_car">directions_car</span>
+<span>Quick Check-In</span>
+</button>
+<!-- Main Tab Links (Active on Transport Dispatch) -->
+<nav class="space-y-1">
+<a class="text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container flex items-center space-x-3 px-3 py-2 text-label-md font-label-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="group">group</span>
+<span>Guest Roster</span>
+</a>
+<a class="bg-surface-container text-primary-container dark:text-inverse-primary font-bold rounded-lg border-l-4 border-primary-container flex items-center space-x-3 px-3 py-2 text-label-md font-label-md" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="local_shipping">local_shipping</span>
+<span>Transport Dispatch</span>
+</a>
+<a class="text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container flex items-center space-x-3 px-3 py-2 text-label-md font-label-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="hotel">hotel</span>
+<span>Room Matrix</span>
+</a>
+<a class="text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container flex items-center space-x-3 px-3 py-2 text-label-md font-label-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="restaurant">restaurant</span>
+<span>Kitchen Headcount</span>
+</a>
+</nav>
+<!-- Driver Shift Status Widget in Sidebar -->
+<div class="mt-8 p-3 bg-surface-container-low rounded-xl border border-outline-variant">
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-sm font-label-sm font-bold text-on-surface">Drivers On-Duty</span>
+<span class="px-2 py-0.5 text-[10px] rounded-full bg-emerald-100 text-tertiary font-bold">Shift 2 Active</span>
+</div>
+<div class="space-y-2 text-body-sm font-body-sm">
+<div class="flex items-center justify-between text-[12px]">
+<span class="text-secondary">EWR Airport Squad</span>
+<span class="font-semibold text-on-surface">5 Vans</span>
+</div>
+<div class="flex items-center justify-between text-[12px]">
+<span class="text-secondary">JFK International Team</span>
+<span class="font-semibold text-on-surface">3 Vans</span>
+</div>
+<div class="flex items-center justify-between text-[12px]">
+<span class="text-secondary">Local Shuttle / Metro</span>
+<span class="font-semibold text-on-surface">4 SUVs</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Rail Footer -->
+<div class="pt-4 border-t border-outline-variant space-y-1">
+<a class="text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low flex items-center space-x-3 px-3 py-2 text-label-sm font-label-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="cloud_done">cloud_done</span>
+<span>Sync Logs</span>
+</a>
+<a class="text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low flex items-center space-x-3 px-3 py-2 text-label-sm font-label-sm transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</aside>
+<!-- Content Canvas -->
+<main class="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+<!-- Operational Header & Realtime Advisory Bar -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 border-b border-outline-variant">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-primary-container/10 text-primary-container font-semibold">Mahotsav Transport Command</span>
+<span class="text-label-sm font-label-sm text-secondary">• Robbinsville / Edison Campus Hub</span>
+</div>
+<h1 class="text-headline-xl font-headline-xl text-on-surface tracking-tight">Fleet Dispatch &amp; Devotee Transit Schedule</h1>
+</div>
+<!-- Filter & Control Group -->
+<div class="flex items-center flex-wrap gap-2.5">
+<div class="flex items-center bg-surface-container-lowest border border-outline-variant rounded-xl p-1 shadow-sm">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container text-primary-container font-bold text-label-sm font-label-sm flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="flight_land">flight_land</span>
+              Arrival Pickups (14)
+            </button>
+<button class="px-3 py-1.5 rounded-lg text-secondary hover:text-on-surface font-label-sm font-label-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="flight_takeoff">flight_takeoff</span>
+              Mandir Departures (28)
+            </button>
+</div>
+<div class="h-7 w-px bg-outline-variant"></div>
+<!-- Vehicle / Terminal Filter -->
+<div class="relative">
+<select class="h-[38px] bg-surface-container-lowest border border-outline-variant rounded-xl px-3 pr-8 text-label-sm font-label-sm text-on-surface focus:outline-none focus:border-primary-container shadow-sm cursor-pointer">
+<option>All Fleet (16 Vehicles)</option>
+<option>15-Pax Vans Only (8)</option>
+<option>Minivans (Toyota Sienna) (5)</option>
+<option>Cargo / Luggage Shuttles (3)</option>
+</select>
+</div>
+<button class="h-[38px] px-3.5 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-on-surface rounded-xl text-label-sm font-label-sm font-semibold flex items-center gap-1.5 shadow-sm transition-all">
+<span class="material-symbols-outlined text-[18px]" data-icon="filter_list">filter_list</span>
+<span>Filters</span>
+</button>
+</div>
+</div>
+<!-- KPI Metrics Bento Grid -->
+<section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+<!-- KPI 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant shadow-sm hover:border-primary-container transition-all">
+<div class="flex items-center justify-between text-secondary mb-2">
+<span class="text-label-md font-label-md">Pending Airport Pickups</span>
+<div class="p-1.5 rounded-lg bg-surface-container text-primary-container">
+<span class="material-symbols-outlined text-[18px]" data-icon="flight_land">flight_land</span>
+</div>
+</div>
+<div class="text-headline-xl font-headline-xl text-on-surface font-bold tracking-tight">14</div>
+<div class="mt-2 flex items-center text-[12px] text-primary-container font-medium">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="alarm">alarm</span>
+<span>4 arriving within 45 mins</span>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant shadow-sm hover:border-primary-container transition-all">
+<div class="flex items-center justify-between text-secondary mb-2">
+<span class="text-label-md font-label-md">Departures Today</span>
+<div class="p-1.5 rounded-lg bg-surface-container text-secondary">
+<span class="material-symbols-outlined text-[18px]" data-icon="flight_takeoff">flight_takeoff</span>
+</div>
+</div>
+<div class="text-headline-xl font-headline-xl text-on-surface font-bold tracking-tight">28</div>
+<div class="mt-2 flex items-center text-[12px] text-secondary font-medium">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="check_circle">check_circle</span>
+<span>12 completed • 16 queued</span>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant shadow-sm hover:border-primary-container transition-all">
+<div class="flex items-center justify-between text-secondary mb-2">
+<span class="text-label-md font-label-md">Active Drivers On Road</span>
+<div class="p-1.5 rounded-lg bg-surface-container text-tertiary">
+<span class="material-symbols-outlined text-[18px]" data-icon="steering_wheel_norm">directions_car</span>
+</div>
+</div>
+<div class="text-headline-xl font-headline-xl text-on-surface font-bold tracking-tight">8</div>
+<div class="mt-2 flex items-center text-[12px] text-tertiary font-medium">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="radio_button_checked">radio_button_checked</span>
+<span>All GPS telemetry active</span>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant shadow-sm hover:border-primary-container transition-all">
+<div class="flex items-center justify-between text-secondary mb-2">
+<span class="text-label-md font-label-md">Fleet Utilization</span>
+<div class="p-1.5 rounded-lg bg-surface-container text-primary-container">
+<span class="material-symbols-outlined text-[18px]" data-icon="pie_chart">pie_chart</span>
+</div>
+</div>
+<div class="text-headline-xl font-headline-xl text-on-surface font-bold tracking-tight">85%</div>
+<div class="mt-2 flex items-center text-[12px] text-secondary font-medium">
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 85%"></div>
+</div>
+</div>
+</div>
+<!-- KPI 5 -->
+<div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant shadow-sm hover:border-primary-container transition-all col-span-2 md:col-span-1">
+<div class="flex items-center justify-between text-secondary mb-2">
+<span class="text-label-md font-label-md">Avg Transit Time</span>
+<div class="p-1.5 rounded-lg bg-surface-container text-secondary">
+<span class="material-symbols-outlined text-[18px]" data-icon="timelapse">timelapse</span>
+</div>
+</div>
+<div class="text-headline-xl font-headline-xl text-on-surface font-bold tracking-tight">38 <span class="text-label-lg font-normal text-secondary">mins</span></div>
+<div class="mt-2 flex items-center text-[12px] text-secondary font-medium">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="traffic">traffic</span>
+<span>NJ Turnpike / I-95 Normal</span>
+</div>
+</div>
+</section>
+<!-- Smart Transit & Departure Engine Banner Card -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-5 shadow-sm">
+<div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+<div class="space-y-1 max-w-xl">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">DISPATCH ALGORITHM</span>
+<h3 class="text-headline-md font-headline-md text-on-surface">Devotee Flight Departure Calculation Formula</h3>
+</div>
+<p class="text-body-sm font-body-sm text-secondary">
+              Strict campus logistics policy ensures all sant &amp; haribhakt delegations arrive with no missed flights during peak mahotsav traffic windows.
+            </p>
+</div>
+<!-- Formula Pill Breakdown -->
+<div class="bg-surface-bright border border-outline-variant rounded-xl p-3 flex flex-wrap items-center gap-2 text-label-sm font-label-sm">
+<div class="px-2.5 py-1 bg-surface-container-lowest rounded-lg border border-outline-variant">
+<span class="text-secondary block text-[10px]">FLIGHT TIME</span>
+<span class="font-bold text-on-surface">17:45 Departure</span>
+</div>
+<span class="text-secondary font-bold">−</span>
+<div class="px-2.5 py-1 bg-surface-container-lowest rounded-lg border border-outline-variant">
+<span class="text-secondary block text-[10px]">DOMESTIC BUFFER</span>
+<span class="font-bold text-on-surface">60 mins (TSA)</span>
+</div>
+<span class="text-secondary font-bold">−</span>
+<div class="px-2.5 py-1 bg-surface-container-lowest rounded-lg border border-outline-variant">
+<span class="text-secondary block text-[10px]">CAMPUS TO EWR</span>
+<span class="font-bold text-on-surface">45 mins Travel</span>
+</div>
+<span class="text-secondary font-bold">−</span>
+<div class="px-2.5 py-1 bg-surface-container-lowest rounded-lg border border-outline-variant">
+<span class="text-secondary block text-[10px]">MANDIR PACKING BUFFER</span>
+<span class="font-bold text-on-surface">20 mins</span>
+</div>
+<span class="text-primary font-bold">=</span>
+<!-- Prominent Gold Output Badge -->
+<div class="px-3.5 py-1.5 bg-primary-container text-on-primary rounded-xl shadow-sm text-center">
+<span class="block text-[10px] uppercase font-bold tracking-wider text-amber-200">Recommended Leave Mandir</span>
+<span class="text-[14px] font-bold tracking-tight">15:20 Sharp</span>
+</div>
+</div>
+</div>
+<!-- Live Route & Highway Advisory Ribbon -->
+<div class="mt-4 pt-3 border-t border-outline-variant flex flex-wrap items-center justify-between text-body-sm font-body-sm gap-2">
+<div class="flex items-center gap-2 text-[12px] text-amber-900 bg-amber-50 px-3 py-1 rounded-lg border border-amber-200">
+<span class="material-symbols-outlined text-[16px] text-primary-container" data-icon="warning">warning</span>
+<span><strong>Live Route Advisory:</strong> NJ Turnpike Exit 8A widening work. Add +12 mins for JFK &amp; LGA runs between 16:00 and 19:30.</span>
+</div>
+<div class="flex items-center gap-3 text-[12px] text-secondary">
+<span>Weather: <strong>Robbinsville 72°F Clear</strong></span>
+<span>•</span>
+<span class="text-tertiary flex items-center gap-1 font-semibold">
+<span class="w-2 h-2 rounded-full bg-tertiary inline-block"></span>
+              All 16 E-ZPass Transponders Active
+            </span>
+</div>
+</div>
+</section>
+<!-- Interactive Dispatch Queues (Data Table + Actions) -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<!-- Table Toolbar -->
+<div class="p-4 border-b border-outline-variant flex flex-col md:flex-row md:items-center justify-between gap-3">
+<div class="flex items-center gap-3">
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Active Pickup Dispatch Queue</h3>
+<span class="px-2 py-0.5 rounded-full text-label-sm font-label-sm bg-surface-container text-primary-container font-bold">14 Devotee Groups</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="relative">
+<input class="h-[34px] pl-8 pr-3 text-body-sm font-body-sm bg-surface-bright border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container" placeholder="Filter by Terminal or City..." type="text"/>
+<span class="material-symbols-outlined absolute left-2.5 top-2 text-[16px] text-secondary" data-icon="search">search</span>
+</div>
+<button class="h-[34px] px-3 bg-surface-bright border border-outline-variant hover:bg-surface-container rounded-lg text-label-sm font-label-sm text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="download">download</span>
+<span>Export Roster</span>
+</button>
+<button class="h-[34px] px-3.5 bg-primary-container hover:bg-primary text-on-primary rounded-lg text-label-sm font-label-sm font-bold flex items-center gap-1.5 shadow-sm transition-all">
+<span class="material-symbols-outlined text-[16px]" data-icon="add">add</span>
+<span>Add Unscheduled Devotee</span>
+</button>
+</div>
+</div>
+<!-- High-Density Operations Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-secondary text-label-sm font-label-sm uppercase tracking-wider border-b border-outline-variant">
+<th class="py-3 px-4">Devotee / Party Name</th>
+<th class="py-3 px-3">Home Satsang Center</th>
+<th class="py-3 px-3">Flight / Carrier</th>
+<th class="py-3 px-3">Terminal &amp; Gate</th>
+<th class="py-3 px-3">Flight ETA</th>
+<th class="py-3 px-3">Mandir ETA</th>
+<th class="py-3 px-3">Assigned Vehicle</th>
+<th class="py-3 px-3">Sevak Driver</th>
+<th class="py-3 px-3">Transit Status</th>
+<th class="py-3 px-4 text-right">Dispatch Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-body-sm text-[13px]">
+<!-- Row 1: Dispatched -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-3.5 px-4 font-semibold text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary-container" data-icon="diversity_3">diversity_3</span>
+<div>
+<span>Pujya Santo Mandal (3 Santo)</span>
+<span class="block text-[11px] text-secondary font-normal">Accompanying: 4 Karyakars</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-medium text-on-surface">Ahmedabad, Guj</span>
+<span class="block text-[11px] text-secondary">Shahibaug Mandir</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-semibold text-on-surface">AI 101</span>
+<span class="block text-[11px] text-secondary">Air India Boeing 777</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container font-semibold text-[12px] text-on-surface">
+                    EWR Terminal B • Gate 62
+                  </span>
+</td>
+<td class="py-3.5 px-3 font-semibold text-on-surface">
+                  13:40 EST
+                  <span class="block text-[11px] text-tertiary">Landed on-time</span>
+</td>
+<td class="py-3.5 px-3 font-bold text-primary-container">
+                  14:35 EST
+                </td>
+<td class="py-3.5 px-3">
+<span class="font-medium text-on-surface">Ford Transit Van #4</span>
+<span class="block text-[11px] text-secondary">15-Pax High Roof (NJ-SEVA4)</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-on-surface">Harishbhai Patel</div>
+<a class="text-[11px] text-primary-container hover:underline flex items-center gap-0.5" href="tel:7325550182">
+<span class="material-symbols-outlined text-[12px]" data-icon="call">call</span>
+                    (732) 555-0182
+                  </a>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-blue-50 text-blue-800 border border-blue-200">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-600 mr-1.5 animate-pulse"></span>
+                    Dispatched
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<button class="px-2.5 py-1 text-label-sm font-label-sm font-semibold rounded-lg bg-surface-bright border border-outline-variant hover:bg-surface-container text-on-surface transition-all" onclick="openAssignmentModal('Pujya Santo Mandal', 'Ford Transit Van #4', 'Harishbhai Patel')">
+                    Reassign
+                  </button>
+</td>
+</tr>
+<!-- Row 2: En Route -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-3.5 px-4 font-semibold text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary" data-icon="person">person</span>
+<div>
+<span>Ghanshyam Patel Family (4)</span>
+<span class="block text-[11px] text-secondary font-normal">Includes 1 Elderly wheelchair</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-medium text-on-surface">London, UK</span>
+<span class="block text-[11px] text-secondary">Neasden Mandir</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-semibold text-on-surface">BA 185</span>
+<span class="block text-[11px] text-secondary">British Airways</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container font-semibold text-[12px] text-on-surface">
+                    EWR Terminal B • Baggage 4
+                  </span>
+</td>
+<td class="py-3.5 px-3 font-semibold text-on-surface">
+                  13:10 EST
+                  <span class="block text-[11px] text-secondary">Baggage collected</span>
+</td>
+<td class="py-3.5 px-3 font-bold text-primary-container">
+                  14:15 EST
+                </td>
+<td class="py-3.5 px-3">
+<span class="font-medium text-on-surface">Toyota Sienna #2</span>
+<span class="block text-[11px] text-secondary">7-Pax AWD (NJ-SEVA2)</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-on-surface">Jignesh Shah</div>
+<a class="text-[11px] text-primary-container hover:underline flex items-center gap-0.5" href="tel:7325550291">
+<span class="material-symbols-outlined text-[12px]" data-icon="call">call</span>
+                    (732) 555-0291
+                  </a>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-emerald-50 text-tertiary border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary mr-1.5 animate-ping"></span>
+                    En Route (Hwy 1)
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<button class="px-2.5 py-1 text-label-sm font-label-sm font-semibold rounded-lg bg-surface-bright border border-outline-variant hover:bg-surface-container text-on-surface transition-all">
+                    Track GPS
+                  </button>
+</td>
+</tr>
+<!-- Row 3: Unassigned Urgent -->
+<tr class="bg-amber-50/60 hover:bg-amber-50 transition-colors">
+<td class="py-3.5 px-4 font-semibold text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary" data-icon="group">group</span>
+<div>
+<span>Chirag &amp; Meera Trivedi (6)</span>
+<span class="block text-[11px] text-primary-container font-semibold">6 Check-in bags + 2 infant strollers</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-medium text-on-surface">Chicago, IL</span>
+<span class="block text-[11px] text-secondary">Bartlett Mandir</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-semibold text-on-surface">UA 2419</span>
+<span class="block text-[11px] text-secondary">United Airlines</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container font-semibold text-[12px] text-on-surface">
+                    EWR Terminal C • Gate C110
+                  </span>
+</td>
+<td class="py-3.5 px-3 font-semibold text-on-surface">
+                  14:15 EST
+                  <span class="block text-[11px] text-amber-700 font-semibold">Arriving in 35 mins</span>
+</td>
+<td class="py-3.5 px-3 font-bold text-secondary">
+                  --:-- EST
+                </td>
+<td class="py-3.5 px-3">
+<span class="text-amber-800 font-semibold italic">Unassigned</span>
+<span class="block text-[11px] text-secondary">Requires 8+ Capacity</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="text-amber-800 font-semibold italic">No Sevak Assigned</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-amber-100 text-amber-900 border border-amber-300">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-600 mr-1.5"></span>
+                    Scheduled (Needs Driver)
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<button class="px-3 py-1 text-label-sm font-label-sm font-bold rounded-lg bg-primary-container hover:bg-primary text-on-primary shadow-sm transition-all" onclick="openAssignmentModal('Chirag &amp; Meera Trivedi', 'Van #7 Recommended', 'Select Sevak Driver')">
+                    Assign Driver &amp; Vehicle
+                  </button>
+</td>
+</tr>
+<!-- Row 4: Arrived at Airport -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-3.5 px-4 font-semibold text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary" data-icon="diversity_1">diversity_1</span>
+<div>
+<span>Toronto Yuvak Delegation (8)</span>
+<span class="block text-[11px] text-secondary font-normal">Kirtan Sevak Group</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-medium text-on-surface">Toronto, Canada</span>
+<span class="block text-[11px] text-secondary">Toronto Mandir</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-semibold text-on-surface">AC 8972</span>
+<span class="block text-[11px] text-secondary">Air Canada Express</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container font-semibold text-[12px] text-on-surface">
+                    EWR Terminal A • Gate A21
+                  </span>
+</td>
+<td class="py-3.5 px-3 font-semibold text-on-surface">
+                  12:55 EST
+                  <span class="block text-[11px] text-secondary">Deboarded</span>
+</td>
+<td class="py-3.5 px-3 font-bold text-primary-container">
+                  14:05 EST
+                </td>
+<td class="py-3.5 px-3">
+<span class="font-medium text-on-surface">Ford Transit Van #1</span>
+<span class="block text-[11px] text-secondary">15-Pax (NJ-SEVA1)</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-on-surface">Bhavik Gandhi</div>
+<a class="text-[11px] text-primary-container hover:underline flex items-center gap-0.5" href="tel:7325550344">
+<span class="material-symbols-outlined text-[12px]" data-icon="call">call</span>
+                    (732) 555-0344
+                  </a>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-purple-50 text-purple-800 border border-purple-200">
+<span class="w-1.5 h-1.5 rounded-full bg-purple-600 mr-1.5"></span>
+                    Arrived at Airport (Curbside)
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<button class="px-2.5 py-1 text-label-sm font-label-sm font-semibold rounded-lg bg-surface-bright border border-outline-variant hover:bg-surface-container text-on-surface transition-all">
+                    Reassign
+                  </button>
+</td>
+</tr>
+<!-- Row 5: Mandir Gate Arrival -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-3.5 px-4 font-semibold text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary" data-icon="elderly">elderly</span>
+<div>
+<span>Rameshchandra &amp; Kokilaben Vyas</span>
+<span class="block text-[11px] text-secondary font-normal">Samarpan Sadan Room 204</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-medium text-on-surface">Houston, TX</span>
+<span class="block text-[11px] text-secondary">Stafford Mandir</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="font-mono font-semibold text-on-surface">UA 1294</span>
+<span class="block text-[11px] text-secondary">United Airlines</span>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container font-semibold text-[12px] text-on-surface">
+                    EWR Terminal C
+                  </span>
+</td>
+<td class="py-3.5 px-3 font-semibold text-on-surface">
+                  12:20 EST
+                  <span class="block text-[11px] text-secondary">Completed</span>
+</td>
+<td class="py-3.5 px-3 font-bold text-tertiary">
+                  13:28 EST
+                </td>
+<td class="py-3.5 px-3">
+<span class="font-medium text-on-surface">Honda Odyssey #3</span>
+<span class="block text-[11px] text-secondary">7-Pax (NJ-SEVA8)</span>
+</td>
+<td class="py-3.5 px-3">
+<div class="font-semibold text-on-surface">Pankajbhai Joshi</div>
+<a class="text-[11px] text-primary-container hover:underline flex items-center gap-0.5" href="tel:7325550419">
+<span class="material-symbols-outlined text-[12px]" data-icon="call">call</span>
+                    (732) 555-0419
+                  </a>
+</td>
+<td class="py-3.5 px-3">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-emerald-100 text-emerald-900 border border-emerald-300">
+<span class="material-symbols-outlined text-[13px] mr-1 text-tertiary" data-icon="check_circle">check_circle</span>
+                    Mandir Gate Arrival
+                  </span>
+</td>
+<td class="py-3.5 px-4 text-right">
+<span class="text-secondary text-[11px] font-medium">Checked-in</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination & Bulk Status Bar -->
+<div class="p-3 bg-surface-container-low border-t border-outline-variant flex flex-col sm:flex-row items-center justify-between text-body-sm font-body-sm gap-2">
+<div class="text-secondary text-[12px]">
+            Showing <strong>1 to 5</strong> of <strong>14</strong> airport pickups for today
+          </div>
+<div class="flex items-center space-x-2">
+<button class="px-2.5 py-1 bg-surface-container-lowest border border-outline-variant rounded text-secondary hover:text-on-surface text-label-sm font-label-sm disabled:opacity-50" disabled="">Previous</button>
+<button class="px-2.5 py-1 bg-primary-container text-on-primary rounded text-label-sm font-label-sm font-bold">1</button>
+<button class="px-2.5 py-1 bg-surface-container-lowest border border-outline-variant rounded text-secondary hover:text-on-surface text-label-sm font-label-sm">2</button>
+<button class="px-2.5 py-1 bg-surface-container-lowest border border-outline-variant rounded text-secondary hover:text-on-surface text-label-sm font-label-sm">3</button>
+<button class="px-2.5 py-1 bg-surface-container-lowest border border-outline-variant rounded text-secondary hover:text-on-surface text-label-sm font-label-sm">Next</button>
+</div>
+</div>
+</section>
+<!-- Fleet Readiness & Quick Airport Terminal Visual Advisory Map Widget -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Live Terminal Traffic Advisory Box -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-5 shadow-sm space-y-4">
+<div class="flex items-center justify-between">
+<h4 class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="local_airport">local_airport</span>
+              Newark Liberty (EWR) Status
+            </h4>
+<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-tertiary">Normal Ops</span>
+</div>
+<div class="space-y-3 text-body-sm font-body-sm">
+<div class="p-3 bg-surface-bright rounded-lg border border-outline-variant">
+<div class="flex items-center justify-between font-semibold text-on-surface">
+<span>Terminal A (United/Air Canada)</span>
+<span class="text-emerald-700 text-[12px]">8 min Curbside Wait</span>
+</div>
+<p class="text-[12px] text-secondary mt-1">Passenger pickup at Level 1, Passenger Pickup Zone 2.</p>
+</div>
+<div class="p-3 bg-surface-bright rounded-lg border border-outline-variant">
+<div class="flex items-center justify-between font-semibold text-on-surface">
+<span>Terminal B (International Santo Flights)</span>
+<span class="text-amber-800 text-[12px]">16 min Customs Queue</span>
+</div>
+<p class="text-[12px] text-secondary mt-1">Air India &amp; British Airways delays reported from European corridor.</p>
+</div>
+<div class="p-3 bg-surface-bright rounded-lg border border-outline-variant">
+<div class="flex items-center justify-between font-semibold text-on-surface">
+<span>Terminal C (Domestic United Hub)</span>
+<span class="text-emerald-700 text-[12px]">5 min Curbside Wait</span>
+</div>
+<p class="text-[12px] text-secondary mt-1">Door 4 curbside loading authorized for Mandir Volunteer Vans.</p>
+</div>
+</div>
+</div>
+<!-- Real-Time Campus Vehicle Status Matrix -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-5 shadow-sm space-y-4 lg:col-span-2">
+<div class="flex items-center justify-between">
+<div>
+<h4 class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="garage">garage</span>
+                Mandir Fleet Readiness &amp; Fuel / Battery Reserves
+              </h4>
+<p class="text-body-sm font-body-sm text-secondary">All vehicles stationed at Samarpan Complex Depot Bay A-D</p>
+</div>
+<button class="text-primary-container hover:underline text-label-sm font-label-sm font-semibold flex items-center gap-1">
+<span>View Full Fleet (16)</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+<!-- Van 1 -->
+<div class="p-3 rounded-xl border border-outline-variant bg-surface-bright flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="font-bold text-[13px] text-on-surface">Van #1 (Ford 15-Pax)</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] bg-blue-100 text-blue-800 font-bold">On Route</span>
+</div>
+<div class="text-[12px] text-secondary space-y-1 mb-2">
+<div>Driver: <strong>Bhavik G.</strong></div>
+<div>Destination: <strong>EWR Term A</strong></div>
+</div>
+<div class="flex items-center justify-between text-[11px] pt-2 border-t border-outline-variant text-secondary">
+<span>Fuel: <strong>88%</strong></span>
+<span class="text-tertiary">Cleaned &amp; Restocked</span>
+</div>
+</div>
+<!-- Van 2 -->
+<div class="p-3 rounded-xl border border-outline-variant bg-surface-bright flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="font-bold text-[13px] text-on-surface">Sienna #2 (AWD 7-Pax)</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold">Returning</span>
+</div>
+<div class="text-[12px] text-secondary space-y-1 mb-2">
+<div>Driver: <strong>Jignesh S.</strong></div>
+<div>Passenger: <strong>Ghanshyam P. (4)</strong></div>
+</div>
+<div class="flex items-center justify-between text-[11px] pt-2 border-t border-outline-variant text-secondary">
+<span>Fuel: <strong>65%</strong></span>
+<span class="text-tertiary">E-ZPass Active</span>
+</div>
+</div>
+<!-- Van 4 -->
+<div class="p-3 rounded-xl border border-outline-variant bg-surface-bright flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="font-bold text-[13px] text-on-surface">Van #4 (High Roof 15)</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] bg-blue-100 text-blue-800 font-bold">At EWR</span>
+</div>
+<div class="text-[12px] text-secondary space-y-1 mb-2">
+<div>Driver: <strong>Harishbhai P.</strong></div>
+<div>Awaiting: <strong>Santo Mandal</strong></div>
+</div>
+<div class="flex items-center justify-between text-[11px] pt-2 border-t border-outline-variant text-secondary">
+<span>Fuel: <strong>95%</strong></span>
+<span class="text-primary-container font-semibold">Prasad Boxes Loaded</span>
+</div>
+</div>
+<!-- Van 5 (Standby) -->
+<div class="p-3 rounded-xl border border-emerald-300 bg-emerald-50/40 flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="font-bold text-[13px] text-on-surface">Van #5 (Chevy Express)</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-200 text-emerald-900 font-bold">Ready / Standby</span>
+</div>
+<div class="text-[12px] text-secondary space-y-1 mb-2">
+<div>Bay: <strong>Depot Stand C</strong></div>
+<div>Inspection: <strong>Completed 11:00</strong></div>
+</div>
+<div class="flex items-center justify-between text-[11px] pt-2 border-t border-emerald-200 text-secondary">
+<span>Fuel: <strong>100% Full</strong></span>
+<span class="text-emerald-800 font-bold">Immediate Dispatch</span>
+</div>
+</div>
+<!-- Sienna 6 (Standby) -->
+<div class="p-3 rounded-xl border border-emerald-300 bg-emerald-50/40 flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="font-bold text-[13px] text-on-surface">Sienna #6 (Toyota Hybrid)</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-200 text-emerald-900 font-bold">Ready / Standby</span>
+</div>
+<div class="text-[12px] text-secondary space-y-1 mb-2">
+<div>Bay: <strong>Depot Stand A</strong></div>
+<div>Driver Pool: <strong>2 Sevaks Ready</strong></div>
+</div>
+<div class="flex items-center justify-between text-[11px] pt-2 border-t border-emerald-200 text-secondary">
+<span>Fuel: <strong>90% Hybrid</strong></span>
+<span class="text-emerald-800 font-bold">Available</span>
+</div>
+</div>
+<!-- Luggage Truck -->
+<div class="p-3 rounded-xl border border-outline-variant bg-surface-bright flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="font-bold text-[13px] text-on-surface">Cargo Shuttle #1</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] bg-purple-100 text-purple-800 font-bold">Baggage Support</span>
+</div>
+<div class="text-[12px] text-secondary space-y-1 mb-2">
+<div>Capacity: <strong>40 Heavy Suitcases</strong></div>
+<div>Driver: <strong>Kishorbhai M.</strong></div>
+</div>
+<div class="flex items-center justify-between text-[11px] pt-2 border-t border-outline-variant text-secondary">
+<span>Status: <strong>EWR Assigned</strong></span>
+<span class="text-on-surface font-semibold">Tarp Secured</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Interactive Slide-Over / Modal: 'Assign Driver & Vehicle' -->
+<div aria-labelledby="modal-title" aria-modal="true" class="fixed inset-0 z-50 hidden" id="assignment-modal" role="dialog">
+<!-- Scrim Backdrop with Blur -->
+<div class="fixed inset-0 bg-[#0F172A] bg-opacity-40 backdrop-blur-[2px] transition-opacity" onclick="closeAssignmentModal()"></div>
+<div class="fixed inset-0 z-10 flex items-center justify-center p-4">
+<div class="relative bg-surface-container-lowest rounded-xl max-w-lg w-full p-6 border border-outline-variant shadow-2xl overflow-hidden">
+<!-- Modal Header -->
+<div class="flex items-center justify-between pb-4 border-b border-outline-variant">
+<div class="flex items-center space-x-2.5">
+<div class="w-9 h-9 rounded-xl bg-primary-container text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]" data-icon="assignment_ind">assignment_ind</span>
+</div>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface" id="modal-title">Assign Driver &amp; Vehicle</h3>
+<p class="text-label-sm font-label-sm text-secondary">Mahaprasad &amp; Transit Logistics Dispatch</p>
+</div>
+</div>
+<button class="text-secondary hover:text-on-surface p-1 rounded-lg" onclick="closeAssignmentModal()">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</div>
+<!-- Modal Body Content -->
+<div class="py-4 space-y-4">
+<!-- Selected Devotee Summary -->
+<div class="p-3 bg-surface-bright rounded-xl border border-outline-variant">
+<span class="text-[11px] uppercase font-bold text-secondary block">Devotee Group</span>
+<div class="text-label-lg font-label-lg text-on-surface font-semibold" id="modal-guest-name">Chirag &amp; Meera Trivedi</div>
+<div class="text-body-sm font-body-sm text-secondary mt-0.5">Flight UA 2419 • EWR Terminal C • Arriving 14:15 EST (6 Pax)</div>
+</div>
+<!-- Select Vehicle Field -->
+<div class="space-y-1">
+<label class="block text-label-sm font-label-sm font-semibold text-on-surface">Available Vehicle</label>
+<select class="w-full h-[38px] bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-primary-container">
+<option selected="">Van #5 - Chevrolet Express 15-Passenger (Depot Stand C - 100% Fuel)</option>
+<option>Van #7 - Ford Transit High Roof 15-Passenger (Depot Stand D)</option>
+<option>Sienna #6 - Toyota Sienna AWD 7-Passenger (Depot Stand A)</option>
+<option>Luggage Truck #2 - Extra Cargo &amp; Baggage Support</option>
+</select>
+</div>
+<!-- Select Sevak Driver Field -->
+<div class="space-y-1">
+<label class="block text-label-sm font-label-sm font-semibold text-on-surface">Assign Sevak Driver (On-Campus Pool)</label>
+<select class="w-full h-[38px] bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-primary-container">
+<option selected="">Jitendrabhai Patel — (732) 555-8812 (Shift 2 Available)</option>
+<option>Maheshbhai Desai — (908) 555-4301 (Airport Badged Sevak)</option>
+<option>Ketan Solanki — (201) 555-9014 (Available Immediately)</option>
+<option>Dinesh Contractor — (609) 555-7762 (Samarpan Depot)</option>
+</select>
+</div>
+<!-- Special Instructions / Notes -->
+<div class="space-y-1">
+<label class="block text-label-sm font-label-sm font-semibold text-on-surface">Dispatch Notes &amp; Gate Access</label>
+<input class="w-full h-[38px] bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-primary-container" type="text" value="Call devotee when crossing Exit 13A. Help with heavy luggage &amp; pram."/>
+</div>
+<!-- Automated SMS Dispatch Checkbox -->
+<div class="flex items-center space-x-2 pt-1">
+<input checked="" class="rounded border-outline-variant text-primary-container focus:ring-primary-container" id="sms-notify" type="checkbox"/>
+<label class="text-body-sm font-body-sm text-on-surface" for="sms-notify">Send automated WhatsApp &amp; SMS flight alert to assigned Sevak driver</label>
+</div>
+</div>
+<!-- Modal Footer Actions -->
+<div class="pt-4 border-t border-outline-variant flex items-center justify-end space-x-3">
+<button class="px-4 py-2 rounded-lg border border-outline-variant hover:bg-surface-container-low text-label-md font-label-md text-on-surface font-semibold transition-all" onclick="closeAssignmentModal()">
+            Cancel
+          </button>
+<button class="px-4 py-2 rounded-lg bg-primary-container hover:bg-primary text-on-primary text-label-md font-label-md font-bold shadow-sm transition-all flex items-center space-x-1.5" onclick="confirmAssignment()">
+<span class="material-symbols-outlined text-[18px]" data-icon="send">send</span>
+<span>Confirm &amp; Dispatch Vehicle</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Notification Toast (Hidden by Default) -->
+<div class="fixed bottom-6 right-6 z-50 hidden bg-surface-container-lowest border border-emerald-300 shadow-xl rounded-xl p-4 max-w-sm flex items-center space-x-3 transition-all duration-300" id="toast">
+<div class="w-8 h-8 rounded-full bg-emerald-100 text-tertiary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="check">check</span>
+</div>
+<div>
+<h5 class="text-label-md font-label-md font-bold text-on-surface">Driver &amp; Vehicle Dispatched</h5>
+<p class="text-body-sm font-body-sm text-secondary" id="toast-message">Van #5 assigned. Live flight tracker dispatched to driver.</p>
+</div>
+</div>
+<script>
+    function openAssignmentModal(guestName, vehicleHint, driverHint) {
+      document.getElementById('modal-guest-name').innerText = guestName;
+      document.getElementById('assignment-modal').classList.remove('hidden');
+    }
+
+    function closeAssignmentModal() {
+      document.getElementById('assignment-modal').classList.add('hidden');
+    }
+
+    function confirmAssignment() {
+      closeAssignmentModal();
+      const toast = document.getElementById('toast');
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 4000);
+    }
+  </script>
+</body></html>

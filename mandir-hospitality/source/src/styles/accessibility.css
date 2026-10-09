@@ -1,0 +1,245 @@
+/* Readable secondary text for outdoor use and consistent native controls on iOS. */
+:root {
+  --muted: #687586;
+}
+.mobile-brand > span > span,
+.brand-sub,
+.demo-label {
+  color: #806b5b;
+}
+.app-main .workspace-context,
+.app-main .workspace-context > span:last-child,
+.app-main .page-description,
+.app-main .page-footer,
+.breadcrumb,
+.local-status,
+.nav-section-label,
+.user-profile small,
+.campus-label div > span,
+.side-utility,
+.seva-note > span {
+  color: #657285;
+}
+.app-main .eyebrow {
+  color: #846241;
+}
+.avatar.peach {
+  color: #885430;
+}
+.avatar.sage {
+  color: #47705b;
+}
+.avatar.lavender {
+  color: #705a8f;
+}
+.avatar.blue {
+  color: #456a8a;
+}
+.avatar.rose {
+  color: #925462;
+}
+.badge.amber {
+  color: #8f5a1d;
+}
+.badge.green {
+  color: #276c56;
+}
+.badge.blue {
+  color: #3c6589;
+}
+.badge.gray {
+  color: #626e7c;
+}
+.app-main .stat-top,
+.app-main .stat-foot,
+.app-main .stat-tag,
+.app-main .roster-tabs > button:not(.active),
+.app-main .roster-tabs > button > span,
+.app-main .roster-total,
+.app-main .roster-card-top p,
+.app-main .roster-pagination,
+.app-main .roster-pagination strong,
+.app-main .table-detail span,
+.app-main .guest-table th,
+.app-main .guest-name-cell small,
+.app-main .details-button,
+.app-main .guest-id,
+.app-main .mobile-guest-name small,
+.app-main .mobile-guest-details > span,
+.app-main .mobile-details,
+.app-main .arrival-bars > div,
+.app-main .arrival-bars small,
+.app-main .arrival-bars strong,
+.app-main .filter-button,
+.app-main .stay-select select,
+.bottom-nav a:not(.active) {
+  color: #647184;
+}
+.app-main .stat-tag.green,
+.app-main .checked-label,
+.app-main .all-shown {
+  color: #39745a;
+}
+.app-main .stat-tag.rose {
+  color: #9a5961;
+}
+.app-main .welcome-banner strong,
+.app-main .welcome-banner > div > span,
+.app-main .welcome-banner > button,
+.app-main .mobile-guest-details > span.needs-room-text,
+.app-main .table-detail strong.needs-room-text {
+  color: #896236;
+}
+.app-main .care-card p,
+.app-main .care-card button,
+.app-main .care-top {
+  color: #607052;
+}
+.app-main .search-field input::placeholder,
+.field input::placeholder,
+.field textarea::placeholder {
+  color: #718092;
+  opacity: 1;
+}
+.app-main .roster-tabs > button.active > span {
+  color: #925724;
+}
+.arrival-overview .section-heading h2 {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+.care-card h2 {
+  font-size: 20px;
+  letter-spacing: -0.5px;
+  line-height: 1.45;
+  font-weight: 500;
+  margin-top: 13px;
+  color: #607255;
+}
+.sheet .sheet-header p,
+.sheet .optional,
+.sheet .form-section-label,
+.sheet .guest-detail-profile p,
+.sheet .guest-detail-list > div > span,
+.sheet .guest-detail-list small,
+.sheet .guest-detail-list strong.guest-note,
+.sheet .notification-list small,
+.sheet .activity-item small {
+  color: #667385;
+}
+.sheet .guest-detail-list button,
+.sheet .guest-detail-list a {
+  color: #95622e;
+}
+.field select,
+.op-status-select {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 46px;
+  padding-right: 33px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23748395' stroke-width='1.7' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+.op-page .op-stat-label,
+.op-page .op-stat strong small,
+.op-page .op-list-heading > span,
+.op-page .op-list-heading h2 span,
+.op-page .trip-guest > span,
+.op-page .trip-route div > span,
+.op-page .trip-note,
+.op-page .trip-driver > div > span,
+.op-page .room-property-title p,
+.op-page .room-occupancy > span,
+.op-page .room-filters button:not(.active),
+.op-page .room-legend span,
+.op-page .room-title p,
+.op-page .room-guest-row small,
+.op-page .room-no-guests,
+.op-page .room-card-footer > span:first-child,
+.op-page .room-offsite small,
+.sheet .op-form-note,
+.sheet .op-driver-option small,
+.sheet .op-form-summary p,
+.sheet .room-occupant-detail small,
+.sheet .room-offsite-detail small,
+.sheet .op-optional {
+  color: #657285;
+}
+.op-page .op-departure-kicker,
+.op-page .op-departure p,
+.op-page .op-departure h2 span,
+.op-page .op-time-breakdown span,
+.op-page .room-waiting p,
+.op-page .room-linen-action {
+  color: #87603b;
+}
+.op-page .room-ready {
+  color: #4c765c;
+}
+.op-page .room-bed.occupied {
+  color: #587189;
+}
+.op-page .room-bed.available {
+  color: #50755e;
+}
+.op-page .room-bed.cleaning {
+  color: #927047;
+}
+.op-page .op-avatar-empty {
+  color: #8b6848;
+}
+.op-page .trip-flight {
+  color: #4f6785;
+}
+@media (max-width: 767px) {
+  .field select {
+    height: 48px;
+    min-height: 48px;
+    font-size: 16px;
+  }
+  .op-page .op-status-select {
+    height: 44px;
+    font-size: 16px;
+    padding-right: 26px;
+  }
+  .app-main .mobile-guest-name strong {
+    font-size: 13px;
+  }
+  .app-main .mobile-guest-name small {
+    font-size: 11px;
+  }
+  .app-main .mobile-guest-details > span {
+    font-size: 12px;
+  }
+  .app-main .mobile-guest-top > .badge {
+    font-size: 9px;
+  }
+  .app-main .guest-id {
+    font-size: 10px;
+  }
+  .app-main .care-card h2 {
+    font-size: 21px;
+  }
+  .app-main .care-card h2 br {
+    display: none;
+  }
+  .bottom-nav a {
+    font-size: 11px;
+  }
+}
+@media (max-width: 374px) {
+  .app-main .mobile-guest-name strong {
+    font-size: 12px;
+  }
+  .app-main .mobile-guest-name small {
+    font-size: 10px;
+  }
+  .app-main .mobile-guest-details > span {
+    font-size: 11px;
+  }
+  .app-main .mobile-guest-top > .badge {
+    font-size: 8px;
+  }
+}

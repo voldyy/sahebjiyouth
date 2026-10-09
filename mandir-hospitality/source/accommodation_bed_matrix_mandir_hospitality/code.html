@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mandir Seva Hospitality - Accommodation Management</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-highest": "#d3e4fe",
+            "secondary": "#545f73",
+            "on-surface-variant": "#564338",
+            "on-primary-fixed": "#331200",
+            "error-container": "#ffdad6",
+            "inverse-primary": "#ffb68e",
+            "on-secondary-fixed": "#111c2d",
+            "primary-fixed": "#ffdbca",
+            "on-tertiary": "#ffffff",
+            "tertiary-fixed": "#85f8c4",
+            "primary": "#903f00",
+            "primary-container": "#b45309",
+            "on-surface": "#0b1c30",
+            "surface-variant": "#d3e4fe",
+            "on-tertiary-fixed-variant": "#005137",
+            "on-error": "#ffffff",
+            "surface-container-low": "#eff4ff",
+            "outline-variant": "#ddc1b3",
+            "on-secondary": "#ffffff",
+            "on-primary-container": "#fff1eb",
+            "secondary-fixed-dim": "#bcc7de",
+            "on-background": "#0b1c30",
+            "inverse-on-surface": "#eaf1ff",
+            "tertiary": "#006444",
+            "tertiary-fixed-dim": "#68dba9",
+            "on-primary-fixed-variant": "#763300",
+            "surface-container-lowest": "#ffffff",
+            "on-error-container": "#93000a",
+            "surface-bright": "#f8f9ff",
+            "on-secondary-container": "#586377",
+            "tertiary-container": "#007f58",
+            "on-secondary-fixed-variant": "#3c475a",
+            "primary-fixed-dim": "#ffb68e",
+            "surface-dim": "#cbdbf5",
+            "surface-tint": "#9b4500",
+            "on-tertiary-fixed": "#002114",
+            "on-tertiary-container": "#ccffe3",
+            "secondary-fixed": "#d8e3fb",
+            "on-primary": "#ffffff",
+            "surface": "#f8f9ff",
+            "error": "#ba1a1a",
+            "background": "#f8f9ff",
+            "secondary-container": "#d5e0f8",
+            "inverse-surface": "#213145",
+            "surface-container-high": "#dce9ff",
+            "surface-container": "#e5eeff",
+            "outline": "#897267"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "1rem",
+            "gutter-md": "1.5rem",
+            "space-xl": "2rem",
+            "margin-lg": "2rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "gutter-lg": "1.5rem",
+            "margin-md": "1.5rem",
+            "margin": "1rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "label-sm": ["Inter"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "body-lg": ["Inter"],
+            "label-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "data-tabular": ["Inter"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "label-lg": ["Inter"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-md": ["Inter"]
+          },
+          "fontSize": {
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "headline-sm": ["15px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "headline-lg-mobile": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "data-tabular": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+            "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col font-body-md text-body-md selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TOP APP BAR (Shared Components: TopNavBar) -->
+<header class="bg-surface-container-lowest dark:bg-surface border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none docked full-width top-0 z-50 sticky">
+<div class="w-full px-6 py-2 flex items-center justify-between border-b border-outline-variant dark:border-outline">
+<!-- Brand & Search Left Cluster -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">temple_hindu</span>
+</div>
+<div>
+<span class="text-headline-md font-headline-md text-primary dark:text-inverse-primary tracking-tight block">Mandir Seva Hospitality</span>
+<span class="text-label-sm font-label-sm text-secondary block -mt-1 tracking-wider uppercase">Mahotsav Logistics Portal</span>
+</div>
+</div>
+<!-- Search Bar (on_left as per JSON) -->
+<div class="hidden lg:flex items-center bg-surface-container-low rounded-xl px-3 py-1.5 border border-outline-variant/60 focus-within:border-primary-container focus-within:ring-1 focus-within:ring-primary-container transition-all w-72">
+<span class="material-symbols-outlined text-secondary text-sm mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-0 p-0 text-body-sm font-body-sm text-on-surface placeholder-secondary focus:ring-0 w-full outline-none" placeholder="Search devotee, room, or hotel..." type="text"/>
+</div>
+</div>
+<!-- Navigation Links Cluster (Desktop) -->
+<nav class="hidden md:flex items-center gap-8 pt-2">
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-inverse-on-surface pb-3 transition-colors text-label-lg font-label-lg" href="#">Overview</a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-inverse-on-surface pb-3 transition-colors text-label-lg font-label-lg" href="#">Transport Logistics</a>
+<!-- Active Tab: Accommodation (CRITICAL: Contextual Semantic Lock) -->
+<a class="border-b-2 border-primary-container text-primary-container dark:text-inverse-primary font-bold pb-3 text-label-lg font-label-lg flex items-center gap-1.5" href="#">
+<span>Accommodation</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+</a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-on-surface dark:hover:text-inverse-on-surface pb-3 transition-colors text-label-lg font-label-lg" href="#">Mahaprasad Kitchen</a>
+</nav>
+<!-- Trailing Action Badges & Profile -->
+<div class="flex items-center gap-3">
+<!-- Date Selector Badge -->
+<div class="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-surface-container rounded-lg border border-outline-variant/50 text-on-surface font-label-md text-label-md">
+<span class="material-symbols-outlined text-primary-container text-base" data-icon="calendar_today">calendar_today</span>
+<span>Oct 24, 2025</span>
+<span class="text-secondary text-label-sm font-label-sm font-normal">• Day 2 of 5</span>
+</div>
+<!-- Trailing Secondary: Mahotsav Badge -->
+<div class="hidden xl:flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed text-label-sm font-label-sm font-medium">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>Shri Akshar-Purushottam Mahotsav 2025</span>
+</div>
+<!-- Trailing Primary Action: Sync Now -->
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-container hover:bg-primary text-on-primary text-label-md font-label-md transition-all active:scale-95 shadow-sm">
+<span class="material-symbols-outlined text-sm" data-icon="sync">sync</span>
+<span class="font-semibold">Sync Now</span>
+</button>
+<!-- Trailing Icons -->
+<div class="flex items-center text-secondary border-l border-outline-variant pl-2 ml-1">
+<button class="p-1.5 rounded-lg hover:bg-surface-container-low transition-colors" title="Notifications">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-1.5 rounded-lg hover:bg-surface-container-low transition-colors" title="Help Desk">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+</div>
+<!-- Sevak Lead Profile -->
+<div class="flex items-center gap-2 pl-1">
+<img class="w-8 h-8 rounded-full border border-primary-container/40 object-cover" data-alt="A portrait photograph of a serene senior mandir sevak coordinator wearing a soft saffron stole and traditional white kurta against the warm marble background of a temple complex. Warm natural daylight softly highlights his calm, hospitable expression. Clean, high-key spiritual documentary photography aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCULMcPVrVcULfkOB_pBUZh9X5PRzw1j70JnIOF33-lAI0R3mr685jTpSdYMmGTVOS5uR8gefnChlxypPrVJAnmWuaBdIrASpguRrUyGEm0WwnT2YPJ76Igina2tdg-TQEXiQPQu8FN1KujfECGOUA_ACW5i26EA24DwfoiHtL0DM5ZkyzmUYGFJANOfH8Ap_5absoY75EQFuCyvVVXiXs8zukBVY0oheGOoxZHtg"/>
+</div>
+</div>
+</div>
+</header>
+<!-- BODY SHELL WRAPPER WITH SIDENAV -->
+<div class="flex-1 flex w-full">
+<!-- SIDE COMMAND RAIL (Shared Components: SideNavBar) -->
+<aside class="w-64 bg-surface-container-lowest dark:bg-surface border-r border-outline-variant dark:border-outline shrink-0 hidden md:flex flex-col justify-between p-4">
+<!-- Rail Header & CTA -->
+<div>
+<div class="flex items-center gap-3 px-2 py-2 mb-4">
+<div class="w-8 h-8 rounded-lg bg-secondary-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-primary-container" data-icon="account_balance" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h2 class="text-headline-sm font-headline-sm text-primary dark:text-inverse-primary leading-tight">Hospitality Ops</h2>
+<p class="text-label-sm font-label-sm text-secondary">Central Command</p>
+</div>
+</div>
+<!-- CTA: Quick Check-In -->
+<button class="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-primary-container hover:bg-primary text-on-primary text-label-md font-label-md font-semibold transition-all active:scale-98 mb-6 shadow-sm">
+<span class="material-symbols-outlined text-base">person_add</span>
+<span>Quick Check-In</span>
+</button>
+<!-- Side Navigation Items (JSON tabs: Guest Roster, Transport Dispatch, Room Matrix, Kitchen Headcount) -->
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors text-label-md font-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Guest Roster</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors text-label-md font-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+<span>Transport Dispatch</span>
+</a>
+<!-- Active tab on SideNav: Room Matrix (Closest match to Accommodation Management screen) -->
+<a class="flex items-center gap-3 px-3 py-2.5 bg-surface-container text-primary-container dark:text-inverse-primary font-bold rounded-lg border-l-4 border-primary-container text-label-md font-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="hotel" style="font-variation-settings: 'FILL' 1;">hotel</span>
+<span>Room Matrix</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-secondary dark:text-secondary-fixed-dim rounded-lg hover:bg-surface-container-low dark:hover:bg-surface-container transition-colors text-label-md font-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+<span>Kitchen Headcount</span>
+</a>
+</div>
+<!-- Campus Quick KPI Widget -->
+<div class="mt-8 p-3 rounded-xl bg-surface-container-low border border-outline-variant/40">
+<div class="flex items-center justify-between mb-2">
+<span class="text-label-sm font-label-sm font-semibold text-secondary uppercase tracking-wider">Campus Capacity</span>
+<span class="text-label-sm font-label-sm font-bold text-tertiary">91.4%</span>
+</div>
+<div class="w-full bg-surface-variant h-1.5 rounded-full overflow-hidden mb-2">
+<div class="bg-primary-container h-full rounded-full" style="width: 91.4%"></div>
+</div>
+<div class="flex items-center justify-between text-label-sm font-label-sm text-secondary">
+<span>Occupied: 438 beds</span>
+<span>Open: 42 beds</span>
+</div>
+</div>
+</div>
+<!-- Rail Footer Items (JSON footer: Sync Logs, Settings) -->
+<div class="border-t border-outline-variant/50 pt-3 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-secondary rounded-lg hover:bg-surface-container-low transition-colors text-label-sm font-label-sm" href="#">
+<span class="material-symbols-outlined text-base" data-icon="cloud_done">cloud_done</span>
+<span>Sync Logs</span>
+<span class="ml-auto w-2 h-2 rounded-full bg-tertiary"></span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-secondary rounded-lg hover:bg-surface-container-low transition-colors text-label-sm font-label-sm" href="#">
+<span class="material-symbols-outlined text-base" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</div>
+</aside>
+<!-- MAIN OPERATIONAL VIEWPORT -->
+<main class="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6">
+<!-- SCREEN HERO & TOP CONTROLS -->
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+<div>
+<div class="flex items-center gap-2">
+<h1 class="text-headline-lg font-headline-lg text-on-surface">Accommodation Management</h1>
+<span class="px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant text-label-sm font-label-sm font-semibold">Live Operational Sync</span>
+</div>
+<p class="text-secondary text-body-sm font-body-sm mt-0.5">Samarpan Onsite ashram complexes, delegated offsite hotel clusters, and turnover queues.</p>
+</div>
+<!-- Global Action Group: Date Picker + Quick Actions -->
+<div class="flex items-center flex-wrap gap-2.5">
+<!-- Interactive Date Picker -->
+<div class="flex items-center bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-1.5 shadow-sm">
+<span class="material-symbols-outlined text-primary-container mr-2 text-base">event</span>
+<span class="text-label-md font-label-md text-on-surface font-semibold mr-2">Viewing:</span>
+<select class="bg-transparent border-0 text-body-sm font-body-sm text-on-surface font-medium focus:ring-0 p-0 pr-4 cursor-pointer">
+<option selected="">Friday, Oct 24 (Day 2 - Peak Arrival)</option>
+<option>Saturday, Oct 25 (Day 3 - Mahapuja Day)</option>
+<option>Sunday, Oct 26 (Day 4 - Yuvak Shibir)</option>
+<option>Monday, Oct 27 (Day 5 - Vidai / Departure)</option>
+</select>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant hover:bg-surface-container-low text-on-surface text-label-md font-label-md font-medium transition-colors shadow-sm">
+<span class="material-symbols-outlined text-base">filter_list</span>
+<span>Filters</span>
+</button>
+<button class="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary-container text-on-primary text-label-md font-label-md font-semibold hover:bg-primary transition-all shadow-sm">
+<span class="material-symbols-outlined text-base">group_add</span>
+<span>Auto-Pair Devotees</span>
+</button>
+</div>
+</div>
+<!-- OPERATIONAL KPI BANNER CARDS -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<!-- KPI 1 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/60 shadow-sm">
+<div class="flex items-center justify-between text-secondary mb-1">
+<span class="text-label-sm font-label-sm font-semibold uppercase tracking-wider">Total Campus Beds</span>
+<span class="material-symbols-outlined text-primary-container text-base">apartment</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-on-surface font-bold">480</div>
+<div class="text-label-sm font-label-sm text-tertiary mt-1 flex items-center gap-1 font-medium">
+<span class="material-symbols-outlined text-xs">check_circle</span>
+<span>42 Beds Available Right Now</span>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/60 shadow-sm">
+<div class="flex items-center justify-between text-secondary mb-1">
+<span class="text-label-sm font-label-sm font-semibold uppercase tracking-wider">Offsite Hotel Allocation</span>
+<span class="material-symbols-outlined text-secondary text-base">hotel_class</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-on-surface font-bold">142 <span class="text-body-sm font-body-sm font-normal text-secondary">Rooms</span></div>
+<div class="text-label-sm font-label-sm text-primary font-medium mt-1">
+<span>3 Partner Properties Active</span>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/60 shadow-sm">
+<div class="flex items-center justify-between text-secondary mb-1">
+<span class="text-label-sm font-label-sm font-semibold uppercase tracking-wider">Linen Queue</span>
+<span class="material-symbols-outlined text-error text-base">cleaning_services</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-error font-bold">14 <span class="text-body-sm font-body-sm font-normal text-secondary">Beds</span></div>
+<div class="text-label-sm font-label-sm text-error font-semibold mt-1">
+<span>6 High-Priority (Arrival in &lt; 2h)</span>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/60 shadow-sm">
+<div class="flex items-center justify-between text-secondary mb-1">
+<span class="text-label-sm font-label-sm font-semibold uppercase tracking-wider">Pairing Compatibility</span>
+<span class="material-symbols-outlined text-tertiary text-base">handshake</span>
+</div>
+<div class="text-headline-lg font-headline-lg text-tertiary font-bold">98.2%</div>
+<div class="text-label-sm font-label-sm text-secondary mt-1">
+<span>Mandir &amp; Age Harmonized</span>
+</div>
+</div>
+</div>
+<!-- MAIN SECTION TAB NAVIGATION -->
+<div class="border-b border-outline-variant/80 flex items-center justify-between">
+<div class="flex items-center gap-6">
+<!-- Sub-tab 1: Samarpan Onsite -->
+<button class="border-b-2 border-primary-container text-primary-container font-bold pb-3 text-headline-sm font-headline-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-base" style="font-variation-settings: 'FILL' 1;">night_shelter</span>
+<span>Samarpan Onsite (Rooms &amp; Beds)</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-label-sm font-label-sm font-semibold">124 Rooms</span>
+</button>
+<!-- Sub-tab 2: Offsite Hotel Blocks -->
+<button class="text-secondary hover:text-on-surface pb-3 text-headline-sm font-headline-sm flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-base">domain</span>
+<span>Offsite Hotel Blocks</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container text-secondary text-label-sm font-label-sm font-semibold">3 Hotels</span>
+</button>
+<!-- Sub-tab 3: Linen & Room Refresh Tasks -->
+<button class="text-secondary hover:text-on-surface pb-3 text-headline-sm font-headline-sm flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-base">sanitizer</span>
+<span>Linen &amp; Room Refresh Tasks</span>
+<span class="px-2 py-0.5 rounded-full bg-error-container text-on-error-container text-label-sm font-label-sm font-bold">14 Pending</span>
+</button>
+</div>
+<div class="hidden md:flex items-center gap-2 pb-2 text-label-sm font-label-sm text-secondary">
+<span class="inline-block w-2.5 h-2.5 rounded-full bg-tertiary"></span> Ready / Available
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-secondary ml-2"></span> Occupied
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-error ml-2"></span> Refresh Needed
+        </div>
+</div>
+<!-- BLOCK & FLOOR SELECTOR STRIP -->
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-surface-container-lowest p-3 rounded-xl border border-outline-variant shadow-sm">
+<!-- Floor & Block Selector -->
+<div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+<span class="text-label-md font-label-md text-secondary font-semibold uppercase tracking-wider pl-1">Target Wing:</span>
+<button class="px-3.5 py-1.5 rounded-lg bg-primary-container text-on-primary text-label-md font-label-md font-bold shadow-sm whitespace-nowrap flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">elderly</span>
+<span>Block A - Sant &amp; Senior Devotees</span>
+<span class="bg-on-primary/20 px-1.5 py-0.2 rounded text-xs ml-1 font-normal">Floor 1 &amp; 2</span>
+</button>
+<button class="px-3.5 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface text-label-md font-label-md font-medium border border-outline-variant/60 whitespace-nowrap transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">family_restroom</span>
+<span>Block B - Families &amp; Grhasth</span>
+</button>
+<button class="px-3.5 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface text-label-md font-label-md font-medium border border-outline-variant/60 whitespace-nowrap transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">diversity_3</span>
+<span>Block C - Yuvaks &amp; Volunteers</span>
+</button>
+</div>
+<!-- Floor Quick Filter -->
+<div class="flex items-center gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-outline-variant/60">
+<span class="text-label-sm font-label-sm text-secondary font-medium">Floor:</span>
+<div class="inline-flex rounded-lg border border-outline-variant p-0.5 bg-surface-container-low">
+<button class="px-2.5 py-1 rounded bg-surface-container-lowest text-primary-container font-bold text-label-sm font-label-sm shadow-xs">Ground</button>
+<button class="px-2.5 py-1 rounded text-secondary hover:text-on-surface text-label-sm font-label-sm">Floor 1</button>
+<button class="px-2.5 py-1 rounded text-secondary hover:text-on-surface text-label-sm font-label-sm">Floor 2</button>
+</div>
+</div>
+</div>
+<!-- MAIN CONTENT BENTO: VISUAL BED MATRIX (LEFT 8 COLS) + LINEN HOUSEKEEPING QUEUE (RIGHT 4 COLS) -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+<!-- ============================================== -->
+<!-- LEFT REGION: VISUAL BED MATRIX ROOM CARDS (8 COLS) -->
+<!-- ============================================== -->
+<div class="xl:col-span-8 space-y-4">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="text-headline-md font-headline-md text-on-surface">Block A • Ground Floor (Sant &amp; Senior Devotees)</h2>
+<p class="text-secondary text-body-sm font-body-sm">Ground-level accessible rooms equipped with low beds, handrails, and quiet courtyard proximity.</p>
+</div>
+<div class="text-label-md font-label-md text-tertiary font-bold bg-tertiary-fixed/30 px-2.5 py-1 rounded-lg border border-tertiary-fixed">
+              4 of 6 Rooms Have Vacancies
+            </div>
+</div>
+<!-- ROOM CARDS GRID -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- ROOM CARD 1: Room 101 -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 shadow-sm hover:border-primary-container/60 transition-all flex flex-col justify-between">
+<div>
+<!-- Room Header -->
+<div class="flex items-start justify-between pb-3 border-b border-outline-variant/60">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-headline-md font-headline-md font-bold text-on-surface">Room 101</span>
+<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-label-sm font-label-sm font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                        1 Bed Available
+                      </span>
+</div>
+<div class="flex items-center gap-3 mt-1 text-label-sm font-label-sm text-secondary">
+<span>Total: 4 Beds</span>
+<span>•</span>
+<span>Attached Bath</span>
+<span>•</span>
+<span>Ground Accessibility</span>
+</div>
+</div>
+<button class="p-1.5 rounded-lg hover:bg-surface-container text-secondary transition-colors" title="Room Options">
+<span class="material-symbols-outlined text-base">more_vert</span>
+</button>
+</div>
+<!-- Individual Beds List -->
+<div class="mt-3 space-y-2">
+<!-- Bed 1: Occupied -->
+<div class="p-2.5 rounded-lg bg-surface-container-low/70 border border-outline-variant/50 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-secondary/15 flex items-center justify-center text-xs font-bold text-on-surface font-data-tabular">B1</span>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-semibold text-body-sm font-body-sm text-on-surface">Ramesh Patel</span>
+<span class="text-label-sm font-label-sm text-secondary font-data-tabular">(54)</span>
+</div>
+<div class="text-label-sm font-label-sm text-secondary flex items-center gap-1.5 mt-0.5">
+<span class="material-symbols-outlined text-xs text-primary-container">location_on</span>
+<span>Toronto Mandir</span>
+<span>•</span>
+<span>Gujarati / Eng</span>
+</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-md bg-secondary-container/60 text-secondary text-label-sm font-label-sm font-medium">Occupied</span>
+</div>
+<!-- Bed 2: Occupied -->
+<div class="p-2.5 rounded-lg bg-surface-container-low/70 border border-outline-variant/50 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-secondary/15 flex items-center justify-center text-xs font-bold text-on-surface font-data-tabular">B2</span>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-semibold text-body-sm font-body-sm text-on-surface">Suresh Patel</span>
+<span class="text-label-sm font-label-sm text-secondary font-data-tabular">(52)</span>
+</div>
+<div class="text-label-sm font-label-sm text-secondary flex items-center gap-1.5 mt-0.5">
+<span class="material-symbols-outlined text-xs text-primary-container">location_on</span>
+<span>Toronto Mandir</span>
+<span>•</span>
+<span>Gujarati / Eng</span>
+</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-md bg-secondary-container/60 text-secondary text-label-sm font-label-sm font-medium">Occupied</span>
+</div>
+<!-- Bed 3: Available (With Devotee Pairing Helper) -->
+<div class="p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-200/80 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-emerald-200 text-emerald-900 flex items-center justify-center text-xs font-bold font-data-tabular">B3</span>
+<div>
+<span class="font-semibold text-body-sm font-body-sm text-emerald-900 block">Available Bed</span>
+<div class="text-label-sm font-label-sm text-emerald-800 flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-xs text-emerald-700">recommend</span>
+<span>Best match: Senior Devotee (50-60y, Gujarati)</span>
+</div>
+</div>
+</div>
+<button class="px-2.5 py-1 rounded bg-tertiary-container hover:bg-tertiary text-on-primary text-label-sm font-label-sm font-bold shadow-xs transition-colors">
+                      + Assign
+                    </button>
+</div>
+<!-- Bed 4: Vacated - Needs Refresh -->
+<div class="p-2.5 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-rose-200 text-rose-900 flex items-center justify-center text-xs font-bold font-data-tabular">B4</span>
+<div>
+<span class="font-semibold text-body-sm font-body-sm text-rose-950 block">Vacated at 11:30 AM</span>
+<div class="text-label-sm font-label-sm text-rose-800 flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-xs text-error">warning</span>
+<span>Linen Turnover Required</span>
+</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-md bg-rose-200/70 text-rose-900 text-label-sm font-label-sm font-semibold">Needs Refresh</span>
+</div>
+</div>
+</div>
+<!-- Devotee Pairing Helper Footer -->
+<div class="mt-3 pt-2.5 border-t border-outline-variant/50 flex items-center justify-between text-label-sm font-label-sm bg-surface-container-low/40 -mx-4 -mb-4 p-3 rounded-b-xl">
+<span class="text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary-container">groups</span>
+<span>Harmonious Pairing: <strong>High Compatibility (Seniors / Toronto)</strong></span>
+</span>
+<span class="text-primary font-semibold hover:underline cursor-pointer">View Dossier</span>
+</div>
+</div>
+<!-- ROOM CARD 2: Room 102 -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 shadow-sm hover:border-primary-container/60 transition-all flex flex-col justify-between">
+<div>
+<!-- Room Header -->
+<div class="flex items-start justify-between pb-3 border-b border-outline-variant/60">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-headline-md font-headline-md font-bold text-on-surface">Room 102</span>
+<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-label-sm font-label-sm font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                        2 Beds Available
+                      </span>
+</div>
+<div class="flex items-center gap-3 mt-1 text-label-sm font-label-sm text-secondary">
+<span>Total: 4 Beds</span>
+<span>•</span>
+<span>Attached Bath</span>
+<span>•</span>
+<span>Garden Facing</span>
+</div>
+</div>
+<button class="p-1.5 rounded-lg hover:bg-surface-container text-secondary transition-colors" title="Room Options">
+<span class="material-symbols-outlined text-base">more_vert</span>
+</button>
+</div>
+<!-- Individual Beds List -->
+<div class="mt-3 space-y-2">
+<!-- Bed 1: Occupied -->
+<div class="p-2.5 rounded-lg bg-surface-container-low/70 border border-outline-variant/50 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-secondary/15 flex items-center justify-center text-xs font-bold text-on-surface font-data-tabular">B1</span>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-semibold text-body-sm font-body-sm text-on-surface">Maheshbhai Shah</span>
+<span class="text-label-sm font-label-sm text-secondary font-data-tabular">(68)</span>
+</div>
+<div class="text-label-sm font-label-sm text-secondary flex items-center gap-1.5 mt-0.5">
+<span class="material-symbols-outlined text-xs text-primary-container">location_on</span>
+<span>London Neasden Mandir</span>
+<span>•</span>
+<span>Gujarati</span>
+</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-md bg-secondary-container/60 text-secondary text-label-sm font-label-sm font-medium">Occupied</span>
+</div>
+<!-- Bed 2: Occupied -->
+<div class="p-2.5 rounded-lg bg-surface-container-low/70 border border-outline-variant/50 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-secondary/15 flex items-center justify-center text-xs font-bold text-on-surface font-data-tabular">B2</span>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-semibold text-body-sm font-body-sm text-on-surface">Pravinbhai Trivedi</span>
+<span class="text-label-sm font-label-sm text-secondary font-data-tabular">(71)</span>
+</div>
+<div class="text-label-sm font-label-sm text-secondary flex items-center gap-1.5 mt-0.5">
+<span class="material-symbols-outlined text-xs text-primary-container">location_on</span>
+<span>Ahmedabad Mandir</span>
+<span>•</span>
+<span>Gujarati / Hindi</span>
+</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-md bg-secondary-container/60 text-secondary text-label-sm font-label-sm font-medium">Occupied</span>
+</div>
+<!-- Bed 3: Available -->
+<div class="p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-200/80 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-emerald-200 text-emerald-900 flex items-center justify-center text-xs font-bold font-data-tabular">B3</span>
+<div>
+<span class="font-semibold text-body-sm font-body-sm text-emerald-900 block">Available Bed</span>
+<div class="text-label-sm font-label-sm text-emerald-800 flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-xs text-emerald-700">recommend</span>
+<span>Elderly Sevak match (65+y, Gujarati)</span>
+</div>
+</div>
+</div>
+<button class="px-2.5 py-1 rounded bg-tertiary-container hover:bg-tertiary text-on-primary text-label-sm font-label-sm font-bold shadow-xs transition-colors">
+                      + Assign
+                    </button>
+</div>
+<!-- Bed 4: Available -->
+<div class="p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-200/80 flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded bg-emerald-200 text-emerald-900 flex items-center justify-center text-xs font-bold font-data-tabular">B4</span>
+<div>
+<span class="font-semibold text-body-sm font-body-sm text-emerald-900 block">Available Bed</span>
+<div class="text-label-sm font-label-sm text-emerald-800 flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-xs text-emerald-700">recommend</span>
+<span>Ready for incoming flight AI-102 devotee</span>
+</div>
+</div>
+</div>
+<button class="px-2.5 py-1 rounded bg-tertiary-container hover:bg-tertiary text-on-primary text-label-sm font-label-sm font-bold shadow-xs transition-colors">
+                      + Assign
+                    </button>
+</div>
+</div>
+</div>
+<!-- Devotee Pairing Helper Footer -->
+<div class="mt-3 pt-2.5 border-t border-outline-variant/50 flex items-center justify-between text-label-sm font-label-sm bg-surface-container-low/40 -mx-4 -mb-4 p-3 rounded-b-xl">
+<span class="text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary-container">groups</span>
+<span>Harmonious Pairing: <strong>Senior Quiet Wing (65+y)</strong></span>
+</span>
+<span class="text-primary font-semibold hover:underline cursor-pointer">Pair Suggestion</span>
+</div>
+</div>
+<!-- ROOM CARD 3: Room 103 (Fully Occupied) -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 shadow-sm flex flex-col justify-between opacity-95">
+<div>
+<div class="flex items-start justify-between pb-3 border-b border-outline-variant/60">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-headline-md font-headline-md font-bold text-on-surface">Room 103</span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-secondary text-label-sm font-label-sm font-semibold">
+                        Full (4/4 Occupied)
+                      </span>
+</div>
+<div class="flex items-center gap-3 mt-1 text-label-sm font-label-sm text-secondary">
+<span>Total: 4 Beds</span>
+<span>•</span>
+<span>Sadhu Sant Niwas Wing</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-base">lock</span>
+</div>
+<div class="mt-3 space-y-2">
+<div class="p-2 rounded-lg bg-surface-container-low text-label-md font-label-md flex justify-between">
+<span>B1: Pujya Bhaktipriya Swami (Sant Mandal)</span>
+<span class="text-secondary font-normal">Dedicated</span>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-low text-label-md font-label-md flex justify-between">
+<span>B2: Pujya Dharmasetu Swami (Sant Mandal)</span>
+<span class="text-secondary font-normal">Dedicated</span>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-low text-label-md font-label-md flex justify-between">
+<span>B3: Sant Sevak Jignesh (28, Sarangpur)</span>
+<span class="text-secondary font-normal">Attendant</span>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-low text-label-md font-label-md flex justify-between">
+<span>B4: Sant Sevak Ketan (31, Sarangpur)</span>
+<span class="text-secondary font-normal">Attendant</span>
+</div>
+</div>
+</div>
+<div class="mt-3 pt-2 text-label-sm font-label-sm text-secondary text-right">
+                Alloted through Oct 28
+              </div>
+</div>
+<!-- ROOM CARD 4: Room 104 -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 shadow-sm hover:border-primary-container/60 transition-all flex flex-col justify-between">
+<div>
+<!-- Room Header -->
+<div class="flex items-start justify-between pb-3 border-b border-outline-variant/60">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-headline-md font-headline-md font-bold text-on-surface">Room 104</span>
+<span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-800 border border-rose-200 text-label-sm font-label-sm font-bold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                        Turnover Active
+                      </span>
+</div>
+<div class="flex items-center gap-3 mt-1 text-label-sm font-label-sm text-secondary">
+<span>Total: 4 Beds</span>
+<span>•</span>
+<span>Attached Bath</span>
+<span>•</span>
+<span>Quiet Courtyard</span>
+</div>
+</div>
+<button class="p-1.5 rounded-lg hover:bg-surface-container text-secondary transition-colors" title="Room Options">
+<span class="material-symbols-outlined text-base">more_vert</span>
+</button>
+</div>
+<!-- Individual Beds List -->
+<div class="mt-3 space-y-2">
+<div class="p-2.5 rounded-lg bg-surface-container-low/70 border border-outline-variant/50 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded bg-secondary/15 flex items-center justify-center text-xs font-bold text-on-surface font-data-tabular">B1</span>
+<span class="font-semibold text-body-sm font-body-sm text-on-surface">Dineshbhai Vora (63, Chicago)</span>
+</div>
+<span class="text-label-sm font-label-sm text-secondary font-medium">Occupied</span>
+</div>
+<!-- Bed 2: Highlighted turnover -->
+<div class="p-2.5 rounded-lg bg-rose-50 border border-rose-300 flex items-center justify-between ring-1 ring-rose-300/50">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded bg-rose-200 text-rose-900 flex items-center justify-center text-xs font-bold font-data-tabular">B2</span>
+<div>
+<span class="font-bold text-body-sm font-body-sm text-rose-950">Departed at 10:15 AM</span>
+<span class="block text-label-sm font-label-sm text-rose-800">Assigned Sevak: Amit K. (In-Progress)</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-rose-200 text-rose-900 text-label-sm font-label-sm font-bold">In Refresh Queue</span>
+</div>
+<div class="p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-200/80 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded bg-emerald-200 text-emerald-900 flex items-center justify-center text-xs font-bold font-data-tabular">B3</span>
+<div>
+<span class="font-semibold text-body-sm font-body-sm text-emerald-900">Available Bed</span>
+<span class="block text-label-sm font-label-sm text-emerald-800">Ideal for Gujarati speaking guest</span>
+</div>
+</div>
+<button class="px-2.5 py-1 rounded bg-tertiary-container text-on-primary text-label-sm font-label-sm font-bold">Assign</button>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-low/70 border border-outline-variant/50 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded bg-secondary/15 flex items-center justify-center text-xs font-bold text-on-surface font-data-tabular">B4</span>
+<span class="font-semibold text-body-sm font-body-sm text-on-surface">Kiritbhai Desai (60, Chicago)</span>
+</div>
+<span class="text-label-sm font-label-sm text-secondary font-medium">Occupied</span>
+</div>
+</div>
+</div>
+<div class="mt-3 pt-2.5 border-t border-outline-variant/50 flex items-center justify-between text-label-sm font-label-sm bg-surface-container-low/40 -mx-4 -mb-4 p-3 rounded-b-xl">
+<span class="text-error font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">timer</span>
+<span>Bed 2 needed by 14:30 PM (Guest arrival from JFK)</span>
+</span>
+<button class="text-primary font-bold hover:underline">View Task Checklist</button>
+</div>
+</div>
+</div>
+<!-- OFFSITE HOTEL MANAGEMENT CLUSTER -->
+<div class="mt-8 pt-6 border-t border-outline-variant">
+<div class="flex items-center justify-between mb-4">
+<div>
+<h3 class="text-headline-md font-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="domain">domain</span>
+<span>Offsite Hotel Blocks &amp; Partner Overlap Status</span>
+</h3>
+<p class="text-secondary text-body-sm font-body-sm">Overflow accommodations secured with dedicated temple shuttle dispatch every 20 minutes.</p>
+</div>
+<button class="flex items-center gap-1 text-label-md font-label-md text-primary font-bold hover:underline">
+<span>Manage Contract Blocks</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<!-- Hotels Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Hotel 1 -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 shadow-sm">
+<div class="flex items-start justify-between pb-3 border-b border-outline-variant/50">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary-container font-bold text-lg">
+                      F
+                    </div>
+<div>
+<h4 class="text-headline-sm font-headline-sm font-bold text-on-surface">Fairfield Inn &amp; Suites</h4>
+<p class="text-label-sm font-label-sm text-secondary">3.2 miles away • Shuttle Stop #2</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-label-sm font-label-sm font-bold">
+                    48 of 50 Checked-in
+                  </span>
+</div>
+<div class="mt-3 space-y-2">
+<div class="flex items-center justify-between text-label-md font-label-md">
+<span class="text-secondary">Block Code: <span class="font-bold text-on-surface">MANDIR-MAHOTSAV-A</span></span>
+<span class="text-tertiary font-semibold">96% Confirmed</span>
+</div>
+<!-- Room Allocation Snippet -->
+<div class="p-2 rounded-lg bg-surface-container-low text-body-sm font-body-sm space-y-1">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="font-bold text-on-surface">Rooms 201 - 225 (East Wing)</span>
+<span class="text-secondary">New Jersey Yuvak Mandal (46 Devotees)</span>
+</div>
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="font-bold text-on-surface">Rooms 301 - 325 (West Wing)</span>
+<span class="text-secondary">Atlanta Seniors Delegation (48 Devotees)</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 text-label-sm font-label-sm">
+<span class="text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary-container">schedule</span>
+<span>Next Temple Bus: <strong>12:40 PM</strong></span>
+</span>
+<span class="text-primary font-bold cursor-pointer hover:underline">View Rooming Roster</span>
+</div>
+</div>
+</div>
+<!-- Hotel 2 -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 shadow-sm">
+<div class="flex items-start justify-between pb-3 border-b border-outline-variant/50">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary-container font-bold text-lg">
+                      C
+                    </div>
+<div>
+<h4 class="text-headline-sm font-headline-sm font-bold text-on-surface">Courtyard by Marriott</h4>
+<p class="text-label-sm font-label-sm text-secondary">4.8 miles away • Shuttle Stop #3</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-label-sm font-label-sm font-bold">
+                    62 of 75 Checked-in
+                  </span>
+</div>
+<div class="mt-3 space-y-2">
+<div class="flex items-center justify-between text-label-md font-label-md">
+<span class="text-secondary">Block Code: <span class="font-bold text-on-surface">MANDIR-MAHOTSAV-B</span></span>
+<span class="text-amber-800 font-semibold">13 Pending Today</span>
+</div>
+<!-- Room Allocation Snippet -->
+<div class="p-2 rounded-lg bg-surface-container-low text-body-sm font-body-sm space-y-1">
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="font-bold text-on-surface">Rooms 401 - 440 (Executive Block)</span>
+<span class="text-secondary">UK &amp; Kenya VIP Devotee Families (62)</span>
+</div>
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="font-bold text-on-surface">Rooms 501 - 535</span>
+<span class="text-amber-700 font-semibold">Expected Arrival: Flight BA-142 (18:00)</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 text-label-sm font-label-sm">
+<span class="text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary-container">sync_problem</span>
+<span>Late Check-in Window: <strong>Approved by Hotel</strong></span>
+</span>
+<span class="text-primary font-bold cursor-pointer hover:underline">View Rooming Roster</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ============================================================== -->
+<!-- RIGHT REGION: LINEN TURNOVER & HOUSEKEEPING QUEUE (4 COLS)     -->
+<!-- ============================================================== -->
+<div class="xl:col-span-4 space-y-4">
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-5 shadow-sm">
+<div class="flex items-center justify-between pb-3 border-b border-outline-variant">
+<div>
+<h3 class="text-headline-md font-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-error" data-icon="cleaning_services">cleaning_services</span>
+<span>Beds Needing Refresh</span>
+</h3>
+<p class="text-label-sm font-label-sm text-secondary">Devotees departed today • Turnovers in queue</p>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-error-container text-on-error-container font-bold text-label-sm font-label-sm">
+                14 In Queue
+              </span>
+</div>
+<!-- Active Turnover Focus Card: Room 104 Bed 2 -->
+<div class="mt-4 p-4 rounded-xl bg-surface-container-low border-2 border-primary-container/40">
+<div class="flex items-start justify-between">
+<div>
+<span class="px-2 py-0.5 rounded bg-error text-on-error font-bold text-label-sm font-label-sm uppercase tracking-wider">
+                    High Priority #1
+                  </span>
+<h4 class="text-headline-sm font-headline-sm font-bold text-on-surface mt-1.5">Room 104 • Bed 2</h4>
+<p class="text-label-sm font-label-sm text-secondary">Guest departed at 10:15 AM • Next check-in: 14:30 PM</p>
+</div>
+<div class="text-right">
+<span class="text-label-sm font-label-sm text-secondary block">Assigned Sevak</span>
+<span class="font-bold text-body-sm font-body-sm text-primary-container">Amitbhai K.</span>
+</div>
+</div>
+<!-- Interactive Turnover Checklist -->
+<div class="mt-4 pt-3 border-t border-outline-variant/60">
+<span class="text-label-sm font-label-sm font-bold text-secondary uppercase tracking-wider block mb-2">
+                  Mandir Housekeeping Protocol
+                </span>
+<div class="space-y-2.5 text-body-sm font-body-sm">
+<!-- Step 1: Checked -->
+<label class="flex items-center gap-3 p-2 rounded-lg bg-surface-container-lowest border border-outline-variant/60 cursor-pointer hover:bg-surface-container-lowest/80 transition-colors">
+<input checked="" class="w-4 h-4 rounded text-primary-container focus:ring-primary-container border-outline-variant" type="checkbox"/>
+<span class="line-through text-secondary font-medium">Remove old linens &amp; deposit in laundry bin</span>
+<span class="material-symbols-outlined text-xs text-tertiary ml-auto" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</label>
+<!-- Step 2: Checked -->
+<label class="flex items-center gap-3 p-2 rounded-lg bg-surface-container-lowest border border-outline-variant/60 cursor-pointer hover:bg-surface-container-lowest/80 transition-colors">
+<input checked="" class="w-4 h-4 rounded text-primary-container focus:ring-primary-container border-outline-variant" type="checkbox"/>
+<span class="line-through text-secondary font-medium">Sanitize mattress surface &amp; vacuum bed area</span>
+<span class="material-symbols-outlined text-xs text-tertiary ml-auto" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</label>
+<!-- Step 3: Pending -->
+<label class="flex items-center gap-3 p-2 rounded-lg bg-surface-container-lowest border border-outline-variant/60 cursor-pointer hover:bg-surface-container-lowest/80 transition-colors">
+<input class="w-4 h-4 rounded text-primary-container focus:ring-primary-container border-outline-variant" type="checkbox"/>
+<span class="text-on-surface font-semibold">Put fresh mandir bedding kit (White sheet + Kambal)</span>
+<span class="px-1.5 py-0.5 rounded bg-primary-fixed text-on-primary-fixed text-xs font-bold ml-auto">Kit #402</span>
+</label>
+<!-- Step 4: Pending -->
+<label class="flex items-center gap-3 p-2 rounded-lg bg-surface-container-lowest border border-outline-variant/60 cursor-pointer hover:bg-surface-container-lowest/80 transition-colors">
+<input class="w-4 h-4 rounded text-primary-container focus:ring-primary-container border-outline-variant" type="checkbox"/>
+<span class="text-on-surface font-semibold">Restock water bottle, fresh towel &amp; tilak box</span>
+</label>
+</div>
+<!-- Complete Action Button -->
+<button class="w-full mt-4 py-2.5 px-4 rounded-lg bg-tertiary hover:bg-tertiary-container text-on-primary text-label-md font-label-md font-bold transition-all shadow-sm flex items-center justify-center gap-2 active:scale-98">
+<span class="material-symbols-outlined text-base">verified</span>
+<span>Mark Ready for Next Guest</span>
+</button>
+</div>
+</div>
+<!-- Secondary Queue Items List -->
+<div class="mt-4 pt-3 border-t border-outline-variant/50 space-y-2">
+<span class="text-label-sm font-label-sm font-semibold text-secondary uppercase tracking-wider block">
+                Next in Turnover Queue
+              </span>
+<!-- Queue item 2 -->
+<div class="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/70 flex items-center justify-between hover:border-primary-container/40 transition-colors">
+<div class="flex items-center gap-2.5">
+<span class="w-7 h-7 rounded-full bg-rose-100 text-rose-800 flex items-center justify-center text-xs font-bold">2</span>
+<div>
+<h5 class="text-label-md font-label-md font-bold text-on-surface">Room 101 • Bed 4</h5>
+<p class="text-label-sm font-label-sm text-secondary">Block A (Sant Wing) • Vacated 11:30 AM</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-label-sm font-label-sm text-secondary block">Assigned</span>
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">Harshil V.</span>
+</div>
+</div>
+<!-- Queue item 3 -->
+<div class="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/70 flex items-center justify-between hover:border-primary-container/40 transition-colors">
+<div class="flex items-center gap-2.5">
+<span class="w-7 h-7 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-xs font-bold">3</span>
+<div>
+<h5 class="text-label-md font-label-md font-bold text-on-surface">Room 208 • Bed 1</h5>
+<p class="text-label-sm font-label-sm text-secondary">Block B (Family Wing) • Vacated 12:00 PM</p>
+</div>
+</div>
+<div class="text-right">
+<button class="px-2 py-1 rounded bg-surface-container text-primary-container text-label-sm font-label-sm font-semibold hover:bg-surface-container-high transition-colors">
+                    Assign Sevak
+                  </button>
+</div>
+</div>
+<!-- Queue item 4 -->
+<div class="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/70 flex items-center justify-between hover:border-primary-container/40 transition-colors">
+<div class="flex items-center gap-2.5">
+<span class="w-7 h-7 rounded-full bg-surface-container text-secondary flex items-center justify-center text-xs font-bold">4</span>
+<div>
+<h5 class="text-label-md font-label-md font-bold text-on-surface">Room 312 • Bed 3 &amp; 4</h5>
+<p class="text-label-sm font-label-sm text-secondary">Block C (Yuvak Wing) • Departure at 13:00</p>
+</div>
+</div>
+<div class="text-right">
+<span class="text-label-sm font-label-sm text-secondary">Pending Exit</span>
+</div>
+</div>
+</div>
+<!-- Linen Inventory Status Footer -->
+<div class="mt-4 pt-3 border-t border-outline-variant/60 bg-surface-container-low/60 -mx-5 -mb-5 p-4 rounded-b-xl">
+<div class="flex items-center justify-between text-label-sm font-label-sm">
+<span class="text-secondary font-medium flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-primary-container">inventory_2</span>
+<span>Campus Linen Stock: <strong>180 Fresh Kits Ready</strong></span>
+</span>
+<span class="text-primary font-bold cursor-pointer hover:underline">Reorder Kits</span>
+</div>
+</div>
+</div>
+<!-- DEVOTEE PAIRING HARMONY HELPER CARD -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-4 shadow-sm">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="lightbulb">lightbulb</span>
+<h4 class="text-headline-sm font-headline-sm text-on-surface">Pairing Guidance Standards</h4>
+</div>
+<p class="text-secondary text-label-sm font-label-sm mb-3">
+              To honor mandir maryada and guest comfort, adhere to the following seating &amp; rooming algorithm parameters:
+            </p>
+<ul class="space-y-1.5 text-label-sm font-label-sm text-on-surface">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-tertiary">check</span>
+<span><strong>Age Proximity:</strong> Keep roommate gap within ±8 years where possible.</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-tertiary">check</span>
+<span><strong>Linguistic Comfort:</strong> Pair primary Gujarati / Hindi speakers jointly.</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-tertiary">check</span>
+<span><strong>Home Mandir Cohorts:</strong> Group overseas yatris by chapter for morning seva commute.</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- FLOATING STATUS BANNER FOR REFRESH VOLUNTEERS (MOBILE / QUICK GLANCE) -->
+<div class="md:hidden fixed bottom-3 left-3 right-3 bg-inverse-surface text-inverse-on-surface p-3 rounded-xl shadow-lg flex items-center justify-between z-40 border border-outline/30">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-error animate-pulse"></span>
+<span class="text-body-sm font-body-sm font-semibold">14 Linen Tasks Pending</span>
+</div>
+<button class="px-3 py-1 bg-primary-container text-on-primary rounded-lg text-label-sm font-label-sm font-bold">
+      Open Refresh
+    </button>
+</div>
+<script>
+    // Lightweight micro-interaction script for the interactive checklist
+    document.addEventListener('DOMContentLoaded', () => {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const textSpan = e.target.parentElement.querySelector('span');
+          if (textSpan) {
+            if (e.target.checked) {
+              textSpan.classList.add('line-through', 'text-secondary');
+              textSpan.classList.remove('text-on-surface', 'font-semibold');
+            } else {
+              textSpan.classList.remove('line-through', 'text-secondary');
+              textSpan.classList.add('text-on-surface', 'font-semibold');
+            }
+          }
+        });
+      });
+    });
+  </script>
+</body></html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mandir Hospitality - Transport Dispatch</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline-variant": "#ddc1b3",
+            "on-background": "#0b1c30",
+            "primary-fixed-dim": "#ffb68e",
+            "secondary-container": "#d5e0f8",
+            "surface-dim": "#cbdbf5",
+            "outline": "#897267",
+            "tertiary-fixed": "#85f8c4",
+            "tertiary": "#006444",
+            "primary": "#903f00",
+            "on-secondary-fixed-variant": "#3c475a",
+            "on-primary": "#ffffff",
+            "on-surface-variant": "#564338",
+            "on-tertiary-fixed-variant": "#005137",
+            "surface-container-high": "#dce9ff",
+            "secondary-fixed": "#d8e3fb",
+            "secondary-fixed-dim": "#bcc7de",
+            "on-primary-fixed-variant": "#763300",
+            "error-container": "#ffdad6",
+            "on-tertiary": "#ffffff",
+            "inverse-primary": "#ffb68e",
+            "surface-container-highest": "#d3e4fe",
+            "surface": "#f8f9ff",
+            "surface-variant": "#d3e4fe",
+            "primary-fixed": "#ffdbca",
+            "surface-container": "#e5eeff",
+            "on-secondary-container": "#586377",
+            "surface-container-low": "#eff4ff",
+            "background": "#f8f9ff",
+            "on-surface": "#0b1c30",
+            "surface-bright": "#f8f9ff",
+            "primary-container": "#b45309",
+            "on-tertiary-fixed": "#002114",
+            "surface-container-lowest": "#ffffff",
+            "error": "#ba1a1a",
+            "on-secondary-fixed": "#111c2d",
+            "on-primary-container": "#fff1eb",
+            "on-secondary": "#ffffff",
+            "on-tertiary-container": "#ccffe3",
+            "surface-tint": "#9b4500",
+            "on-error": "#ffffff",
+            "tertiary-fixed-dim": "#68dba9",
+            "on-primary-fixed": "#331200",
+            "inverse-surface": "#213145",
+            "inverse-on-surface": "#eaf1ff",
+            "tertiary-container": "#007f58",
+            "secondary": "#545f73",
+            "on-error-container": "#93000a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "margin": "1rem",
+            "space-md": "1rem",
+            "gutter-lg": "1.5rem",
+            "margin-lg": "2rem",
+            "space-lg": "1.5rem",
+            "margin-md": "1.5rem",
+            "space-sm": "0.5rem",
+            "gutter": "1rem",
+            "gutter-md": "1.5rem",
+            "space-xl": "2rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "data-tabular": ["Inter"],
+            "label-sm": ["Inter"],
+            "headline-lg-mobile": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "body-sm": ["Inter"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "label-md": ["Inter"],
+            "body-md": ["Inter"],
+            "label-lg": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-sm": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "data-tabular": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+            "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+            "headline-lg-mobile": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "headline-md": ["18px", {"lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "headline-xl-mobile": ["26px", {"lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+            "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+            "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+            "label-lg": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "headline-sm": ["15px", {"lineHeight": "22px", "fontWeight": "600"}]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-on-background min-h-screen antialiased flex justify-center selection:bg-primary-fixed selection:text-primary">
+<!-- Mobile Viewport Wrapper (390px - 430px optimal) -->
+<div class="w-full max-w-md min-h-screen bg-background flex flex-col pb-24 shadow-sm relative overflow-x-hidden">
+<!-- TopAppBar (from Shared Components JSON) -->
+<header class="docked full-width top-0 sticky z-40 bg-surface-container-lowest dark:bg-inverse-surface shadow-sm border-b border-outline-variant/30 flex justify-between items-center w-full px-space-md py-space-sm h-14">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary text-[24px]" data-icon="temple_hindu">temple_hindu</span>
+<span class="text-headline-md font-headline-md text-primary dark:text-inverse-primary tracking-tight">Mandir Hospitality</span>
+</div>
+<div class="flex items-center space-x-1">
+<button aria-label="Notifications" class="p-2 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-inverse-surface hover:text-primary rounded-full transition-all duration-150 active:opacity-80 flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<!-- Sub-header Operational Bar -->
+<section class="px-space-md pt-3 pb-2 flex items-center justify-between">
+<div>
+<div class="flex items-center space-x-1.5">
+<span class="inline-block w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold uppercase tracking-wider">Live Sevak Feed</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mt-0.5">Transport Dispatch</h1>
+</div>
+<div class="flex items-center bg-surface-container px-2 py-1 rounded-xl border border-secondary-container">
+<span class="material-symbols-outlined text-secondary text-[16px] mr-1" data-icon="flight_takeoff">flight_takeoff</span>
+<span class="font-data-tabular text-data-tabular text-on-surface">T2 Intl Hub</span>
+</div>
+</section>
+<!-- Main Content Canvas -->
+<main class="px-space-md space-y-4">
+<!-- Automated Recommendation Banner Card -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-3.5 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 w-24 h-24 bg-primary-fixed/20 rounded-full blur-2xl pointer-events-none -mr-6 -mt-6"></div>
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center space-x-1.5 text-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="schedule">schedule</span>
+<span class="font-label-md text-label-md uppercase tracking-wider font-bold">Departure Leave Time</span>
+</div>
+<span class="bg-surface-container px-2 py-0.5 rounded-full font-label-sm text-label-sm text-secondary flex items-center">
+<span class="material-symbols-outlined text-[13px] mr-0.5" data-icon="sync">sync</span> Auto-calculated
+          </span>
+</div>
+<div class="flex items-baseline justify-between py-1">
+<div>
+<div class="font-headline-xl-mobile text-headline-xl-mobile text-primary font-bold tracking-tight">Leave Mandir: 15:20 Sharp</div>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">Recommended dispatch for Pujya Santo Mandal departure</p>
+</div>
+</div>
+<!-- Step Breakdown Metric Pills -->
+<div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-outline-variant/30">
+<div class="bg-surface-container-low rounded-lg p-2 text-center border border-outline-variant/20">
+<span class="font-label-sm text-label-sm text-secondary block">Drive</span>
+<span class="font-data-tabular text-data-tabular font-bold text-on-surface">45m</span>
+</div>
+<div class="bg-surface-container-low rounded-lg p-2 text-center border border-outline-variant/20">
+<span class="font-label-sm text-label-sm text-secondary block">Buffer</span>
+<span class="font-data-tabular text-data-tabular font-bold text-on-surface">60m</span>
+</div>
+<div class="bg-surface-container-low rounded-lg p-2 text-center border border-outline-variant/20">
+<span class="font-label-sm text-label-sm text-secondary block">Flight</span>
+<span class="font-data-tabular text-data-tabular font-bold text-primary">17:45</span>
+</div>
+</div>
+</section>
+<!-- Departmental Segmented Filter Toggle -->
+<nav aria-label="Dispatch Type" class="flex bg-surface-container p-1 rounded-xl">
+<button class="flex-1 py-2 px-3 text-center rounded-lg bg-surface-container-lowest font-label-lg text-label-lg text-primary font-bold shadow-sm transition-all duration-150 flex items-center justify-center space-x-1">
+<span>Airport Pickups</span>
+<span class="bg-primary/10 text-primary text-label-sm font-label-sm px-1.5 py-0.5 rounded-full ml-1">14</span>
+</button>
+<button class="flex-1 py-2 px-3 text-center rounded-lg text-secondary font-label-md text-label-md hover:text-on-surface transition-all duration-150 flex items-center justify-center space-x-1">
+<span>Mandir Departures</span>
+<span class="text-secondary text-label-sm font-label-sm px-1.5 py-0.5 rounded-full ml-1">28</span>
+</button>
+</nav>
+<!-- Search & Rapid Filter Toolbar -->
+<div class="flex items-center space-x-2">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-[18px] text-secondary" data-icon="search">search</span>
+<input class="w-full h-[38px] pl-9 pr-3 bg-surface-container-lowest border border-outline-variant/40 rounded-xl font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="Search party, flight or driver..." type="text"/>
+</div>
+<button class="h-[38px] px-3 bg-surface-container-lowest border border-outline-variant/40 rounded-xl flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="tune">tune</span>
+</button>
+</div>
+<!-- Pickup Cards Container -->
+<section class="space-y-3">
+<!-- Card 1: Pujya Santo Mandal -->
+<article class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 shadow-sm space-y-3">
+<!-- Top Row: Flight pill & Status -->
+<div class="flex items-start justify-between">
+<div class="inline-flex items-center space-x-1.5 bg-surface-container-low px-2.5 py-1 rounded-full border border-secondary-container">
+<span class="material-symbols-outlined text-[15px] text-tertiary" data-icon="flight_land">flight_land</span>
+<span class="font-data-tabular text-data-tabular font-semibold text-on-surface">Air India 101</span>
+<span class="text-outline text-[11px]">•</span>
+<span class="font-label-sm text-label-sm text-tertiary font-bold">Landed (14:50)</span>
+</div>
+<!-- Status Badge -->
+<span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-medium bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#065F46] mr-1"></span>
+              Arrived
+            </span>
+</div>
+<!-- Devotee Party Info -->
+<div>
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Pujya Santo Mandal</h3>
+<span class="font-label-md text-label-md text-secondary font-medium bg-surface-container px-2 py-0.5 rounded-lg">3 Pax</span>
+</div>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">Terminal 2 • Gate 4 Arrivals • VIP Sevak Escort</p>
+</div>
+<!-- Driver & Vehicle Attribution Strip -->
+<div class="flex items-center justify-between pt-2 border-t border-outline-variant/20">
+<div class="space-y-1">
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="badge">badge</span>
+<span class="font-label-md text-label-md text-on-surface">Harshil Sevak</span>
+</div>
+<div class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-data-tabular text-[12px]">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="directions_car">directions_car</span>
+                Ford Transit #4
+              </div>
+</div>
+<!-- Call Driver Action Button -->
+<a class="inline-flex items-center justify-center space-x-1.5 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container px-3 py-2 rounded-xl text-primary font-label-md text-label-md font-semibold transition-all shadow-xs active:scale-95" href="tel:+919876543210">
+<span class="material-symbols-outlined text-[18px]" data-icon="call">call</span>
+<span>Call Driver</span>
+</a>
+</div>
+</article>
+<!-- Card 2: London Yuvak Mandal -->
+<article class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 shadow-sm space-y-3">
+<!-- Top Row: Flight pill & Status -->
+<div class="flex items-start justify-between">
+<div class="inline-flex items-center space-x-1.5 bg-surface-container-low px-2.5 py-1 rounded-full border border-secondary-container">
+<span class="material-symbols-outlined text-[15px] text-primary" data-icon="flight_land">flight_land</span>
+<span class="font-data-tabular text-data-tabular font-semibold text-on-surface">British Airways 139</span>
+<span class="text-outline text-[11px]">•</span>
+<span class="font-label-sm text-label-sm text-secondary font-medium">ETA 15:35</span>
+</div>
+<!-- Status Badge -->
+<span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-medium bg-[#FFFBEB] text-[#92400E] border border-[#FDE68A]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#92400E] mr-1"></span>
+              Dispatched
+            </span>
+</div>
+<!-- Devotee Party Info -->
+<div>
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">London Yuvak Mandal</h3>
+<span class="font-label-md text-label-md text-secondary font-medium bg-surface-container px-2 py-0.5 rounded-lg">8 Pax</span>
+</div>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">Terminal 2 • Belt 6 Baggage • Luggage Van Assigned</p>
+</div>
+<!-- Driver & Vehicle Attribution Strip -->
+<div class="flex items-center justify-between pt-2 border-t border-outline-variant/20">
+<div class="space-y-1">
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="badge">badge</span>
+<span class="font-label-md text-label-md text-on-surface">Bhavik Patel</span>
+</div>
+<div class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-data-tabular text-[12px]">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="directions_bus">directions_bus</span>
+                Mercedes Sprinter #2
+              </div>
+</div>
+<!-- Call Driver Action Button -->
+<a class="inline-flex items-center justify-center space-x-1.5 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container px-3 py-2 rounded-xl text-primary font-label-md text-label-md font-semibold transition-all shadow-xs active:scale-95" href="tel:+919876543211">
+<span class="material-symbols-outlined text-[18px]" data-icon="call">call</span>
+<span>Call Driver</span>
+</a>
+</div>
+</article>
+<!-- Card 3: Ahmedabad Vadil Parivar -->
+<article class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 p-4 shadow-sm space-y-3">
+<!-- Top Row: Flight pill & Status -->
+<div class="flex items-start justify-between">
+<div class="inline-flex items-center space-x-1.5 bg-surface-container-low px-2.5 py-1 rounded-full border border-secondary-container">
+<span class="material-symbols-outlined text-[15px] text-tertiary" data-icon="train">train</span>
+<span class="font-data-tabular text-data-tabular font-semibold text-on-surface">Vande Bharat 20901</span>
+<span class="text-outline text-[11px]">•</span>
+<span class="font-label-sm text-label-sm text-tertiary font-bold">Platform 3</span>
+</div>
+<!-- Status Badge -->
+<span class="inline-flex items-center px-2 py-0.5 rounded-full font-label-sm text-label-sm font-medium bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#065F46] mr-1"></span>
+              Arrived
+            </span>
+</div>
+<!-- Devotee Party Info -->
+<div>
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Ahmedabad Vadil Parivar</h3>
+<span class="font-label-md text-label-md text-secondary font-medium bg-surface-container px-2 py-0.5 rounded-lg">4 Pax</span>
+</div>
+<p class="font-body-sm text-body-sm text-secondary mt-0.5">Central Railway Station • West Exit Porch</p>
+</div>
+<!-- Driver & Vehicle Attribution Strip -->
+<div class="flex items-center justify-between pt-2 border-t border-outline-variant/20">
+<div class="space-y-1">
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="badge">badge</span>
+<span class="font-label-md text-label-md text-on-surface">Chirag Sevak</span>
+</div>
+<div class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-data-tabular text-[12px]">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="directions_car">directions_car</span>
+                Toyota Innova #8
+              </div>
+</div>
+<!-- Call Driver Action Button -->
+<a class="inline-flex items-center justify-center space-x-1.5 bg-surface-container-lowest border border-outline-variant hover:bg-surface-container px-3 py-2 rounded-xl text-primary font-label-md text-label-md font-semibold transition-all shadow-xs active:scale-95" href="tel:+919876543212">
+<span class="material-symbols-outlined text-[18px]" data-icon="call">call</span>
+<span>Call Driver</span>
+</a>
+</div>
+</article>
+</section>
+</main>
+<!-- BottomNavBar (from Shared Components JSON: Active 'Transport') -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs docked full-width bottom-0 bg-surface-container-lowest dark:bg-inverse-surface shadow-md border-t border-outline-variant/30">
+<!-- Tab 1: Roster (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-secondary-fixed-dim px-space-sm py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-150 active:scale-95 transition-transform duration-100">
+<span class="material-symbols-outlined text-[24px]" data-icon="badge">badge</span>
+<span class="text-label-sm font-label-sm mt-0.5">Roster</span>
+</button>
+<!-- Tab 2: Transport (Active Tab mapped to page intent) -->
+<button class="flex flex-col items-center justify-center text-primary-container dark:text-primary-fixed bg-surface-container dark:bg-on-secondary-fixed-variant rounded-full px-space-md py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-150 active:scale-95 transition-transform duration-100">
+<span class="material-symbols-outlined text-[24px]" data-icon="local_shipping" data-weight="fill" style="font-variation-settings: 'FILL' 1;">local_shipping</span>
+<span class="text-label-sm font-label-sm mt-0.5 font-bold">Transport</span>
+</button>
+<!-- Tab 3: Rooms (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-secondary-fixed-dim px-space-sm py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-150 active:scale-95 transition-transform duration-100">
+<span class="material-symbols-outlined text-[24px]" data-icon="bed">bed</span>
+<span class="text-label-sm font-label-sm mt-0.5">Rooms</span>
+</button>
+<!-- Tab 4: Kitchen (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-secondary-fixed-dim px-space-sm py-1 hover:text-primary dark:hover:text-primary-fixed transition-colors duration-150 active:scale-95 transition-transform duration-100">
+<span class="material-symbols-outlined text-[24px]" data-icon="restaurant">restaurant</span>
+<span class="text-label-sm font-label-sm mt-0.5">Kitchen</span>
+</button>
+</nav>
+</div>
+</body></html>
