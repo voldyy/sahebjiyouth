@@ -18,7 +18,7 @@ npm run preview
 
 The production build is generated in `dist/` for `https://sahebjiyouth.org/mandir-hospitality/`. `npm run preview` serves it at `/mandir-hospitality/`; development remains at `/`. Navigation uses URL hashes, so hosting does not require route rewrites.
 
-The website repository is `voldyy/sahebjiyouth`. Its `mandir-hospitality/` directory contains the compiled static release, and `mandir-hospitality/source/` contains the editable application. Build from that source directory with `npm ci && npm run build`, then publish the contents of `dist/` to the parent `mandir-hospitality/` directory. The existing registration deployment workflow does not publish this directory; uploading the release to the live website requires a separate hosting deployment.
+The website repository is `voldyy/sahebjiyouth`. Its `mandir-hospitality/` directory contains the compiled static release, and `mandir-hospitality/source/` contains the editable application. Build from that source directory with `npm ci && npm run build`, then publish the contents of `dist/` to the parent `mandir-hospitality/` directory. GitHub Pages publishes the repository root from `main` at `https://www.sahebjiyouth.org/mandir-hospitality/`. The Azure registration workflow is separate.
 
 Production embeds two locally bundled WOFF2 variable fonts in the stylesheet. No external font service or server-side runtime is required. The web manifest uses relative URLs and is scoped to this subdirectory.
 
@@ -42,6 +42,12 @@ Assignments use **AD = lodging location**, **AE = room number**, and **AF = cust
 
 ### Enable authorized assignment writes
 
+Confirmed Samarpan inventory: room 100 has 7 beds; rooms 101–104 have 12 beds each; rooms 204–207 have 4 beds each. The nine rooms total 71 beds. Samarpan assignments select a room and bed; AF automatically becomes `S{room}B{bed}`, for example `S204B1` or `S101B12`. The generated code is read-only. Hotel room numbers and codes remain manual until their naming convention is specified.
+
+Accommodation opens in Weekly view for October 11–17, 2026. Select a room using the scrolling room strip, then navigate six weeks through November 15–21. Bed rows show each night's occupants. Selecting a day header opens Daily view, which shows all nine rooms and 71 beds with unassigned guests for that date above them. Guest list retains hotel assignment and search controls.
+
+Occupancy uses Accommodation In/Out, falling back to arrival/departure dates for missing values. Check-in is inclusive and checkout is exclusive: the checkout day is free for the next guest. A cell assignment covers the selected guest's entire stay, not just the clicked date. The save path rechecks that whole stay against freshly read sheet assignments and rejects changed stay dates or overlapping bed bookings. Missing dates and unrecognized bed codes are flagged for review, not silently marked empty. Assignments with identical beds on overlapping dates are shown as double bookings. These checks do not provide an atomic reservation across concurrent writers; the Sheets API limitation below still applies.
+
 1. In Google Cloud, enable **Google Sheets API** and configure the OAuth consent screen. If the consent app is in Testing, add the staff Google accounts as test users.
 2. Create an OAuth client of type **Web application**. Add the exact hosting origins, e.g. `https://sahebjiyouth.org` and `http://localhost:5173` for local development, as Authorized JavaScript origins. Do not include `/mandir-hospitality/` in an origin. Configure production and preview origins separately if they differ.
 3. Set the public client ID via `VITE_GOOGLE_CLIENT_ID` before building, or enter it in Workspace settings. Never put a client secret or access token in source, browser storage, or the public website. The client ID is safe public configuration.
@@ -51,7 +57,7 @@ Google's `spreadsheets` OAuth scope can grant access to all spreadsheets availab
 
 Read-only loading uses the sheet's existing public visualization access and JSONP; signed-in loading uses the authorized Sheets API. The sheet was readable without authentication during setup. Review its sharing policy if guest data should be private. If public reading is disabled, users must sign in before the roster can load. Refresh is available manually and every minute while the tab is visible. The last successful snapshot remains visible with an error when a refresh fails.
 
-The Sheets values API does not provide an atomic compare-and-swap. Conflict checks protect against changes already present at pre-save read, but simultaneous writers or sorting during the read/write window can still race. Do not sort or rearrange rows while saves are in progress. For concurrent multi-user room reservations, use a backend with serialization and a defined room inventory. This sheet does not specify room capacities, so the live view does not fabricate beds, availability, or codes. A network failure is never automatically retried; refresh and inspect before retrying.
+The Sheets values API does not provide an atomic compare-and-swap. Conflict checks protect against changes already present at pre-save read, but simultaneous writers or sorting during the read/write window can still race. Do not sort or rearrange rows while saves are in progress. Strict concurrent reservation guarantees require a backend with serialization. A network failure is never automatically retried; refresh and inspect before retrying.
 
 Kitchen headcount adjustments remain local to each device. Live transport dispatch plans are session-only and clear on reload, so attendee identities and trip details are not persisted in browser storage. These limits are labeled in settings and the dispatch view. Neither workflow updates the guest sheet. Guest creation and unrelated field editing must happen in the source sheet. Source data lives in memory; explicit CSV/JSON exports may contain personal information and must be handled privately.
 
@@ -64,7 +70,7 @@ The original Stitch HTML, PNGs, and design document are preserved in their exist
 ```sh
 npx playwright install chromium webkit
 npm test
-node --test tests/unit/sheets.test.js
+node --test tests/unit/*.test.js
 npx playwright test --config playwright.sheets.config.js
 ```
 

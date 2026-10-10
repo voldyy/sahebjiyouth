@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { samarpanRooms, samarpanBedCount } from "../../src/lib/lodgingRooms.js";
 import { guestsFromRows, attendeeKey, sheetDate, validateAssignment, writeLodging } from "../../src/lib/sheets.js";
 
 const header = () => { const row = Array(32).fill(""); row[0] = "Registration ID"; row[8] = "Attendee Full Name"; row[29] = "Lodging"; row[30] = "Room No."; row[31] = "Room Code"; return row; };
@@ -66,9 +67,9 @@ test("stale lodging or duplicate attendees cause no write", async (t) => {
   const guest = guestsFromRows([header(), target])[0];
   target[29] = "Hawthorn";
   const google = mockGoogle(t, [header(), target]);
-  await assert.rejects(writeLodging(guest, { lodging: "Samarpan", roomNo: "12", roomCode: "S12" }, "synthetic-token"), /Someone changed/);
+  await assert.rejects(writeLodging(guest, { lodging: "Samarpan", roomNo: "101", roomCode: "S101B1" }, "synthetic-token"), /Someone changed/);
   google.rows.push(structuredClone(target));
-  await assert.rejects(writeLodging(guest, { lodging: "Samarpan", roomNo: "12", roomCode: "S12" }, "synthetic-token"), /duplicated/);
+  await assert.rejects(writeLodging(guest, { lodging: "Samarpan", roomNo: "101", roomCode: "S101B1" }, "synthetic-token"), /duplicated/);
   assert.equal(google.writes.length, 0);
 });
 test("clearing touches only the three lodging fields, and a denied write never reports success", async (t) => {
@@ -86,4 +87,38 @@ test("permission failure does not retry or change the snapshot", async (t) => {
   await assert.rejects(writeLodging(guestsFromRows([header(), target])[0], { lodging: "Hawthorn", roomNo: "007", roomCode: "H007" }, "synthetic-token"), /cannot edit/);
   assert.equal(google.writes.length, 1);
   assert.deepEqual(google.rows[1].slice(29), ["", "", ""]);
+});
+test("confirmed Samarpan inventory contains nine rooms and 71 beds", () => {
+  assert.equal(samarpanBedCount, 71);
+  assert.deepEqual(samarpanRooms.map((r) => r.number), ["100", "101", "102", "103", "104", "204", "205", "206", "207"]);
+  assert.deepEqual(samarpanRooms.map((r) => r.beds), [7, 12, 12, 12, 12, 4, 4, 4, 4]);
+  assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "105", roomCode: "CUSTOM" }), /confirmed Samarpan/);
+  assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "204", roomCode: "S204B1" }), ["Samarpan", "204", "S204B1"]);
+  assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "204", roomCode: "S204B5" }), /valid bed/);
+  assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "204", roomCode: "S205B1" }), /valid bed/);
+  assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "101", roomCode: "S101B12" }), ["Samarpan", "101", "S101B12"]);
+});
+test("Samarpan pre-save validation rejects a bed booked after the dashboard loaded", async (t) => {
+  const target = attendee();
+  const guest = guestsFromRows([header(), target])[0];
+  const occupied = attendee("OTHER", "Other Attendee");
+  occupied.splice(29, 3, "Samarpan", "204", "S204B1");
+  const google = mockGoogle(t, [header(), target, occupied]);
+  await assert.rejects(writeLodging(guest, { lodging: "Samarpan", roomNo: "204", roomCode: "S204B1" }, "synthetic-token"), /occupied during/);
+  assert.equal(google.writes.length, 0);
+});
+test("Samarpan save rejects changed stay dates and permits checkout-day bed reuse", async (t) => {
+  const target = attendee();
+  const guest = guestsFromRows([header(), target])[0];
+  const oldOccupant = attendee("OTHER", "Earlier Attendee");
+  oldOccupant[12] = "10/11/2026";
+  oldOccupant[13] = "10/18/2026";
+  oldOccupant.splice(29, 3, "Samarpan", "204", "S204B1");
+  const google = mockGoogle(t, [header(), target, oldOccupant]);
+  google.rows[1][13] = "10/22/2026";
+  await assert.rejects(writeLodging(guest, { lodging: "Samarpan", roomNo: "204", roomCode: "S204B1" }, "synthetic-token"), /stay dates changed/);
+  assert.equal(google.writes.length, 0);
+  google.rows[1][13] = target[13];
+  await writeLodging(guest, { lodging: "Samarpan", roomNo: "204", roomCode: "S204B1" }, "synthetic-token");
+  assert.equal(google.writes.length, 1);
 });
