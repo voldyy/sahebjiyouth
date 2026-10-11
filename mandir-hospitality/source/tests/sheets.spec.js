@@ -217,7 +217,7 @@ test('transport drivers, vehicles and assignments persist across independent bro
   await vehicleSelect(page).selectOption('Test Van');
   await expect(vehicleSelect(page)).toBeEnabled();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.locator('.transport-journey').first()).toContainText('American Airlines · PHL');
+  await expect(page.locator('.transport-journey').first()).toContainText('American · PHL');
   await expect(page.getByLabel('Driver notes',{exact:true})).toHaveCount(0);
   const context=await browser.newContext({viewport:{width:1280,height:900}});
   await mockBridge(context,harness);
