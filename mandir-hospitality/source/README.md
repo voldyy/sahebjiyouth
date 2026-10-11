@@ -1,88 +1,72 @@
 # Mandir Hospitality
 
-A responsive hospitality website built from the provided Stitch designs. The four tabs are Main, Transport, Accommodations, and Yogi Prasad. The dashboard uses sky blue and soft orange, the supplied Anoopam Mission logo, and Allentown Shri Swaminarayan Mandirji as a plain subtitle.
+A responsive Google Sheets dashboard for Allentown Shri Swaminarayan Mandirji. Admins have Main, Transport, Accommodations, and Yogi Prasad. The Yogi Prasad team has its own restricted meal-planning link. The interface uses the supplied Anoopam Mission logo, sky blue, and soft orange.
 
-## Run locally
+## Development and release
 
 ```sh
 npm install
-npm run dev
-```
-
-Open the URL printed by Vite. To test on a phone connected to the same Wi-Fi, open the printed Network URL.
-
-```sh
+npm run dev -- --port 5174
+npm run build:backend
+npm run test:unit
+npm run test:sheets
 npm run build
-npm run preview
 ```
 
-The production build is generated in `dist/` for `https://sahebjiyouth.org/mandir-hospitality/`. `npm run preview` serves it at `/mandir-hospitality/`; development remains at `/`. Navigation uses URL hashes, so hosting does not require route rewrites.
+Production is `https://www.sahebjiyouth.org/mandir-hospitality/`. Vite builds to `dist/` with that subdirectory as its base. Development serves `/`; preview serves `/mandir-hospitality/`. Hash navigation works on static GitHub Pages hosting.
 
-The website repository is `voldyy/sahebjiyouth`. Its `mandir-hospitality/` directory contains the compiled static release, and `mandir-hospitality/source/` contains the editable application. Build from that source directory with `npm ci && npm run build`, then publish the contents of `dist/` to the parent `mandir-hospitality/` directory. GitHub Pages publishes the repository root from `main` at `https://www.sahebjiyouth.org/mandir-hospitality/`. The Azure registration workflow is separate.
+Publish editable source to `voldyy/sahebjiyouth`, `mandir-hospitality/source/`, and `dist/` contents to `mandir-hospitality/`. Preserve older hashed assets for existing tabs. Never publish `.env.local`, admin links, private credentials, guest exports, browser traces, or the old reference export. The registration application and its separate Apps Script project are unrelated to this dashboard's deployment.
 
-Production embeds two locally bundled WOFF2 variable fonts in the stylesheet. No external font service or server-side runtime is required. The web manifest uses relative URLs and is scoped to this subdirectory.
+## Access
 
-## What works
+The shareable team link is `https://www.sahebjiyouth.org/mandir-hospitality/#kitchen?team=yogi-prasad`. An admin can copy it from Workspace settings. It opens only Yogi Prasad, even in an existing admin tab. Without valid admin access, changing the hash or forging a role cannot unlock other sections.
 
-- Search, status/stay/date filters, sorting, CSV export, and guest registration/editing.
-- Guest check-in and checkout, with onsite checkout creating housekeeping tasks.
-- Driver assignment with vehicle-capacity checks, dispatch, completion, and new journeys.
-- Onsite and offsite room assignments with capacity validation, bed availability, room release, and linen preparation.
-- Breakfast/lunch/dinner forecasts based on guest arrival times and stay dates, with editable volunteer/walk-in estimates and preparation buffers saved independently for each day.
-- Swipeable planning dates, previous/next day navigation, a Today shortcut, calendar selection, and date-specific plan exports. Future dates start with no additional volunteer/walk-in estimates until entered.
-- Guest activity, browser persistence, guest backup download, keyboard-accessible dialogs, reduced-motion support, and mobile bottom navigation.
+Full access uses a private link with an `admin` parameter in the URL fragment. The key is generated on the backend and stored in the Apps Script property `ADMIN_ACCESS_KEY`. The frontend consumes it into this tab's session storage and removes it from the address bar. It is never bundled in source or production assets. Possession grants admin access, so share this link only with admins. Rotating the script property invalidates old links. No Google sign-in is required for dashboard users.
 
-Mobile screens use compact summaries and readable cards, 44px primary touch targets, 16px form controls, safe-area spacing, and native date/time inputs. Fonts are served locally. Secondary workspaces load on demand.
+The backend checks the key on every lodging, transport, resource, flight, offsite, and linen action. Anonymous snapshots contain only the dates/counts needed for meal forecasts, not the guest roster, contact information, transport plans, room inventory, or housekeeping records. Source-sheet link sharing must remain **Viewer**, with named editors retained. Anonymous source-sheet editing would bypass dashboard restrictions.
 
-## Data and production integration
+Yogi Prasad headcount adjustments remain device-local; they do not change other dashboard sections or the source sheet.
 
-The default workspace reads the guest roster from Google Sheets document `1YvVz4DyPZYTYtKC9qiDlEXsPd7Xz4DPNJIoe3NBkYMA`, tab `gid=0`. Each attendee row is one person, not a party headcount. Arrival/departure, airport needs, dietary notes and current lodging come from the sheet. Blank accommodation answers are treated as pending, not as a definite day visitor. Check-in/check-out is not recorded in this sheet and is not inferred from RSVP status. Attendees missing arrival or departure dates are excluded from date-specific kitchen forecasts with an explicit warning.
+## Source data
 
-Assignments use **AD = lodging location**, **AE = room number**, and **AF = custom room code**. Choose Samarpan, Comfort Inn, or Hawthorn and enter both identifiers in Accommodation. Identifiers are written as literal text, preserving leading zeroes. All other cells are read-only. Assignment saves re-read the source, match registration ID + attendee name + relationship, reject removed/ambiguous identities and changed lodging, update only that row's AD–AF range, and read back to confirm the values. Assignment edits and clearing use the same path. No real guest data is embedded in the static build or automatically cached in localStorage.
+The roster is Google Sheets document `1YvVz4DyPZYTYtKC9qiDlEXsPd7Xz4DPNJIoe3NBkYMA`, attendee tab `gid=0`. Each row is one attendee. Registration ID + attendee name + relationship identifies a row independently of sorting. Removed or duplicate identities and stale edits are rejected. Direct sheet edits bypass the app's lock, so avoid rearranging rows while saving.
 
-### Shared assignment editing (no Google sign-in)
+Lodging uses **AD = location**, **AE = hotel/room number**, **AF = bed code**. Assignment writes preserve literal text and leading zeroes. Guest data stays in memory and is not embedded in the static build. Other registration edits remain in Sheets. Explicit RSVP values `Departed` and `Checked out` are recognized; changing scheduled checkout dates is necessary for date-driven linen tracking.
 
-The live dashboard uses a dedicated Google Apps Script web app that executes as the owner. Visitors do not need a Google account. The endpoint is deliberately public: anyone who can access the dashboard can change room and transport assignments. The server fixes the spreadsheet ID, limits supported actions, validates inputs, checks stale edits, and serializes dashboard saves with a script lock. Direct edits and sorting in the sheet bypass this lock; avoid rearranging source rows during active saves.
+Travel choices include `CAR`, `FLIGHT`, `BUS`, and `Bus (arrival)`. The last applies only to arrivals; it does not infer a bus return. Location ABE is supported for bus pickup. Bus journeys do not invoke flight lookup or display flight trackers.
 
-Samarpan has rooms 204–207 (4 beds each), then room 100 (7 beds), and 101–104 (12 beds each): 71 beds total. Assignments use AD–AF only. Codes are generated as `S{room}B{bed}`. Hotel room identifiers remain manual and are stored as literal text. Occupancy includes check-in and excludes checkout. A booking covers the guest's whole stay; the backend rechecks fresh dates and conflicts before writing. The six weekly calendars run October 11 through November 21, 2026. The unassigned guests panel sits directly above the weekly calendar.
+## Accommodations
 
-Airport Trips combines arrivals and departures in one compact chronological list: guests are grouped by flight, airport, date, and direction, with shared driver/vehicle lists, guest names with city/state and tappable phone numbers, search and filters. Select a driver and use **Copy driver link**, or append `#transport?driver=Driver+Name` to the website URL. Driver links support spaces, special characters, case-insensitive matching, and reopening after refresh. These links filter the shared dashboard; they do not change editing permissions. Unknown flights stay separated by registration. Driver and vehicle dropdowns appear directly on each trip card and save on selection, with confirmation or a visible error. Pickup time, journey status, and notes are not shown in this interface; existing stored values remain available in the sheet. Flight services are labeled Airline followed by their airport code.
+The top selector switches between **Samarpan**, **Offsite**, and **Housekeeping**.
 
-The backend creates three dedicated tabs without changing the registration workflow:
+Samarpan has rooms 204–207 (4 beds each), 100 (7 beds), and 101–104 (12 beds each), totaling 71 beds. Generated codes are `S{room}B{bed}`. Weekly view covers six Sunday–Saturday weeks from October 11 through November 21, 2026. Daily view displays every room in the selected location. Guest list supports search and assignment editing.
 
-- `Transport Assignments`: service and guest details, driver, vehicle, pickup time, status, notes, revision and request ID.
-- `Transport Resources`: active and archived driver/vehicle names. Resources assigned to unfinished journeys cannot be archived.
-- `Assignment History`: request ID, timestamp and before/after values. Since users are anonymous, this records changes rather than verified editor identities.
+Offsite offers **Comfort Inn** and **Hilton Garden Inn**, with the same weekly, daily, and guest-list views. Admins add a provisional planning room and its planned bed count; no inventory is invented. The hotel room number is optional. Until confirmed, AE stays blank and AF uses a stable internal bed code. Editing the planning room to add its actual number updates its assigned guests' AE values while retaining bed codes and stay dates. Assigned beds cannot be removed from inventory.
 
-The browser receives a confirmed fresh snapshot after each save, refreshes every minute while visible, and refreshes when returning to the tab. Assignment data stays in memory. Separate devices share the same sheet. Failed saves remain visible and are never retried automatically. Request IDs prevent duplicate processing of the same request.
+Drag an unassigned guest card onto a bed row to assign their entire stay, regardless of the drop date. Feedback previews the stay and flags conflicts. Tapping a guest or empty bed opens the assignment form as an alternative for touch and keyboard use. Both frontend and backend check the entire stay using fresh dates. Check-in is inclusive and checkout exclusive. Missing dates or unknown bed codes are flagged instead of advertising affected beds as empty.
 
-#### Backend setup and release
+Housekeeping records linen tasks for assigned Samarpan beds when the accommodation checkout date arrives in **America/New_York**. Accommodation dates take precedence, with arrival/departure fallback. This uses scheduled dates, not physical checkout detection. Correct an early departure or extension in the source sheet. Each checkout has its own record. Outstanding tasks survive clearing or moving the lodging assignment; a corrected stay supersedes its old pending scheduled checkout. **Linens refreshed** records completion in the sheet, survives reloads, and rejects stale checkout lists. The next guest's checkout creates a new task.
 
-1. Run `node scripts/build-apps-script.mjs` to bundle shared validation and server code into `apps-script/Code.gs`.
-2. Save it in a **separate** Apps Script project. The existing registration project must remain intact.
-3. Deploy as a Web app: **Execute as Me**, **Who has access: Anyone**. The owner must authorize Google Sheets access. The flight lookup also needs permission for external requests.
-4. Set the public deployment URL as `VITE_APPS_SCRIPT_URL` and build the website. It must end in `/exec`.
-5. For future backend changes, edit the existing deployment and select a new version to preserve the URL.
+## Transport and Yogi Prasad
 
-The website remains on GitHub Pages. A hidden Apps Script HTML frame uses `google.script.run`, with a source/origin-checked, random `postMessage` channel to the website. This avoids unconfirmed `no-cors` saves and keeps Google authorization out of visitors' browsers. The allowed parent origins are listed in `apps-script/server.js`; they are a browser bridge restriction, not an authentication boundary for this deliberately public backend.
+Airport Trips combines arrivals and departures chronologically. Groups use direction, date, airport and flight/service. Unknown services remain separated by registration. Names include supplied city/state and phone links. Inline driver/vehicle selectors save on selection. Driver URLs such as `#transport?driver=Driver+Name` filter the admin view and still require admin access.
 
-FlightStats lookups run only on the flight day, with a five-minute server cache and manual refresh. Keep `FLIGHTSTATS_APP_ID` and `FLIGHTSTATS_APP_KEY` in Apps Script **Script properties**, never in source or browser configuration. The UI reports provider failures and offers an external flight tracker instead of inventing live status. No guest names or contact details are sent to FlightStats.
+FlightStats lookups run only on flight day, with a five-minute server cache. Keep `FLIGHTSTATS_APP_ID` and `FLIGHTSTATS_APP_KEY` in private Apps Script properties. No guest data is sent to the provider.
 
-Kitchen adjustments remain local to each device. Attendee creation and edits outside lodging must still happen in the source sheet. CSV/JSON exports may contain guest contact information and should be handled privately.
+Yogi Prasad forecasts breakfast, lunch, and dinner from attendee dates and arrival times. Undated attendees are excluded with a warning. Volunteer/walk-in counts and preparation buffers are saved per day on the current device. Plan export is available to the team.
 
-Set `VITE_DEMO_MODE=true` to run the original sample-data workspace with its sample room inventory, device-local check-in and housekeeping. Demo and live dispatch/kitchen data use separate storage keys. Do not use the demo as the system of record for real guest data.
+## Shared backend
 
-The original Stitch HTML, PNGs, and design document are preserved in their existing folders.
+The existing **Mandir Hospitality Shared Editing** Apps Script project executes as the owner and serves Anyone. Update this project, not the registration project. `npm run build:backend` generates `apps-script/Code.gs`. Update the existing Web app deployment to a new version to preserve its URL; the static website release does not update Apps Script automatically.
+
+For first-time setup, invoke the private `setupHospitality_` helper from an editor-only temporary wrapper. It creates shared tabs and generates `ADMIN_ACCESS_KEY` only if absent. The private `showAdminLink_` helper logs the admin URL in the owner's editor. Remove any temporary wrapper before deploying. Apps Script hides underscore helpers from the public RPC interface and the normal function picker. Existing deployments retain the key when code is updated. Never return the key through `hospitalityRequest`.
+
+Shared tabs are `Transport Assignments`, `Transport Resources`, `Assignment History`, `Offsite Rooms`, and `Housekeeping`. Request IDs, a script lock, stale checks, literal writes and readback confirmation protect saves. History records changes, not verified personal identities. The browser refreshes every minute while visible and on returning to the tab.
+
+The browser uses an Apps Script iframe with nonce/source/origin-checked postMessage RPC. These checks protect message transport; the server's access-key check supplies authorization. `VITE_APPS_SCRIPT_URL` can override the public `/exec` endpoint. Local bridge origins are localhost/127.0.0.1 on port 5174.
 
 ## Verification
 
-```sh
-npx playwright install chromium webkit
-npm test
-node --test tests/unit/*.test.js
-npx playwright test --config playwright.sheets.config.js
-```
+Unit tests cover backend permissions, stale writes, room conflicts, provisional numbering, successive checkout/linen cycles, date corrections, Allentown day boundaries and bus travel. Sheets Playwright tests exercise Chromium and WebKit with synthetic records and a mocked backend, including real pointer drags, responsive views, persistent saves and team restrictions. They never change real guest assignments.
 
-Playwright exercises mobile navigation, responsive widths, registration, persistence, check-in, checkout-to-housekeeping, onsite/offsite assignment, dispatch, and kitchen day planning on Chromium and WebKit. Kitchen checks cover future dates, year boundaries, day visitors, arrival/departure cutoffs and isolated per-day adjustments. It starts a local server automatically if needed.
-
-The Sheets tests execute the bundled Apps Script backend against synthetic sheets and connect it to mocked browser frames. They exercise anonymous room saves and shared transport updates across independent browser contexts. They never modify real guest records. Verify the deployed bridge and a reversible resource save before publishing a backend release.
+`VITE_DEMO_MODE=true` and `npm test` use the separate original sample-data workspace. Its registration, check-in, dispatch and housekeeping behavior is device-local and is not the live system of record.

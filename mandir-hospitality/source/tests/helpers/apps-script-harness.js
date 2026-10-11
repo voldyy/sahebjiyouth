@@ -1,9 +1,12 @@
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
+export const TEST_ADMIN_KEY = "test-admin-private-key";
 export function createHarness(initialRows, denied = false) {
+  const properties = new Map([["ADMIN_ACCESS_KEY", TEST_ADMIN_KEY]]);
   const writes=[], sheets=new Map();
   let locked=false;
+  let today = "2026-10-10";
   class Sheet {
     constructor(name,rows=[],id=1){this.name=name;this.rows=rows;this.id=id;}
     getSheetId(){return this.id;}
@@ -29,7 +32,7 @@ export function createHarness(initialRows, denied = false) {
   }
   sheets.set('Attendees',new Sheet('Attendees',structuredClone(initialRows),0));
   const book={getSheets:()=>[...sheets.values()],getSheetByName:name=>sheets.get(name),insertSheet:name=>{const s=new Sheet(name);sheets.set(name,s);return s;}};
-  const context=vm.createContext({console,Date,JSON,Map,Set,URL,SpreadsheetApp:{openById:()=>book,flush:()=>{}},Utilities:{getUuid:randomUUID,formatDate:()=>new Date().toISOString().slice(0,10)},LockService:{getScriptLock:()=>({tryLock(){if(locked)return false;locked=true;return true;},hasLock:()=>locked,releaseLock(){locked=false;}})},PropertiesService:{getScriptProperties:()=>({getProperty:()=>null})}});
+  const context=vm.createContext({console,Date,JSON,Map,Set,URL,SpreadsheetApp:{openById:()=>book,flush:()=>{}},Utilities:{getUuid:randomUUID,formatDate:()=>today},LockService:{getScriptLock:()=>({tryLock(){if(locked)return false;locked=true;return true;},hasLock:()=>locked,releaseLock(){locked=false;}})},PropertiesService:{getScriptProperties:()=>({getProperty:key=>properties.get(key),setProperty:(key,value)=>properties.set(key,value)})}});
   vm.runInContext(readFileSync(new URL('../../apps-script/Code.gs',import.meta.url),'utf8'),context);
-  return {sheets,writes,rows:sheets.get('Attendees').rows,request:req=>JSON.parse(JSON.stringify(context.hospitalityRequest(req))),setLocked:value=>{locked=value;}};
+  return {sheets,writes,properties,rows:sheets.get('Attendees').rows,request:req=>JSON.parse(JSON.stringify(context.hospitalityRequest({accessKey:TEST_ADMIN_KEY,...req}))),setLocked:value=>{locked=value;},setToday:value=>{today=value;}};
 }

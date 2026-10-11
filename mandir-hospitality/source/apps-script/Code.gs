@@ -22,7 +22,8 @@ var Hospitality = (() => {
   __export(server_exports, {
     doGet: () => doGet,
     hospitalityRequest: () => hospitalityRequest,
-    setupHospitality: () => setupHospitality
+    setupHospitality: () => setupHospitality,
+    showAdminLink: () => showAdminLink
   });
 
   // src/lib/lodgingRooms.js
@@ -43,6 +44,13 @@ var Hospitality = (() => {
     const bed = Number(bedNo);
     if (!room || !Number.isInteger(bed) || bed < 1 || bed > room.beds) return "";
     return `S${room.number}B${bed}`;
+  }
+
+  // src/lib/offsite.js
+  var OFFSITE_HOTELS = ["Comfort Inn", "Hilton Garden Inn"];
+  var offsiteBedCode = (room, bed) => `O${room.id}B${bed}`;
+  function offsiteRoomFor(guest, rooms) {
+    return rooms.find((room) => room.lodging === guest.lodging && new RegExp(`^O${room.id}B[1-9]\\d*$`).test(guest.roomCode || ""));
   }
 
   // src/lib/occupancy.js
@@ -66,33 +74,47 @@ var Hospitality = (() => {
   function overlaps(a, b) {
     return !!a && !!b && a.start < b.end && b.start < a.end;
   }
-  function bedForGuest(guest) {
-    if (guest.lodging !== "Samarpan") return null;
+  function bedForGuest(guest, rooms = []) {
+    if (guest.lodging !== "Samarpan") {
+      const room = offsiteRoomFor(guest, rooms);
+      const bed2 = Number(String(guest.roomCode || "").match(/B([1-9]\d*)$/)?.[1]);
+      return room && bed2 >= 1 && bed2 <= room.beds ? bed2 : null;
+    }
     const bed = String(guest.roomCode || "").match(/^S\d+B([1-9]\d*)$/)?.[1];
     return bed && samarpanRoomCode(guest.roomNo, bed) === guest.roomCode ? Number(bed) : null;
   }
   var sameGuest = (a, b) => (a.sourceIdentity || a.id) === (b.sourceIdentity || b.id);
-  function bedState(guests, roomNo, bedNo, range, exceptGuest = null) {
+  function bedState(guests, roomNo, bedNo, range, exceptGuest = null, lodging2 = "Samarpan", rooms = []) {
     const occupants = [];
     const uncertain = [];
     for (const guest of guests) {
-      if (!needsLodging(guest) || guest.lodging !== "Samarpan" || String(guest.roomNo) !== String(roomNo) || exceptGuest && sameGuest(guest, exceptGuest)) continue;
+      if (!needsLodging(guest) || guest.lodging !== lodging2 || exceptGuest && sameGuest(guest, exceptGuest)) continue;
+      if (lodging2 === "Samarpan") {
+        if (String(guest.roomNo) !== String(roomNo)) continue;
+      } else {
+        const target = rooms.find((r) => r.id === roomNo && r.lodging === lodging2);
+        const assigned = offsiteRoomFor(guest, rooms);
+        if (!target || (assigned ? assigned.id !== target.id : !target.roomNo || guest.roomNo !== target.roomNo)) continue;
+      }
       const stay = stayRange(guest);
       if (stay && !overlaps(stay, range)) continue;
-      const bed = bedForGuest(guest);
+      const bed = bedForGuest(guest, rooms);
       if (bed !== null && bed !== Number(bedNo)) continue;
       if (!stay || bed === null) uncertain.push(guest);
       else occupants.push(guest);
     }
     return { occupants, uncertain, free: occupants.length === 0 && uncertain.length === 0 };
   }
-  function assignmentIssue(guests, guest, assignment) {
-    if (assignment.lodging !== "Samarpan") return "";
+  function assignmentIssue(guests, guest, assignment, rooms = []) {
+    if (assignment.lodging !== "Samarpan" && !OFFSITE_HOTELS.includes(assignment.lodging)) return "";
+    const hotelRoom = offsiteRoomFor(assignment, rooms);
+    if (assignment.lodging !== "Samarpan" && !hotelRoom) return "Choose a hotel room and bed from the Offsite inventory.";
     const range = stayRange(guest);
     if (!range) return "Add valid accommodation or arrival/departure dates in the source sheet before assigning a bed.";
-    const bed = bedForGuest(assignment);
+    const bed = bedForGuest(assignment, rooms);
     if (!bed) return "Choose a valid room and bed.";
-    const state = bedState(guests, assignment.roomNo, bed, range, guest);
+    if (hotelRoom && (assignment.roomNo !== hotelRoom.roomNo || assignment.roomCode !== offsiteBedCode(hotelRoom, bed))) return "The hotel room changed. Refresh before assigning.";
+    const state = bedState(guests, hotelRoom?.id || assignment.roomNo, bed, range, guest, assignment.lodging, rooms);
     if (state.uncertain.length) return `Room ${assignment.roomNo} has an assignment with missing dates or an unrecognized bed code. Review it before assigning this bed.`;
     if (state.occupants.length) return `${assignment.roomCode} is occupied during this guest\u2019s stay. Choose another bed.`;
     return "";
@@ -102,7 +124,7 @@ var Hospitality = (() => {
   var SPREADSHEET_ID = "1YvVz4DyPZYTYtKC9qiDlEXsPd7Xz4DPNJIoe3NBkYMA";
   var SHEET_GID = 0;
   var SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit#gid=${SHEET_GID}`;
-  var LODGING_LOCATIONS = ["Samarpan", "Comfort Inn", "Hawthorn"];
+  var LODGING_LOCATIONS = ["Samarpan", ...OFFSITE_HOTELS];
   var API = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`;
   var HEADERS = { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" };
   var text = (value) => String(value ?? "").trim();
@@ -179,7 +201,7 @@ var Hospitality = (() => {
         departureFlight: text(row[17]),
         accommodationIn: lodgingIn.date,
         accommodationOut: lodgingOut.date,
-        status: /^cancel/i.test(rsvp) ? "Cancelled" : "Registered",
+        status: /^cancel/i.test(rsvp) ? "Cancelled" : /^(departed|checked out)$/i.test(rsvp) ? "Departed" : "Registered",
         rsvpStatus: rsvp,
         stay: lodging2[0] || (/^(NO|N|FALSE)$/.test(overnight) ? "Day visitor" : "Pending lodging"),
         lodging: lodging2[0],
@@ -197,7 +219,8 @@ var Hospitality = (() => {
   function validateAssignment(assignment) {
     const values = [text(assignment.lodging), text(assignment.roomNo), text(assignment.roomCode)];
     if (values.every((v) => v === "")) return values;
-    if (!LODGING_LOCATIONS.includes(values[0]) || !values[1] || !values[2]) throw new Error("Choose a lodging location and enter both the room number and custom room code.");
+    const provisional = OFFSITE_HOTELS.includes(values[0]) && /^O[a-zA-Z0-9-]+B[1-9]\d*$/.test(values[2]);
+    if (!LODGING_LOCATIONS.includes(values[0]) || !values[1] && !provisional || !values[2]) throw new Error("Choose a lodging location and enter both the room number and custom room code.");
     if (values[0] === "Samarpan" && !samarpanRooms.some((room) => room.number === values[1])) throw new Error("Choose a confirmed Samarpan room: 100\u2013104 or 204\u2013207.");
     if (values[0] === "Samarpan") {
       const bed = values[2].match(/^S\d+B([1-9]\d*)$/)?.[1];
@@ -213,14 +236,15 @@ var Hospitality = (() => {
     for (const guest of guests) {
       if (guest.status === "Cancelled") continue;
       const arrival = direction === "Arrivals";
-      const method = guest.travelMethod || "";
-      const flight = (arrival ? guest.arrivalFlight : guest.departureFlight)?.trim().toUpperCase().replace(/\s+/g, "") || "";
+      const method = !arrival && /bus\s*\(arrival\)/i.test(guest.travelMethod || "") ? "" : guest.travelMethod || "";
+      const isBus = /bus/i.test(method);
+      const flight = isBus ? "" : (arrival ? guest.arrivalFlight : guest.departureFlight)?.trim().toUpperCase().replace(/\s+/g, "") || "";
       const airport = (arrival ? guest.arrivalAirport : guest.departureAirport)?.trim().toUpperCase() || "";
       if (!/flight|air|bus/i.test(method) && !flight && guest.transport !== "Needed")
         continue;
       const day = (arrival ? guest.arrivalDate : guest.departureDate) || "";
       const time = (arrival ? guest.arrivalTime : guest.departureTime) || "";
-      const mode = /bus/i.test(method) ? "Bus" : flight || /flight|air/i.test(method) ? "Flight" : "Pickup";
+      const mode = isBus ? "Bus" : flight || /flight|air/i.test(method) ? "Flight" : "Pickup";
       const id = JSON.stringify([
         direction,
         day,
@@ -265,6 +289,15 @@ var Hospitality = (() => {
     );
   }
 
+  // src/lib/housekeeping.js
+  function checkoutEvents(guests, today) {
+    return guests.flatMap((guest) => {
+      const stay = stayRange(guest), bed = bedForGuest(guest);
+      if (guest.lodging !== "Samarpan" || !bed || !stay || guest.status === "Cancelled" || stay.end > today) return [];
+      return [{ id: JSON.stringify([guest.sourceIdentity || guest.id, guest.roomCode, stay.start, stay.end]), roomNo: guest.roomNo, bed, roomCode: guest.roomCode, name: guest.name, checkout: stay.end, refreshedAt: "" }];
+    });
+  }
+
   // apps-script/bridge.html
   var bridge_default = `<!doctype html><html><head><meta charset="utf-8"></head><body><p>Mandir Hospitality connection</p><script>
 const config = __CONFIG__;
@@ -281,6 +314,8 @@ reply({ ready: true });
 
   // apps-script/server.js
   var TABLES = {
+    "Offsite Rooms": ["ID", "Hotel", "Room number", "Beds", "Planning label", "Revision"],
+    "Housekeeping": ["Checkout ID", "Room", "Bed", "Bed code", "Guest", "Checkout date", "Linens refreshed at", "Request ID", "State"],
     "Transport Assignments": [
       "Journey ID",
       "Direction",
@@ -354,10 +389,48 @@ reply({ ready: true });
       vehicles: resources.filter((r) => r[0] === "Vehicle").map((r) => r[1])
     };
   }
-  function snapshot(book) {
+  function hotelRooms(book) {
+    return table(book, "Offsite Rooms").rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
+  }
+  function housekeeping(book, guests) {
+    const current = table(book, "Housekeeping");
+    const today = Utilities.formatDate(/* @__PURE__ */ new Date(), "America/New_York", "yyyy-MM-dd");
+    const due = checkoutEvents(guests, today);
+    const dueIds = new Set(due.map((e) => e.id));
+    const known = new Set(current.rows.slice(1).map((r) => r[0]));
+    current.rows.forEach((r, i) => {
+      if (!i || !r[0] || r[6]) return;
+      let identity;
+      try {
+        identity = JSON.parse(r[0])[0];
+      } catch {
+        return;
+      }
+      const guest = guests.find((g) => g.sourceIdentity === identity && g.roomCode === r[3]);
+      const state = dueIds.has(r[0]) ? "Pending" : guest && stayRange(guest) ? "Superseded" : r[8];
+      if (state !== r[8]) writeRow(current.sheet, i + 1, [...r.slice(0, 8), state]);
+    });
+    for (const event of due) {
+      if (known.has(event.id)) continue;
+      writeRow(current.sheet, current.sheet.getLastRow() + 1, [event.id, event.roomNo, String(event.bed), event.roomCode, event.name, event.checkout, "", "", "Pending"]);
+      known.add(event.id);
+    }
+    return table(book, "Housekeeping").rows.slice(1).filter((r) => r[0] && r[8] !== "Superseded").map((r) => ({ id: r[0], roomNo: r[1], bed: Number(r[2]), roomCode: r[3], name: r[4], checkout: r[5], refreshedAt: r[6] }));
+  }
+  function snapshot(book, role) {
+    const current = roster(book);
+    if (role !== "admin") return {
+      role: "kitchen",
+      // Only the fields needed for meal headcounts leave the backend.
+      kitchenGuests: current.guests.map((g, index) => ({ sourceIdentity: `meal-${index}`, count: g.count, arrivalDate: g.arrivalDate, arrivalTime: g.arrivalTime, departureDate: g.departureDate, status: g.status, stay: g.stay === "Day visitor" ? "Day visitor" : "Overnight" })),
+      refreshedAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
     return {
-      rows: roster(book).rows,
+      role,
+      rows: current.rows,
       transport: plans(book),
+      offsiteRooms: hotelRooms(book),
+      housekeeping: housekeeping(book, current.guests),
       refreshedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
   }
@@ -378,6 +451,7 @@ reply({ ready: true });
   function lodging(book, req) {
     const values = validateAssignment(req.assignment);
     const current = roster(book);
+    housekeeping(book, current.guests);
     const matches = current.rows.map((row, index) => ({ row, index })).filter((x) => x.index > 0 && attendeeKey(x.row) === req.identity);
     if (matches.length !== 1)
       throw new Error(
@@ -391,7 +465,7 @@ reply({ ready: true });
         "Someone changed this attendee\u2019s lodging. Refresh and review their assignment first."
       );
     const guest = current.guests.find((g) => g.sourceIdentity === req.identity);
-    if (values[0] === "Samarpan") {
+    if (values[0]) {
       if (!needsLodging(guest))
         throw new Error("This guest no longer needs overnight accommodation.");
       if (!equal(stayRange(guest), req.stay))
@@ -402,7 +476,7 @@ reply({ ready: true });
         lodging: values[0],
         roomNo: values[1],
         roomCode: values[2]
-      });
+      }, hotelRooms(book));
       if (problem) throw new Error(problem);
     }
     current.sheet.getRange(match.index + 1, 30, 1, 3).setNumberFormat("@").setValues([values.map(literal)]);
@@ -411,6 +485,49 @@ reply({ ready: true });
     if (confirmed.length !== 1 || !equal(lodgingValues(confirmed[0]), values))
       throw new Error("Save could not be confirmed. Refresh before retrying.");
     history(book, req, req.identity, before, values);
+  }
+  function linen(book, req) {
+    const events = housekeeping(book, roster(book).guests).filter((e) => e.roomCode === req.roomCode && !e.refreshedAt);
+    if (!Array.isArray(req.expected) || !events.length || !equal(events.map((e) => e.id).sort(), [...req.expected].sort())) throw new Error("The checkout list changed. Refresh before marking this bed clean.");
+    const { sheet, rows } = table(book, "Housekeeping");
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    const ids = new Set(events.map((e) => e.id));
+    rows.forEach((r, i) => {
+      if (i > 0 && ids.has(r[0])) writeRow(sheet, i + 1, [...r.slice(0, 6), now, req.requestId, "Refreshed"]);
+    });
+    SpreadsheetApp.flush();
+    const confirmed = table(book, "Housekeeping").rows.filter((r) => ids.has(r[0]));
+    if (confirmed.length !== ids.size || confirmed.some((r) => r[6] !== now)) throw new Error("The linen update could not be confirmed. Refresh before retrying.");
+    history(book, req, req.roomCode, events, { refreshedAt: now });
+  }
+  function offsite(book, req) {
+    const rooms = hotelRooms(book);
+    const old = req.id ? rooms.find((r) => r.id === req.id) : null;
+    if (req.id && (!old || old.revision !== req.expectedRevision)) throw new Error("This hotel room changed. Refresh before saving.");
+    const hotel = clean(req.lodging), roomNo = clean(req.roomNo), beds = Number(req.beds);
+    if (!OFFSITE_HOTELS.includes(hotel) || !Number.isInteger(beds) || beds < 1 || beds > 20) throw new Error("Choose a hotel and between 1 and 20 beds.");
+    if (old && old.lodging !== hotel) throw new Error("An existing planning room cannot be moved to another hotel.");
+    if (roomNo && rooms.some((r) => r.id !== old?.id && r.lodging === hotel && r.roomNo.toLowerCase() === roomNo.toLowerCase())) throw new Error("This hotel room number is already in the inventory.");
+    const current = roster(book);
+    const assigned = old ? current.guests.filter((g) => offsiteRoomFor(g, rooms)?.id === old.id) : [];
+    if (assigned.some((g) => Number(g.roomCode.match(/B(\d+)$/)?.[1]) > beds)) throw new Error("A guest is assigned to a bed you are removing. Reassign them first.");
+    if (assigned.some((g) => !g.sourceWritable)) throw new Error("Resolve duplicate attendee identities before changing this room.");
+    const id = old?.id || Utilities.getUuid();
+    const label = old?.label || `Provisional room ${rooms.filter((r) => r.lodging === hotel).length + 1}`;
+    const values = [id, hotel, roomNo, String(beds), label, Utilities.getUuid()];
+    const { sheet, rows } = table(book, "Offsite Rooms");
+    const index = rows.findIndex((r) => r[0] === id);
+    writeRow(sheet, index < 0 ? sheet.getLastRow() + 1 : index + 1, values);
+    if (old && assigned.some((g) => g.roomNo !== roomNo)) {
+      const identities = new Set(assigned.map((g) => g.sourceIdentity));
+      current.rows.forEach((r, i) => {
+        if (i > 0 && identities.has(attendeeKey(r))) current.sheet.getRange(i + 1, 31, 1, 1).setNumberFormat("@").setValues([[literal(roomNo)]]);
+      });
+    }
+    SpreadsheetApp.flush();
+    const confirmed = hotelRooms(book).find((r) => r.id === id);
+    if (!confirmed || confirmed.roomNo !== roomNo || confirmed.beds !== beds || roster(book).guests.some((g) => assigned.some((a) => a.sourceIdentity === g.sourceIdentity) && g.roomNo !== roomNo)) throw new Error("Room changes could not be confirmed. Refresh before retrying.");
+    history(book, req, id, old || {}, confirmed);
   }
   function clean(value, max = 100) {
     if (typeof value !== "string" || value.length > max || /[\r\n\x00]/.test(value))
@@ -520,7 +637,14 @@ reply({ ready: true });
     const book = spreadsheet();
     roster(book);
     Object.keys(TABLES).forEach((name) => table(book, name));
-    return "Hospitality tabs ready. No attendee assignments changed.";
+    const props = PropertiesService.getScriptProperties();
+    if (!props.getProperty("ADMIN_ACCESS_KEY")) props.setProperty("ADMIN_ACCESS_KEY", Utilities.getUuid() + Utilities.getUuid());
+    return "Hospitality tabs ready. Admin access is configured. Run showAdminLink to retrieve the private admin link.";
+  }
+  function showAdminLink() {
+    const key = PropertiesService.getScriptProperties().getProperty("ADMIN_ACCESS_KEY");
+    if (!key) throw new Error("Run setupHospitality first.");
+    return `https://www.sahebjiyouth.org/mandir-hospitality/#guests?admin=${encodeURIComponent(key)}`;
   }
   function doGet(e) {
     const origin = e?.parameter?.origin;
@@ -544,10 +668,13 @@ reply({ ready: true });
     try {
       if (!req || JSON.stringify(req).length > 16e3)
         throw new Error("Invalid or oversized request.");
-      if (!["snapshot", "lodging", "transport", "resource", "flight"].includes(
+      if (!["snapshot", "lodging", "transport", "resource", "flight", "linen", "offsite"].includes(
         req.action
       ))
         throw new Error("Unknown action.");
+      const key = PropertiesService.getScriptProperties().getProperty("ADMIN_ACCESS_KEY");
+      const role = key && typeof req.accessKey === "string" && req.accessKey === key ? "admin" : "kitchen";
+      if (req.action !== "snapshot" && role !== "admin") throw new Error("Admin access is required for this action. Open your private admin link.");
       if (req.action === "flight") return { ok: true, flight: flightStatus(req) };
       if (!lock.tryLock(2e4))
         throw new Error("Another save is in progress. Please retry shortly.");
@@ -561,10 +688,11 @@ reply({ ready: true });
         const committed = req.action === "transport" && table(book, "Transport Assignments").rows.some(
           (r, i) => i > 0 && r[13] === req.requestId
         );
-        if (!past && !committed)
-          ({ lodging, transport, resource })[req.action](book, req);
+        const linenCommitted = req.action === "linen" && table(book, "Housekeeping").rows.some((r, i) => i > 0 && r[7] === req.requestId);
+        if (!past && !committed && !linenCommitted)
+          ({ lodging, transport, resource, linen, offsite })[req.action](book, req);
       }
-      return { ok: true, ...snapshot(book) };
+      return { ok: true, ...snapshot(book, role) };
     } catch (error) {
       return {
         ok: false,
@@ -642,4 +770,5 @@ reply({ ready: true });
 
 function doGet(e) { return Hospitality.doGet(e); }
 function hospitalityRequest(request) { return Hospitality.hospitalityRequest(request); }
-function setupHospitality() { console.log(Hospitality.setupHospitality()); }
+function setupHospitality_() { console.log(Hospitality.setupHospitality()); }
+function showAdminLink_() { console.log(Hospitality.showAdminLink()); }

@@ -339,7 +339,7 @@ function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode
             <Info size={14} />
             <span>
               {day === dateISO()
-                ? "Volunteer and walk-in counts are editable demo estimates."
+                ? "Volunteer and walk-in adjustments are saved on this device."
                 : "Add this day’s expected volunteers and walk-in visitors to your plan."}
             </span>
           </p>

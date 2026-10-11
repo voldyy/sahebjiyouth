@@ -1,9 +1,10 @@
 import { samarpanRooms, samarpanRoomCode } from "./lodgingRooms.js";
 import { assignmentIssue, stayRange, needsLodging } from "./occupancy.js";
+import { OFFSITE_HOTELS } from "./offsite.js";
 export const SPREADSHEET_ID = "1YvVz4DyPZYTYtKC9qiDlEXsPd7Xz4DPNJIoe3NBkYMA";
 export const SHEET_GID = 0;
 export const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit#gid=${SHEET_GID}`;
-export const LODGING_LOCATIONS = ["Samarpan", "Comfort Inn", "Hawthorn"];
+export const LODGING_LOCATIONS = ["Samarpan", ...OFFSITE_HOTELS];
 const API = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`;
 const HEADERS = { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" };
 const text = (value) => String(value ?? "").trim();
@@ -68,7 +69,7 @@ export function guestsFromRows(rows) {
       city: text(row[7]), phone: text(row[5]), count: 1,
       arrivalDate: arrival.date, arrivalTime: arrival.time,
       departureDate: departure.date, departureTime: departure.time, travelMethod: text(row[11]), arrivalAirport: text(row[14]), arrivalFlight: text(row[15]), departureAirport: text(row[16]), departureFlight: text(row[17]), accommodationIn: lodgingIn.date, accommodationOut: lodgingOut.date,
-      status: /^cancel/i.test(rsvp) ? "Cancelled" : "Registered", rsvpStatus: rsvp,
+      status: /^cancel/i.test(rsvp) ? "Cancelled" : /^(departed|checked out)$/i.test(rsvp) ? "Departed" : "Registered", rsvpStatus: rsvp,
       stay: lodging[0] || (/^(NO|N|FALSE)$/.test(overnight) ? "Day visitor" : "Pending lodging"),
       lodging: lodging[0], roomNo: lodging[1], roomCode: lodging[2], room: lodging[2] || lodging[1],
       transport: /^(YES|Y|TRUE)$/i.test(text(row[18])) ? "Needed" : "Not needed",
@@ -144,7 +145,8 @@ export async function readAuthorizedRows(token) {
 export function validateAssignment(assignment) {
   const values = [text(assignment.lodging), text(assignment.roomNo), text(assignment.roomCode)];
   if (values.every((v) => v === "")) return values;
-  if (!LODGING_LOCATIONS.includes(values[0]) || !values[1] || !values[2]) throw new Error("Choose a lodging location and enter both the room number and custom room code.");
+  const provisional = OFFSITE_HOTELS.includes(values[0]) && /^O[a-zA-Z0-9-]+B[1-9]\d*$/.test(values[2]);
+  if (!LODGING_LOCATIONS.includes(values[0]) || (!values[1] && !provisional) || !values[2]) throw new Error("Choose a lodging location and enter both the room number and custom room code.");
   if (values[0] === "Samarpan" && !samarpanRooms.some((room) => room.number === values[1])) throw new Error("Choose a confirmed Samarpan room: 100–104 or 204–207.");
   if (values[0] === "Samarpan") {
     const bed = values[2].match(/^S\d+B([1-9]\d*)$/)?.[1];

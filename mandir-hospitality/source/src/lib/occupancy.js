@@ -1,4 +1,5 @@
 import { samarpanRoomCode } from "./lodgingRooms.js";
+import { OFFSITE_HOTELS, offsiteRoomFor, offsiteBedCode } from "./offsite.js";
 
 export const FIRST_STAY_DAY = "2026-10-11";
 export const LAST_STAY_DAY = "2026-11-21";
@@ -25,8 +26,12 @@ export function overlaps(a, b) {
   return !!a && !!b && a.start < b.end && b.start < a.end;
 }
 export const onDay = (guest, day) => overlaps(stayRange(guest), { start: day, end: moveDay(day, 1) });
-export function bedForGuest(guest) {
-  if (guest.lodging !== "Samarpan") return null;
+export function bedForGuest(guest, rooms = []) {
+  if (guest.lodging !== "Samarpan") {
+    const room = offsiteRoomFor(guest, rooms);
+    const bed = Number(String(guest.roomCode || "").match(/B([1-9]\d*)$/)?.[1]);
+    return room && bed >= 1 && bed <= room.beds ? bed : null;
+  }
   const bed = String(guest.roomCode || "").match(/^S\d+B([1-9]\d*)$/)?.[1];
   return bed && samarpanRoomCode(guest.roomNo, bed) === guest.roomCode ? Number(bed) : null;
 }
@@ -34,14 +39,20 @@ const sameGuest = (a, b) => (a.sourceIdentity || a.id) === (b.sourceIdentity || 
 
 // An assigned room with an unknown bed or stay cannot be advertised as empty.
 // It stays visible for review until the sheet identifies the bed and dates.
-export function bedState(guests, roomNo, bedNo, range, exceptGuest = null) {
+export function bedState(guests, roomNo, bedNo, range, exceptGuest = null, lodging = "Samarpan", rooms = []) {
   const occupants = [];
   const uncertain = [];
   for (const guest of guests) {
-    if (!needsLodging(guest) || guest.lodging !== "Samarpan" || String(guest.roomNo) !== String(roomNo) || (exceptGuest && sameGuest(guest, exceptGuest))) continue;
+    if (!needsLodging(guest) || guest.lodging !== lodging || (exceptGuest && sameGuest(guest, exceptGuest))) continue;
+    if (lodging === "Samarpan") { if (String(guest.roomNo) !== String(roomNo)) continue; }
+    else {
+      const target = rooms.find((r) => r.id === roomNo && r.lodging === lodging);
+      const assigned = offsiteRoomFor(guest, rooms);
+      if (!target || (assigned ? assigned.id !== target.id : !target.roomNo || guest.roomNo !== target.roomNo)) continue;
+    }
     const stay = stayRange(guest);
     if (stay && !overlaps(stay, range)) continue;
-    const bed = bedForGuest(guest);
+    const bed = bedForGuest(guest, rooms);
     if (bed !== null && bed !== Number(bedNo)) continue;
     if (!stay || bed === null) uncertain.push(guest);
     else occupants.push(guest);
@@ -49,18 +60,21 @@ export function bedState(guests, roomNo, bedNo, range, exceptGuest = null) {
   return { occupants, uncertain, free: occupants.length === 0 && uncertain.length === 0 };
 }
 
-export function assignmentIssue(guests, guest, assignment) {
-  if (assignment.lodging !== "Samarpan") return "";
+export function assignmentIssue(guests, guest, assignment, rooms = []) {
+  if (assignment.lodging !== "Samarpan" && !OFFSITE_HOTELS.includes(assignment.lodging)) return "";
+  const hotelRoom = offsiteRoomFor(assignment, rooms);
+  if (assignment.lodging !== "Samarpan" && !hotelRoom) return "Choose a hotel room and bed from the Offsite inventory.";
   const range = stayRange(guest);
   if (!range) return "Add valid accommodation or arrival/departure dates in the source sheet before assigning a bed.";
-  const bed = bedForGuest(assignment);
+  const bed = bedForGuest(assignment, rooms);
   if (!bed) return "Choose a valid room and bed.";
-  const state = bedState(guests, assignment.roomNo, bed, range, guest);
+  if (hotelRoom && (assignment.roomNo !== hotelRoom.roomNo || assignment.roomCode !== offsiteBedCode(hotelRoom, bed))) return "The hotel room changed. Refresh before assigning.";
+  const state = bedState(guests, hotelRoom?.id || assignment.roomNo, bed, range, guest, assignment.lodging, rooms);
   if (state.uncertain.length) return `Room ${assignment.roomNo} has an assignment with missing dates or an unrecognized bed code. Review it before assigning this bed.`;
   if (state.occupants.length) return `${assignment.roomCode} is occupied during this guest’s stay. Choose another bed.`;
   return "";
 }
 
 export function unassignedGuest(guest) {
-  return needsLodging(guest) && (!guest.lodging || !guest.roomNo || !guest.roomCode);
+  return needsLodging(guest) && (!guest.lodging || !guest.roomCode || (!guest.roomNo && !/^O[a-zA-Z0-9-]+B[1-9]\d*$/.test(guest.roomCode)));
 }

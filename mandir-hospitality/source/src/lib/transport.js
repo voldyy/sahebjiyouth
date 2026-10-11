@@ -5,8 +5,9 @@ export function transportGroups(guests, direction) {
   for (const guest of guests) {
     if (guest.status === "Cancelled") continue;
     const arrival = direction === "Arrivals";
-    const method = guest.travelMethod || "";
-    const flight =
+    const method = !arrival && /bus\s*\(arrival\)/i.test(guest.travelMethod || "") ? "" : guest.travelMethod || "";
+    const isBus = /bus/i.test(method);
+    const flight = isBus ? "" :
       (arrival ? guest.arrivalFlight : guest.departureFlight)
         ?.trim()
         .toUpperCase()
@@ -23,7 +24,7 @@ export function transportGroups(guests, direction) {
       continue;
     const day = (arrival ? guest.arrivalDate : guest.departureDate) || "";
     const time = (arrival ? guest.arrivalTime : guest.departureTime) || "";
-    const mode = /bus/i.test(method)
+    const mode = isBus
       ? "Bus"
       : flight || /flight|air/i.test(method)
         ? "Flight"

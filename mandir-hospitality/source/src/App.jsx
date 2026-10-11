@@ -34,6 +34,7 @@ import GuestForm from "./components/GuestForm";
 import Guests from "./views/Guests";
 import { useSheetWorkspace } from "./lib/useSheetWorkspace";
 import { SHEET_URL } from "./lib/sheets";
+import { yogiPrasadLink, isTeamView } from "./lib/access";
 import "./styles/sheets.css";
 
 const SheetTransport = lazy(() => import("./views/SheetTransport"));
@@ -65,7 +66,10 @@ const currentRoute = () =>
 export default function App() {
   const demoMode = import.meta.env.VITE_DEMO_MODE === "true";
   const sheetWorkspace = useSheetWorkspace(!demoMode);
-  const [route, setRoute] = useState(currentRoute);
+  const [requestedRoute, setRoute] = useState(currentRoute);
+  const isAdmin = demoMode || (sheetWorkspace.role === "admin" && !isTeamView());
+  const route = isAdmin ? requestedRoute : "kitchen";
+  const visibleNavigation = isAdmin ? navigation : navigation.filter((n) => n.id === "kitchen");
   const [demoGuests, setGuests] = useLocalStorage("seva.guests.v1", () => demoMode ? seedGuests : [], demoMode);
   const guests = demoMode ? demoGuests : sheetWorkspace.guests;
   const [linen, setLinen] = useLocalStorage("mandir-linen-v1", initialLinen);
@@ -215,7 +219,7 @@ export default function App() {
       <aside className="sidebar">
         <a
           className="brand"
-          href="#guests"
+          href={isAdmin ? "#guests" : "#kitchen?team=yogi-prasad"}
           aria-label="Mandir Hospitality home"
         >
           <img className="mission-logo" src={`${import.meta.env.BASE_URL}am-logo.png`} alt="Anoopam Mission" width="180" height="64" />
@@ -224,10 +228,10 @@ export default function App() {
         <p className="campus-subtitle">Allentown Shri Swaminarayan Mandirji</p>
         <div className="nav-section-label">WORKSPACE</div>
         <nav className="side-navigation" aria-label="Main navigation">
-          {navigation.map((item) => (
+          {visibleNavigation.map((item) => (
             <a
               key={item.id}
-              href={`#${item.id}`}
+              href={isAdmin ? `#${item.id}` : "#kitchen?team=yogi-prasad"}
               className={route === item.id ? "active" : ""}
               aria-current={route === item.id ? "page" : undefined}
             >
@@ -239,7 +243,7 @@ export default function App() {
             </a>
           ))}
         </nav>
-        <button
+        {isAdmin && <button
           className="quick-checkin button secondary"
           disabled={!demoMode}
           onClick={() => {
@@ -248,19 +252,19 @@ export default function App() {
           }}
         >
           <UserRoundCheck size={18} /> Quick check-in<span>↗</span>
-        </button>
+        </button>}
         <div className="sidebar-bottom">
           <button className="side-utility" onClick={() => setModal("help")}>
             <CircleHelp size={18} /> Help & guidance
             <ArrowUpRight size={15} />
           </button>
-          <button className="side-utility" onClick={() => setModal("settings")}>
+          {isAdmin && <button className="side-utility" onClick={() => setModal("settings")}>
             <Settings size={18} /> Workspace settings
-          </button>
-          <button className="user-profile" onClick={() => setModal("profile")}>
+          </button>}
+          <button className="user-profile" onClick={() => setModal(isAdmin ? "profile" : "help")}>
             <span className="avatar profile-avatar">SK</span>
             <span>
-              <strong>Sevak team</strong>
+              <strong>{isAdmin ? "Sevak team" : "Yogi Prasad team"}</strong>
               <small>Hospitality volunteer</small>
             </span>
             <ChevronDown size={15} />
@@ -269,7 +273,7 @@ export default function App() {
       </aside>
       <div className="app-main">
         <header className="topbar">
-          <a href="#guests" className="mobile-brand">
+          <a href={isAdmin ? "#guests" : "#kitchen?team=yogi-prasad"} className="mobile-brand">
             <img className="mission-logo" src={`${import.meta.env.BASE_URL}am-logo.png`} alt="Anoopam Mission" width="114" height="40" />
             <span className="brand-caption">Mandir Hospitality</span>
           </a>
@@ -295,14 +299,14 @@ export default function App() {
             <button
               className="avatar top-avatar"
               aria-label="SK · Open profile and settings"
-              onClick={() => setModal("profile")}
+              onClick={() => setModal(isAdmin ? "profile" : "help")}
             >
               SK
             </button>
           </div>
         </header>
         {!demoMode && <section className="sheet-connection" aria-label="Google Sheets connection">
-          <div><strong>Google Sheets guest roster</strong><p>{sheetWorkspace.loading ? "Refreshing attendee data…" : sheetWorkspace.refreshedAt ? `Last refreshed ${sheetWorkspace.refreshedAt.toLocaleTimeString()}` : "Waiting for source data"} · {sheetWorkspace.connected ? "Shared editing enabled" : "Connecting to shared editing…"}</p></div>
+          <div><strong>Google Sheets guest roster</strong><p>{sheetWorkspace.loading ? "Refreshing attendee data…" : sheetWorkspace.refreshedAt ? `Last refreshed ${sheetWorkspace.refreshedAt.toLocaleTimeString()}` : "Waiting for source data"} · {sheetWorkspace.connected ? (isAdmin ? "Admin access" : "Yogi Prasad access") : "Connecting…"}</p></div>
           <button className="button secondary small" disabled={sheetWorkspace.loading || sheetWorkspace.saving} onClick={sheetWorkspace.refresh}>Refresh sheet</button>
           {sheetWorkspace.error && <p className="sheet-connection-error" role="alert">{sheetWorkspace.error}</p>}
         </section>}
@@ -359,7 +363,7 @@ export default function App() {
                 setLinen={setLinen}
               />
             )}
-            {route === "kitchen" && (
+            {route === "kitchen" && (demoMode || sheetWorkspace.refreshedAt) && (
               <Kitchen
                 guests={guests}
                 sheetMode={!demoMode}
@@ -379,9 +383,9 @@ export default function App() {
         </main>
       </div>
       <nav className="bottom-nav" aria-label="Mobile navigation">
-        {navigation.map((item) => (
+        {visibleNavigation.map((item) => (
           <a
-            href={`#${item.id}`}
+            href={isAdmin ? `#${item.id}` : "#kitchen?team=yogi-prasad"}
             key={item.id}
             className={route === item.id ? "active" : ""}
             aria-current={route === item.id ? "page" : undefined}
@@ -514,7 +518,7 @@ export default function App() {
           )}
         </Sheet>
       )}
-      {(modal === "settings" || modal === "profile") && (
+      {isAdmin && (modal === "settings" || modal === "profile") && (
         <Sheet
           title={
             modal === "profile" ? "Your seva workspace" : "Workspace settings"
@@ -534,7 +538,8 @@ export default function App() {
             <h3>About this workspace</h3>
             {demoMode ? <p>This demo uses sample guests, saved in this browser.</p> : <>
               <p>Guest data comes from the source sheet. Lodging changes write only AD (location), AE (room number), and AF (custom code). Other fields are read-only. Guest records are not saved to browser storage.</p>
-              <p>Room and transport assignments are shared through Google Sheets. Anyone with this page can edit assignments. Kitchen headcount adjustments remain device-local.</p>
+              <p>Room and transport assignments are shared through Google Sheets. Editing rooms, transport and housekeeping requires a private admin link. The Yogi Prasad team link only opens meal planning. Kitchen headcount adjustments remain device-local.</p>
+              <button className="button secondary" onClick={async () => { try { await navigator.clipboard.writeText(yogiPrasadLink()); toast("Yogi Prasad team link copied."); } catch { toast(`Team link: ${yogiPrasadLink()}`); } }}>Copy Yogi Prasad team link</button>
               <a className="button secondary" href={SHEET_URL} target="_blank" rel="noreferrer">Open source sheet</a>
 
             </>}

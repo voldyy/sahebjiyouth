@@ -1,3 +1,4 @@
+import { requestAccessKey } from "./access";
 // Apps Script HTML service handles the authenticated Sheets calls inside its own
 // frame. The public website uses a nonce-bound postMessage channel, not no-cors
 // fetch (which cannot confirm a save). This channel is not an access credential.
@@ -121,7 +122,7 @@ export function createAppsScriptClient(endpoint = ENDPOINT) {
 export function sheetRequest(request) {
   if (!connection) connection = createAppsScriptClient();
   const current = connection;
-  return current.request(request).catch((error) => {
+  return current.request({ ...request, accessKey: requestAccessKey() }).catch((error) => {
     if (!current.connected && connection === current) {
       current.dispose();
       connection = null;

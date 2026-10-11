@@ -6,6 +6,9 @@ import { EMPTY_TRANSPORT } from "./transport";
 export function useSheetWorkspace(enabled) {
   const [guests, setGuests] = useState([]);
   const [transport, setTransport] = useState(EMPTY_TRANSPORT);
+  const [offsiteRooms, setOffsiteRooms] = useState([]);
+  const [housekeeping, setHousekeeping] = useState([]);
+  const [role, setRole] = useState(null);
   const [state, setState] = useState({
     loading: enabled,
     saving: false,
@@ -16,8 +19,11 @@ export function useSheetWorkspace(enabled) {
   const generation = useRef(0),
     busy = useRef(false);
   const apply = useCallback((result) => {
-    setGuests(guestsFromRows(result.rows));
-    setTransport(result.transport);
+    setRole(result.role || "kitchen");
+    setGuests(result.role === "admin" ? guestsFromRows(result.rows) : result.kitchenGuests || []);
+    setTransport(result.transport || EMPTY_TRANSPORT);
+    setOffsiteRooms(result.offsiteRooms || []);
+    setHousekeeping(result.housekeeping || []);
     setState((s) => ({
       ...s,
       connected: true,
@@ -48,9 +54,17 @@ export function useSheetWorkspace(enabled) {
       if (!document.hidden) refresh();
     };
     document.addEventListener("visibilitychange", focus);
+    const accessChanged = () => {
+      generation.current++;
+      setRole(null); setGuests([]); setTransport(EMPTY_TRANSPORT); setHousekeeping([]); setOffsiteRooms([]);
+      setState((s) => ({ ...s, refreshedAt: null, connected: false }));
+      refresh();
+    };
+    window.addEventListener("mandir-access-change", accessChanged);
     return () => {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", focus);
+      window.removeEventListener("mandir-access-change", accessChanged);
       generation.current++;
     };
   }, [enabled, refresh]);
@@ -73,6 +87,9 @@ export function useSheetWorkspace(enabled) {
   return {
     guests,
     transport,
+    offsiteRooms,
+    housekeeping,
+    role,
     ...state,
     refresh,
     saveAssignment: (guest, assignment) =>
@@ -95,6 +112,8 @@ export function useSheetWorkspace(enabled) {
       }),
     saveResource: (type, name, active) =>
       save({ action: "resource", type, name, active }),
+    saveOffsiteRoom: (room) => save({ action: "offsite", ...room }),
+    refreshLinens: (bed) => save({ action: "linen", roomCode: bed.roomCode, expected: bed.events.map((e) => e.id) }),
     flightStatus: (group) =>
       sheetRequest({
         action: "flight",
