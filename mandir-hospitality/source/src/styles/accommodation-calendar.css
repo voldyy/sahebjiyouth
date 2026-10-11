@@ -148,3 +148,5 @@
 .drop-conflict .stay-drop-label { background: #ffe5e5ee; color: #8b2828; }
 .stay-drag-status, .stay-drop-error { position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%); z-index: 45; width: max-content; max-width: min(90vw, 660px); padding: 12px 18px; box-shadow: 0 5px 24px #193a5022; pointer-events: none; }
 .stay-drop-error { background: #fff1e6; border: 1px solid #d38350; border-radius: 9px; }
+.stay-read-details { display: grid; gap: 12px; color: #326681; font-size: 14px; line-height: 1.6; }
+.stay-read-details strong { color: #193a50; }

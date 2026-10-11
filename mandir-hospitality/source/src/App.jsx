@@ -68,8 +68,9 @@ export default function App() {
   const sheetWorkspace = useSheetWorkspace(!demoMode);
   const [requestedRoute, setRoute] = useState(currentRoute);
   const isAdmin = demoMode || (sheetWorkspace.role === "admin" && !isTeamView());
-  const route = isAdmin ? requestedRoute : "kitchen";
-  const visibleNavigation = isAdmin ? navigation : navigation.filter((n) => n.id === "kitchen");
+  const route = requestedRoute;
+  const visibleNavigation = navigation;
+  const routeLink = (id) => `#${id}${isTeamView() ? "?team=yogi-prasad" : ""}`;
   const [demoGuests, setGuests] = useLocalStorage("seva.guests.v1", () => demoMode ? seedGuests : [], demoMode);
   const guests = demoMode ? demoGuests : sheetWorkspace.guests;
   const [linen, setLinen] = useLocalStorage("mandir-linen-v1", initialLinen);
@@ -102,7 +103,7 @@ export default function App() {
     };
   }, []);
   const navigate = (id) => {
-    location.hash = id;
+    location.hash = routeLink(id);
     setRoute(id);
     setModal(null);
   };
@@ -219,7 +220,7 @@ export default function App() {
       <aside className="sidebar">
         <a
           className="brand"
-          href={isAdmin ? "#guests" : "#kitchen?team=yogi-prasad"}
+          href={routeLink("guests")}
           aria-label="Mandir Hospitality home"
         >
           <img className="mission-logo" src={`${import.meta.env.BASE_URL}am-logo.png`} alt="Anoopam Mission" width="180" height="64" />
@@ -231,7 +232,7 @@ export default function App() {
           {visibleNavigation.map((item) => (
             <a
               key={item.id}
-              href={isAdmin ? `#${item.id}` : "#kitchen?team=yogi-prasad"}
+              href={routeLink(item.id)}
               className={route === item.id ? "active" : ""}
               aria-current={route === item.id ? "page" : undefined}
             >
@@ -273,7 +274,7 @@ export default function App() {
       </aside>
       <div className="app-main">
         <header className="topbar">
-          <a href={isAdmin ? "#guests" : "#kitchen?team=yogi-prasad"} className="mobile-brand">
+          <a href={routeLink("guests")} className="mobile-brand">
             <img className="mission-logo" src={`${import.meta.env.BASE_URL}am-logo.png`} alt="Anoopam Mission" width="114" height="40" />
             <span className="brand-caption">Mandir Hospitality</span>
           </a>
@@ -306,7 +307,7 @@ export default function App() {
           </div>
         </header>
         {!demoMode && <section className="sheet-connection" aria-label="Google Sheets connection">
-          <div><strong>Google Sheets guest roster</strong><p>{sheetWorkspace.loading ? "Refreshing attendee data…" : sheetWorkspace.refreshedAt ? `Last refreshed ${sheetWorkspace.refreshedAt.toLocaleTimeString()}` : "Waiting for source data"} · {sheetWorkspace.connected ? (isAdmin ? "Admin access" : "Yogi Prasad access") : "Connecting…"}</p></div>
+          <div><strong>Google Sheets guest roster</strong><p>{sheetWorkspace.loading ? "Refreshing attendee data…" : sheetWorkspace.refreshedAt ? `Last refreshed ${sheetWorkspace.refreshedAt.toLocaleTimeString()}` : "Waiting for source data"} · {sheetWorkspace.connected ? (isAdmin ? "Admin access" : "View-only access") : "Connecting…"}</p></div>
           <button className="button secondary small" disabled={sheetWorkspace.loading || sheetWorkspace.saving} onClick={sheetWorkspace.refresh}>Refresh sheet</button>
           {sheetWorkspace.error && <p className="sheet-connection-error" role="alert">{sheetWorkspace.error}</p>}
         </section>}
@@ -338,13 +339,14 @@ export default function App() {
               <Guests
                 guests={guests}
                 readOnly={!demoMode}
+                viewOnly={!isAdmin}
                 onUpdateGuest={onUpdateGuest}
                 toast={toast}
                 onAdd={() => demoMode ? setModal("add") : toast("Add attendees in the Google source sheet, then refresh.")}
                 onNavigate={navigate}
               />
             )}
-            {route === "transport" && !demoMode && <SheetTransport workspace={sheetWorkspace} toast={toast} />}
+            {route === "transport" && !demoMode && <SheetTransport workspace={sheetWorkspace} toast={toast} readOnly={!isAdmin} />}
             {route === "transport" && demoMode && (
               <Transport
                 guests={guests}
@@ -353,7 +355,7 @@ export default function App() {
                 toast={toast}
               />
             )}
-            {route === "rooms" && !demoMode && <SheetAccommodation workspace={sheetWorkspace} toast={toast} />}
+            {route === "rooms" && !demoMode && <SheetAccommodation workspace={sheetWorkspace} toast={toast} readOnly={!isAdmin} />}
             {route === "rooms" && demoMode && (
               <Accommodation
                 guests={guests}
@@ -365,6 +367,7 @@ export default function App() {
             )}
             {route === "kitchen" && (demoMode || sheetWorkspace.refreshedAt) && (
               <Kitchen
+                readOnly={!isAdmin}
                 guests={guests}
                 sheetMode={!demoMode}
                 onUpdateGuest={onUpdateGuest}
@@ -385,7 +388,7 @@ export default function App() {
       <nav className="bottom-nav" aria-label="Mobile navigation">
         {visibleNavigation.map((item) => (
           <a
-            href={isAdmin ? `#${item.id}` : "#kitchen?team=yogi-prasad"}
+            href={routeLink(item.id)}
             key={item.id}
             className={route === item.id ? "active" : ""}
             aria-current={route === item.id ? "page" : undefined}
@@ -538,7 +541,7 @@ export default function App() {
             <h3>About this workspace</h3>
             {demoMode ? <p>This demo uses sample guests, saved in this browser.</p> : <>
               <p>Guest data comes from the source sheet. Lodging changes write only AD (location), AE (room number), and AF (custom code). Other fields are read-only. Guest records are not saved to browser storage.</p>
-              <p>Room and transport assignments are shared through Google Sheets. Editing rooms, transport and housekeeping requires a private admin link. The Yogi Prasad team link only opens meal planning. Kitchen headcount adjustments remain device-local.</p>
+              <p>Room and transport assignments are shared through Google Sheets. Editing rooms, transport and housekeeping requires a private admin link. The Yogi Prasad team link opens all four tabs in view-only mode. Only admins can change headcounts or assignments. Kitchen headcount adjustments remain device-local.</p>
               <button className="button secondary" onClick={async () => { try { await navigator.clipboard.writeText(yogiPrasadLink()); toast("Yogi Prasad team link copied."); } catch { toast(`Team link: ${yogiPrasadLink()}`); } }}>Copy Yogi Prasad team link</button>
               <a className="button secondary" href={SHEET_URL} target="_blank" rel="noreferrer">Open source sheet</a>
 

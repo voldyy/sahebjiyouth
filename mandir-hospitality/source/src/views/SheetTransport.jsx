@@ -94,7 +94,7 @@ function FlightStatus({ group, workspace }) {
     </div>
   );
 }
-export default function SheetTransport({ workspace, toast }) {
+export default function SheetTransport({ workspace, toast, readOnly = false }) {
   const [query, setQuery] = useState(""),
     [airport, setAirport] = useState("All"),
     [driver, setDriver] = useState(() => driverFromUrl(location.href)),
@@ -173,6 +173,7 @@ export default function SheetTransport({ workspace, toast }) {
     }
   };
   const saveResource = async (type, name, active) => {
+    if (readOnly) return;
     setError("");
     try {
       await workspace.saveResource(type, name, active);
@@ -184,6 +185,7 @@ export default function SheetTransport({ workspace, toast }) {
     }
   };
   const saveInline = async (group, field, value) => {
+    if (readOnly) return;
     const plan = { ...group.plan, [field]: value };
     if (!plan.driver || !plan.vehicle) plan.status = "Planned";
     setInlineDraft({ id: group.id, plan });
@@ -205,7 +207,7 @@ export default function SheetTransport({ workspace, toast }) {
           <h1>Airport Trips</h1>
           <p>Airport pickups and drop-offs, together in one schedule.</p>
         </div>
-        <button
+        {!readOnly && <button
           className="button secondary"
           onClick={() => {
             setResources(true);
@@ -214,7 +216,7 @@ export default function SheetTransport({ workspace, toast }) {
         >
           <Car size={17} />
           Drivers & vehicles
-        </button>
+        </button>}
       </div>
       <div className="transport-summary">
         <div>
@@ -396,7 +398,7 @@ export default function SheetTransport({ workspace, toast }) {
                     ].map(({ field, label, options }) => (
                       <label className="field" key={field}>
                         {label}
-                        <select
+                        {readOnly ? <span className="transport-read-value">{group.plan[field] || "Not assigned"}</span> : <select
                           aria-label={`${label} for ${group.flight || group.method} ${group.direction} ${group.day}`}
                           value={
                             inlineDraft?.id === group.id
@@ -422,7 +424,7 @@ export default function SheetTransport({ workspace, toast }) {
                           ].map((name) => (
                             <option key={name}>{name}</option>
                           ))}
-                        </select>
+                        </select>}
                       </label>
                     ))}
                     {saveState?.id === group.id && (
@@ -437,7 +439,7 @@ export default function SheetTransport({ workspace, toast }) {
                         {saveState.error || saveState.message}
                       </small>
                     )}
-                    {!group.day && (
+                    {!group.day && !readOnly && (
                       <small>
                         Add the travel date in the source sheet before
                         assigning.
@@ -449,7 +451,7 @@ export default function SheetTransport({ workspace, toast }) {
             ))}
         </section>
       ))}
-      {resources && (
+      {resources && !readOnly && (
         <Sheet
           title="Drivers & vehicles"
           subtitle="These lists are shared with every admin."

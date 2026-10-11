@@ -10,18 +10,22 @@ const header = () => { const r = Array(32).fill(''); Object.assign(r, {0:'Regist
 const row = (id, start='2026-10-11', end='2026-10-14', bed='') => { const r=Array(32).fill(''); Object.assign(r,{0:id,8:id,9:'Self',12:start,13:end,20:'YES',24:'Confirmed',29:bed?'Samarpan':'',30:bed?'204':'',31:bed}); return r; };
 const req = (h,r) => h.request({requestId:randomUUID(),...r});
 const assign = (h, guest, assignment) => req(h, {action:'lodging',identity:guest.sourceIdentity,expected:guest.sourceLodging,stay:{start:guest.arrivalDate,end:guest.departureDate},assignment});
-test('public and forged roles cannot mutate anything and receive only meal data', () => {
+test('viewers receive all dashboard data but cannot mutate it', () => {
   const h=createHarness([header(),row('Private Guest')]);
   h.rows[1][7]='Edison, NJ';
   h.rows[1][5]='555-010-1234';
   for (const accessKey of ['',undefined,'forged']) {
-    for (const action of ['lodging','offsite','linen','transport','resource','flight']) {
+    for (const action of ['lodging','offsite','linen','transport','resource']) {
       const result=req(h,{action,accessKey,role:'admin'});
       assert.equal(result.ok,false); assert.match(result.error,/Admin access/);
     }
     const snapshot=h.request({action:'snapshot',accessKey,role:'admin'});
-    assert.equal(snapshot.role,'kitchen');
-    assert.equal(snapshot.rows,undefined);assert.equal(snapshot.transport,undefined);assert.equal(snapshot.offsiteRooms,undefined);assert.equal(snapshot.housekeeping,undefined);
+    assert.equal(snapshot.role,'viewer');
+    assert.equal(snapshot.rows,undefined);
+    assert.deepEqual(snapshot.transport,{assignments:[],drivers:[],vehicles:[]});
+    assert.deepEqual(snapshot.offsiteRooms,[]);assert.deepEqual(snapshot.housekeeping,[]);
+    assert.equal(snapshot.guests[0].name,'Private Guest');
+    assert.equal(snapshot.guests[0].city,'Edison, NJ');
     assert.equal(snapshot.kitchenGuests[0].name,'Private Guest');
     assert.equal(snapshot.kitchenGuests[0].city,'Edison, NJ');
     assert.equal(snapshot.kitchenGuests[0].phone,undefined);
@@ -29,6 +33,9 @@ test('public and forged roles cannot mutate anything and receive only meal data'
     assert.equal(snapshot.kitchenGuests[0].roomCode,undefined);
     assert.equal(snapshot.kitchenGuests[0].count,1);
   }
+  h.rows[1][29]='Samarpan';h.rows[1][30]='204';h.rows[1][31]='S204B1';
+  h.setToday('2026-10-14');
+  assert.equal(h.request({action:'snapshot',accessKey:''}).housekeeping.length,1);
   assert.equal(h.sheets.size,1); assert.equal(h.writes.length,0);
   h.properties.delete('ADMIN_ACCESS_KEY');
   assert.match(req(h,{action:'resource',type:'Driver',name:'Intruder',active:true}).error,/Admin access/);

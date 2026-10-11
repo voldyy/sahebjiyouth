@@ -359,28 +359,42 @@ test('housekeeping autoloads checkout beds and saves refreshed linens across rel
   await page.screenshot({path:test.info().outputPath('housekeeping-mobile.png'),fullPage:true,scale:'css'});
 });
 
-test('Yogi Prasad link is restricted even on an admin browser and invalid credentials cannot unlock it', async ({page,browser}) => {
+test('team links show all four tabs without edits and preserve view-only access through reloads', async ({page,browser}) => {
   const h = await openPlanner(page);
   await page.goto('/#kitchen?team=yogi-prasad');
+  const nav=page.getByRole('navigation',{name:'Mobile navigation'});
   await expect(page.getByRole('heading',{name:'Yogi Prasad',exact:true})).toBeVisible();
-  await expect(page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link')).toHaveCount(1);
+  await expect(nav.getByRole('link')).toHaveCount(4);
+  await expect(page.getByRole('button',{name:'Adjust headcount'})).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Workspace settings'})).toHaveCount(0);
-  await page.evaluate(()=>location.hash='rooms');
-  await expect(page.getByRole('heading',{name:'Yogi Prasad',exact:true})).toBeVisible();
-  await expect(page.locator('.stay-workspace')).toHaveCount(0);
+  await nav.getByRole('link',{name:'Accommodations',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Assign guest',exact:true})).toHaveCount(0);
+  await expect(page.getByRole('button',{name:'View Chirag Mehta',exact:true})).toHaveAttribute('draggable','false');
+  await page.getByRole('button',{name:'View Chirag Mehta',exact:true}).click();
+  await expect(page.getByRole('dialog')).toContainText('Oct 11 – Oct 17');
+  await expect(page.getByRole('button',{name:'Save assignment to sheet'})).toHaveCount(0);
+  await page.getByRole('button',{name:'Close dialog',exact:true}).click();
+  await page.getByRole('button',{name:'Offsite',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Add planning room',exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'Housekeeping',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Linens refreshed',exact:true})).toHaveCount(0);
+  await nav.getByRole('link',{name:'Transport',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Drivers & vehicles',exact:true})).toHaveCount(0);
+  await page.reload();
+  await expect(nav.getByRole('link')).toHaveCount(4);
+  expect(page.url()).toContain('team=yogi-prasad');
+  await expect(page.getByRole('button',{name:'Workspace settings'})).toHaveCount(0);
+  await nav.getByRole('link',{name:/^Main/}).click();
+  await expect(page.locator('.mobile-guest-name').first()).toBeVisible();
+  await expect(page.getByRole('button',{name:'Add guest',exact:true})).toHaveCount(0);
   const context=await browser.newContext({viewport:{width:390,height:900}});
   await mockBridge(context,h,false);
-  const team=await context.newPage();
-  await team.goto('http://localhost:5175/#rooms?admin=forged');
-  await expect(team.getByRole('heading',{name:'Yogi Prasad',exact:true})).toBeVisible();
-  expect(team.url()).not.toContain('forged');
-  await expect(team.getByRole('link',{name:'Open source sheet'})).toHaveCount(0);
-  await team.getByRole('button',{name:'Adjust headcount'}).click();
-  await team.getByLabel('Volunteers',{exact:true}).fill('12');
-  await team.getByRole('button',{name:'Save headcount',exact:true}).click();
-  await expect(team.getByRole('dialog')).toHaveCount(0);
+  const viewer=await context.newPage();
+  await viewer.goto('http://localhost:5175/#rooms?admin=forged');
+  await expect(viewer.getByRole('heading',{name:'Accommodations',exact:true})).toBeVisible();
+  expect(viewer.url()).not.toContain('forged');
+  await expect(viewer.getByRole('button',{name:'Assign guest',exact:true})).toHaveCount(0);
   expect(h.writes).toHaveLength(0);
-  await team.screenshot({path:test.info().outputPath('team-only-mobile.png'),fullPage:true,scale:'css'});
   await context.close();
 });
 

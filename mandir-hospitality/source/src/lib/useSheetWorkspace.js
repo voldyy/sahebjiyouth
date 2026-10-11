@@ -3,6 +3,7 @@ import { guestsFromRows } from "./sheets";
 import { sheetRequest } from "./appsScript";
 import { stayRange } from "./occupancy";
 import { EMPTY_TRANSPORT } from "./transport";
+import { isTeamView } from "./access";
 export function useSheetWorkspace(enabled) {
   const [guests, setGuests] = useState([]);
   const [transport, setTransport] = useState(EMPTY_TRANSPORT);
@@ -19,8 +20,8 @@ export function useSheetWorkspace(enabled) {
   const generation = useRef(0),
     busy = useRef(false);
   const apply = useCallback((result) => {
-    setRole(result.role || "kitchen");
-    setGuests(result.role === "admin" ? guestsFromRows(result.rows) : result.kitchenGuests || []);
+    setRole(result.role || "viewer");
+    setGuests(result.role === "admin" ? guestsFromRows(result.rows) : result.guests || result.kitchenGuests || []);
     setTransport(result.transport || EMPTY_TRANSPORT);
     setOffsiteRooms(result.offsiteRooms || []);
     setHousekeeping(result.housekeeping || []);
@@ -69,19 +70,22 @@ export function useSheetWorkspace(enabled) {
     };
   }, [enabled, refresh]);
   const save = async (request) => {
+    if (role !== "admin" || isTeamView()) throw new Error("This link is view-only. Open your private admin link to make changes.");
     if (busy.current)
       throw new Error("Another change is being saved. Please wait.");
     busy.current = true;
-    generation.current++;
+    const saveGeneration = ++generation.current;
     setState((s) => ({ ...s, saving: true, loading: false, error: "" }));
     try {
-      apply(await sheetRequest({ ...request, requestId: crypto.randomUUID() }));
+      const result = await sheetRequest({ ...request, requestId: crypto.randomUUID() });
+      if (saveGeneration === generation.current) apply(result);
     } catch (error) {
       setState((s) => ({ ...s, error: error.message }));
       throw error;
     } finally {
       busy.current = false;
       setState((s) => ({ ...s, saving: false }));
+      if (saveGeneration !== generation.current) refresh();
     }
   };
   return {

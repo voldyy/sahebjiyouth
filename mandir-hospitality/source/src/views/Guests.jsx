@@ -40,6 +40,7 @@ export default function Guests({
   onAdd,
   onNavigate,
   readOnly = false,
+  viewOnly = false,
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All guests");
@@ -52,7 +53,7 @@ export default function Guests({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const selected = guests.find((g) => g.id === selectedId);
   const total = guests.reduce((n, g) => n + g.count, 0);
-  const stayOptions = readOnly ? ["Samarpan", "Comfort Inn", "Hawthorn", "Pending lodging", "Day visitor"] : ["Samarpan", "Offsite", "Day visitor"];
+  const stayOptions = readOnly ? ["Samarpan", "Comfort Inn", "Hilton Garden Inn", "Pending lodging", "Day visitor"] : ["Samarpan", "Offsite", "Day visitor"];
   const visibleStatuses = readOnly ? ["All guests", "Registered", "Cancelled", "Needs room"] : statuses;
   const checked = guests
     .filter((g) => g.status === "Checked in")
@@ -157,9 +158,9 @@ export default function Guests({
             <Download size={17} />
             <span>Export</span>
           </button>
-          <button className="button primary add-guest" disabled={readOnly} onClick={onAdd}>
+          {!viewOnly && <button className="button primary add-guest" disabled={readOnly} onClick={onAdd}>
             <Plus size={18} /> Add guest
-          </button>
+          </button>}
         </div>
       </header>
       <div className="stat-grid guest-stats">
@@ -225,7 +226,7 @@ export default function Guests({
             </span>
           </div>
           <button onClick={() => onNavigate("rooms")}>
-            Assign rooms
+            {viewOnly ? "View rooms" : "Assign rooms"}
             <ArrowRight size={17} />
           </button>
         </div>
@@ -380,7 +381,7 @@ export default function Guests({
                   </td>
                   <td>
                     <div className="row-actions">
-                      {g.status === "Arriving" ? (
+                      {!readOnly && g.status === "Arriving" ? (
                         <button
                           className="checkin-button"
                           onClick={() => checkIn(g)}
@@ -468,7 +469,7 @@ export default function Guests({
                   Details
                   <ChevronRight size={14} />
                 </button>
-                {g.status === "Arriving" && (
+                {!readOnly && g.status === "Arriving" && (
                   <button
                     className="button primary small"
                     onClick={() => checkIn(g)}
@@ -648,7 +649,7 @@ export default function Guests({
             setEdit(false);
           }}
         >
-          {edit ? (
+          {edit && !readOnly ? (
             <GuestForm
               guest={selected}
               onCancel={() => setEdit(false)}
@@ -706,7 +707,7 @@ export default function Guests({
                           onNavigate("rooms");
                         }}
                       >
-                        Assign a room
+                        {viewOnly ? "View accommodation" : "Assign a room"}
                         <ArrowRight size={14} />
                       </button>
                     )}
@@ -730,7 +731,7 @@ export default function Guests({
                           onNavigate("transport");
                         }}
                       >
-                        Coordinate pickup
+                        {viewOnly ? "View transport" : "Coordinate pickup"}
                         <ArrowRight size={14} />
                       </button>
                     )}
@@ -766,15 +767,15 @@ export default function Guests({
                 )}
               </div>
               <div className="form-footer">
-                <button
+                {!viewOnly && <button
                   className="button secondary"
                   disabled={readOnly}
                   onClick={() => setEdit(true)}
                 >
                   <Pencil size={16} />
                   Edit details
-                </button>
-                {selected.status === "Arriving" ? (
+                </button>}
+                {!readOnly && selected.status === "Arriving" ? (
                   <button
                     className="button primary"
                     onClick={() => checkIn(selected)}
@@ -782,7 +783,7 @@ export default function Guests({
                     <UserRoundCheck size={17} />
                     Check in
                   </button>
-                ) : selected.status === "Checked in" ? (
+                ) : !readOnly && selected.status === "Checked in" ? (
                   <button
                     className="button secondary"
                     onClick={() => {

@@ -13,7 +13,7 @@ export function RoomStrip({ selected, onSelect, rooms = samarpanRooms, lodging =
   </section>;
 }
 
-function BedSlot({ guests, room, bed, day, onAssign, onEdit, saving, compact = false, rooms = [], drag }) {
+function BedSlot({ guests, room, bed, day, onAssign, onEdit, saving, compact = false, rooms = [], drag, readOnly = false }) {
   const state = bedState(guests, room.number, bed, { start: day, end: moveDay(day, 1) }, null, room.lodging || "Samarpan", rooms);
   const conflict = state.occupants.length > 1;
   const hovered = drag?.target === `${room.number}:${bed}`;
@@ -24,31 +24,31 @@ function BedSlot({ guests, room, bed, day, onAssign, onEdit, saving, compact = f
     onDrop={(e) => { e.preventDefault(); if (drag?.guest && !saving) drag.drop(e.dataTransfer.getData("application/x-mandir-guest"), room, bed); }}>
     {compact && <span className="stay-bed-caption">Bed {bed}</span>}
     {preview && <span className="stay-drop-label">{problem ? "Stay conflicts" : drag.guest.name}</span>}
-    {state.free ? <button className="stay-empty" disabled={saving} onClick={() => onAssign(room.number, bed, day)} aria-label={`Assign room ${room.number} bed ${bed} on ${fullDay(day)}`}><Plus size={15} /><span>Empty bed</span></button> : <>
+    {state.free ? (readOnly ? <div className="stay-empty">Empty bed</div> : <button className="stay-empty" disabled={saving} onClick={() => onAssign(room.number, bed, day)} aria-label={`Assign room ${room.number} bed ${bed} on ${fullDay(day)}`}><Plus size={15} /><span>Empty bed</span></button>) : <>
       {conflict && <span className="stay-conflict"><AlertCircle size={12} /> Double booking</span>}
-      {state.occupants.map((guest) => <button className="stay-occupant" key={guest.id} disabled={saving} onClick={() => onEdit(guest)} aria-label={`Edit ${guest.name}, room ${room.number} bed ${bed}, ${shortDay(day)}`}><span className="stay-guest-initials">{guest.initials}</span><span>{guest.name}</span></button>)}
+      {state.occupants.map((guest) => <button className="stay-occupant" key={guest.id} disabled={saving} onClick={() => onEdit(guest)} aria-label={`${readOnly ? "View" : "Edit"} ${guest.name}, room ${room.number} bed ${bed}, ${shortDay(day)}`}><span className="stay-guest-initials">{guest.initials}</span><span>{guest.name}</span></button>)}
       {state.uncertain.length > 0 && <div className="stay-uncertain"><span>Needs review</span>{state.uncertain.map((guest) => <button key={guest.id} onClick={() => onEdit(guest)} disabled={saving}>{guest.name}</button>)}</div>}
     </>}
   </div>;
 }
 
-export function WeeklyRooms({ guests, room, week, onAssign, onEdit, saving, onChooseDay, rooms, drag }) {
+export function WeeklyRooms({ guests, room, week, onAssign, onEdit, saving, onChooseDay, rooms, drag, readOnly = false }) {
   const days = Array.from({ length: 7 }, (_, i) => moveDay(week, i));
   return <section className="stay-calendar-panel" aria-label={`${roomLabel(room)} weekly occupancy`}>
     <div className="stay-panel-title"><div><h2>{roomLabel(room)}</h2><p>{room.lodging || "Samarpan"} · {room.beds} beds{room.lodging && !room.roomNo ? " · Hotel room number pending" : ""}</p></div><div className="stay-legend"><span><i className="legend-occupied" /> Occupied</span><span><i /> Empty</span></div></div>
     <div className="stay-grid-scroll" tabIndex={0} role="region" aria-label="Weekly bed calendar; scroll horizontally for all seven days">
       <table className="stay-week-grid"><thead><tr><th scope="col">Bed</th>{days.map((day) => <th scope="col" key={day}><button onClick={() => onChooseDay(day)} aria-label={`Open daily view for ${fullDay(day)}`}><span>{localDay(day).toLocaleDateString("en-US", { weekday: "short" })}</span><strong>{shortDay(day)}</strong></button></th>)}</tr></thead>
-        <tbody>{Array.from({ length: room.beds }, (_, i) => i + 1).map((bed) => <tr key={bed}><th scope="row"><BedDouble size={16} /><strong>Bed {bed}</strong><small>{room.lodging ? `${room.roomNo || "Pending"} · B${bed}` : samarpanRoomCode(room.number, bed)}</small></th>{days.map((day) => <td key={day}><BedSlot guests={guests} room={room} bed={bed} day={day} onAssign={onAssign} onEdit={onEdit} saving={saving} rooms={rooms} drag={drag} /></td>)}</tr>)}</tbody>
+        <tbody>{Array.from({ length: room.beds }, (_, i) => i + 1).map((bed) => <tr key={bed}><th scope="row"><BedDouble size={16} /><strong>Bed {bed}</strong><small>{room.lodging ? `${room.roomNo || "Pending"} · B${bed}` : samarpanRoomCode(room.number, bed)}</small></th>{days.map((day) => <td key={day}><BedSlot guests={guests} room={room} bed={bed} day={day} onAssign={onAssign} onEdit={onEdit} saving={saving} rooms={rooms} drag={drag} readOnly={readOnly} /></td>)}</tr>)}</tbody>
       </table>
     </div>
-    <p className="stay-calendar-note">Each column is the night beginning that day. Checkout day is free. Drag a guest onto a bed row to assign their full stay, or tap an empty bed.</p>
+    <p className="stay-calendar-note">Each column is the night beginning that day. Checkout day is free.{!readOnly && " Drag a guest onto a bed row to assign their full stay, or tap an empty bed."}</p>
   </section>;
 }
 
-export function DailyRooms({ guests, day, onAssign, onEdit, saving, rooms = samarpanRooms, lodging = "Samarpan", drag }) {
+export function DailyRooms({ guests, day, onAssign, onEdit, saving, rooms = samarpanRooms, lodging = "Samarpan", drag, readOnly = false }) {
   return <section className="stay-daily-rooms" aria-label={`All ${lodging} rooms`}>{rooms.map((room) => {
     const beds = Array.from({ length: room.beds }, (_, i) => i + 1);
     const free = beds.filter((bed) => bedState(guests, room.number, bed, { start: day, end: moveDay(day, 1) }, null, lodging, rooms).free).length;
-    return <article className="stay-day-room" key={room.number} aria-label={roomLabel(room)}><header><div><BedDouble size={21} /><h2>{roomLabel(room)}</h2></div><span className={free ? "stay-free-count" : "stay-full-count"}>{free} / {room.beds} beds empty</span></header><div className="stay-day-beds">{beds.map((bed) => <BedSlot key={bed} guests={guests} room={room} bed={bed} day={day} onAssign={onAssign} onEdit={onEdit} saving={saving} compact rooms={rooms} drag={drag} />)}</div></article>;
+    return <article className="stay-day-room" key={room.number} aria-label={roomLabel(room)}><header><div><BedDouble size={21} /><h2>{roomLabel(room)}</h2></div><span className={free ? "stay-free-count" : "stay-full-count"}>{free} / {room.beds} beds empty</span></header><div className="stay-day-beds">{beds.map((bed) => <BedSlot key={bed} guests={guests} room={room} bed={bed} day={day} onAssign={onAssign} onEdit={onEdit} saving={saving} compact rooms={rooms} drag={drag} readOnly={readOnly} />)}</div></article>;
   })}</section>;
 }

@@ -439,3 +439,4 @@
 .transport-plan .transport-save-status { color: #326681; }
 .transport-plan .transport-save-error { color: #9f3030; }
 @media (max-width: 700px) { .transport-plan select { font-size: 16px; min-height: 44px; } }
+.transport-read-value { display: block; padding: 10px 12px; background: #f6fbff; border: 1px solid #cce5f5; border-radius: 8px; color: #244d65; font-size: 13px; font-weight: 600; }

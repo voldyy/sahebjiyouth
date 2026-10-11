@@ -52,9 +52,10 @@ const literal = (value) => {
 function spreadsheet() {
   return SpreadsheetApp.openById(SPREADSHEET_ID);
 }
-function table(book, name) {
+function table(book, name, readOnly = false) {
   const expected = TABLES[name];
   let sheet = book.getSheetByName(name);
+  if (!sheet && readOnly) return { sheet: null, rows: [expected] };
   if (!sheet) {
     sheet = book.insertSheet(name);
     sheet
@@ -81,11 +82,11 @@ function roster(book) {
     .getDisplayValues();
   return { sheet, rows, guests: guestsFromRows(rows) };
 }
-function plans(book) {
-  const rows = table(book, "Transport Assignments")
+function plans(book, readOnly = false) {
+  const rows = table(book, "Transport Assignments", readOnly)
     .rows.slice(1)
     .filter((r) => r[0]);
-  const resources = table(book, "Transport Resources")
+  const resources = table(book, "Transport Resources", readOnly)
     .rows.slice(1)
     .filter((r) => r[2] === "Yes");
   return {
@@ -102,11 +103,11 @@ function plans(book) {
     vehicles: resources.filter((r) => r[0] === "Vehicle").map((r) => r[1]),
   };
 }
-function hotelRooms(book) {
-  return table(book, "Offsite Rooms").rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
+function hotelRooms(book, readOnly = false) {
+  return table(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
 }
-function housekeeping(book, guests) {
-  const current = table(book, "Housekeeping");
+function housekeeping(book, guests, readOnly = false) {
+  const current = table(book, "Housekeeping", readOnly);
   const today = Utilities.formatDate(new Date(), "America/New_York", "yyyy-MM-dd");
   const due = checkoutEvents(guests, today);
   const dueIds = new Set(due.map((e) => e.id));
@@ -119,20 +120,30 @@ function housekeeping(book, guests) {
     // A corrected stay supersedes the scheduled checkout. Clearing/moving a
     // lodging assignment retains the linen task for the bed that was vacated.
     const state = dueIds.has(r[0]) ? "Pending" : guest && stayRange(guest) ? "Superseded" : r[8];
-    if (state !== r[8]) writeRow(current.sheet, i + 1, [...r.slice(0, 8), state]);
+    if (state !== r[8]) {
+      if (readOnly) current.rows[i] = [...r.slice(0, 8), state];
+      else writeRow(current.sheet, i + 1, [...r.slice(0, 8), state]);
+    }
   });
   for (const event of due) {
     if (known.has(event.id)) continue;
-    writeRow(current.sheet, current.sheet.getLastRow() + 1, [event.id, event.roomNo, String(event.bed), event.roomCode, event.name, event.checkout, "", "", "Pending"]);
+    const values = [event.id, event.roomNo, String(event.bed), event.roomCode, event.name, event.checkout, "", "", "Pending"];
+    if (readOnly) current.rows.push(values);
+    else writeRow(current.sheet, current.sheet.getLastRow() + 1, values);
     known.add(event.id);
   }
-  return table(book, "Housekeeping").rows.slice(1).filter((r) => r[0] && r[8] !== "Superseded").map((r) => ({ id: r[0], roomNo: r[1], bed: Number(r[2]), roomCode: r[3], name: r[4], checkout: r[5], refreshedAt: r[6] }));
+  return (readOnly ? current.rows : table(book, "Housekeeping").rows).slice(1).filter((r) => r[0] && r[8] !== "Superseded").map((r) => ({ id: r[0], roomNo: r[1], bed: Number(r[2]), roomCode: r[3], name: r[4], checkout: r[5], refreshedAt: r[6] }));
 }
 function snapshot(book, role) {
   const current = roster(book);
   if (role !== "admin") return {
-    role: "kitchen",
-    // The meal roster includes names and home locations, without admin details.
+    role: "viewer",
+    // All dashboard views use normalized display data, never the raw source rows.
+    guests: current.guests,
+    transport: plans(book, true),
+    offsiteRooms: hotelRooms(book, true),
+    housekeeping: housekeeping(book, current.guests, true),
+    // Retain the meal projection for already-open versions of the team page.
     kitchenGuests: current.guests.map((g, index) => ({ sourceIdentity: `meal-${index}`, name: g.name, city: g.city, count: g.count, arrivalDate: g.arrivalDate, arrivalTime: g.arrivalTime, departureDate: g.departureDate, status: g.status, stay: g.stay === "Day visitor" ? "Day visitor" : "Overnight" })),
     refreshedAt: new Date().toISOString(),
   };
@@ -418,8 +429,8 @@ export function hospitalityRequest(req) {
     )
       throw new Error("Unknown action.");
     const key = PropertiesService.getScriptProperties().getProperty("ADMIN_ACCESS_KEY");
-    const role = key && typeof req.accessKey === "string" && req.accessKey === key ? "admin" : "kitchen";
-    if (req.action !== "snapshot" && role !== "admin") throw new Error("Admin access is required for this action. Open your private admin link.");
+    const role = key && typeof req.accessKey === "string" && req.accessKey === key ? "admin" : "viewer";
+    if (!["snapshot", "flight"].includes(req.action) && role !== "admin") throw new Error("Admin access is required to change this view-only dashboard. Open your private admin link.");
     if (req.action === "flight") return { ok: true, flight: flightStatus(req) };
     if (!lock.tryLock(20000))
       throw new Error("Another save is in progress. Please retry shortly.");

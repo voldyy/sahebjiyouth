@@ -1,6 +1,6 @@
 # Mandir Hospitality
 
-A responsive Google Sheets dashboard for Allentown Shri Swaminarayan Mandirji. Admins have Main, Transport, Accommodations, and Yogi Prasad. The Yogi Prasad team has its own restricted meal-planning link. The interface uses the supplied Anoopam Mission logo, sky blue, and soft orange.
+A responsive Google Sheets dashboard for Allentown Shri Swaminarayan Mandirji. Admins have Main, Transport, Accommodations, and Yogi Prasad. The Yogi Prasad team link opens an overall view-only version of all four tabs. The interface uses the supplied Anoopam Mission logo, sky blue, and soft orange.
 
 ## Development and release
 
@@ -19,13 +19,13 @@ Publish editable source to `voldyy/sahebjiyouth`, `mandir-hospitality/source/`, 
 
 ## Access
 
-The shareable team link is `https://www.sahebjiyouth.org/mandir-hospitality/#kitchen?team=yogi-prasad`. An admin can copy it from Workspace settings. It opens only Yogi Prasad, even in an existing admin tab. Without valid admin access, changing the hash or forging a role cannot unlock other sections.
+The shareable team link is `https://www.sahebjiyouth.org/mandir-hospitality/#kitchen?team=yogi-prasad`. An admin can copy it from Workspace settings. It starts on Yogi Prasad and shows Main, Transport, Accommodations, and Yogi Prasad in view-only mode, including when opened in an existing admin tab. The team flag persists across navigation and driver filters. Search, filters, dates, guest/stay details, and flight lookups remain available. Editing controls and headcount adjustments are unavailable; a forged role or hash cannot authorize writes.
 
 Full access uses a private link with an `admin` parameter in the URL fragment. The key is generated on the backend and stored in the Apps Script property `ADMIN_ACCESS_KEY`. The frontend consumes it into this tab's session storage and removes it from the address bar. It is never bundled in source or production assets. Possession grants admin access, so share this link only with admins. Rotating the script property invalidates old links. No Google sign-in is required for dashboard users.
 
-The backend checks the key on every lodging, transport, resource, flight, offsite, and linen action. Team snapshots contain names, home city/state, and the dates/counts needed for meal forecasts and diner lists. They exclude contact details, registration identifiers, transport plans, room inventory, and housekeeping records. Source-sheet link sharing must remain **Viewer**, with named editors retained. Anonymous source-sheet editing would bypass dashboard restrictions.
+The backend checks the key on every lodging, transport, resource, offsite, and linen write. Viewer snapshots return the normalized guest display records, transport assignments, room inventory, and housekeeping needed by all four tabs, without the raw source rows. Viewer snapshots do not create or update sheet records; due linen tasks can be derived in memory. Snapshot and flight lookup are permitted read actions. Source-sheet link sharing must remain **Viewer**, with named editors retained. Anonymous source-sheet editing would bypass dashboard restrictions.
 
-Yogi Prasad headcount adjustments remain device-local; they do not change other dashboard sections or the source sheet.
+Yogi Prasad headcount adjustments remain device-local and are now available only to admins. Guest views cannot change headcounts or any shared assignments.
 
 ## Source data
 

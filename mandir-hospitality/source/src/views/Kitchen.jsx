@@ -91,7 +91,7 @@ function getForecast(guests, meal, plan, day) {
   };
 }
 
-export default function Kitchen({ guests = [], toast = () => {}, sheetMode = false }) {
+export default function Kitchen({ guests = [], toast = () => {}, sheetMode = false, readOnly = false }) {
   const [planningDate, setPlanningDate] = useState(() => dateISO());
   const [selectedMeal, setSelectedMeal] = useState("lunch");
   return (
@@ -114,12 +114,13 @@ export default function Kitchen({ guests = [], toast = () => {}, sheetMode = fal
         setSelected={setSelectedMeal}
         toast={toast}
         sheetMode={sheetMode}
+        readOnly={readOnly}
       />
     </div>
   );
 }
 
-function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode }) {
+function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode, readOnly }) {
   const [savedPlans, setPlans] = useLocalStorage(
     `${sheetMode ? "sheet" : "seva"}-kitchen-plans-v1-${day}`,
     () => defaultPlans(day, sheetMode),
@@ -156,6 +157,7 @@ function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode
     { weekday: "short", month: "short", day: "numeric", year: "numeric" },
   );
   function openAdjustments() {
+    if (readOnly) return;
     setDraft({
       volunteers: plan.volunteers,
       visitors: plan.visitors,
@@ -165,6 +167,7 @@ function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode
   }
   function saveAdjustments(event) {
     event.preventDefault();
+    if (readOnly) return;
     const next = Object.fromEntries(
       ["volunteers", "visitors", "buffer"].map((key) => [
         key,
@@ -283,19 +286,19 @@ function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode
             ) : <p className="kit-diners-empty">No guests scheduled for this meal.</p>}
             {forecast.expected > forecast.guests && <p className="kit-diners-empty">{forecast.expected - forecast.guests} additional diners have no names recorded.</p>}
           </div>
-          <p className="kit-estimate-note">
+          {!readOnly && <p className="kit-estimate-note">
             <Info size={14} />
             <span>Headcount adjustments are saved on this device.</span>
-          </p>
-          <div className="kit-service-actions">
+          </p>}
+          {!readOnly && <div className="kit-service-actions">
             <button className="button secondary" onClick={openAdjustments}>
               <Settings2 size={16} />
               Adjust headcount
             </button>
-          </div>
+          </div>}
         </section>
       </div>
-      {draft && (
+      {draft && !readOnly && (
         <Sheet
           title={`Adjust ${meal.name.toLowerCase()} plan`}
           subtitle={`${formattedDate} · Update the extra meals expected for this day.`}
