@@ -6,12 +6,12 @@ import {
   Plus,
   Trash2,
   CalendarDays,
-  ExternalLink,
   Link2,
   Clock,
 } from "lucide-react";
 import Sheet from "../components/Sheet";
 import AirlineLabel from "../components/AirlineLabel";
+import FlightStatus from "../components/FlightStatus";
 import { transportGroups, transportWithPlans } from "../lib/transport";
 import { driverFromUrl, driverUrl } from "../lib/driverLinks";
 import { fullDay } from "../lib/occupancy";
@@ -24,77 +24,6 @@ const timeLabel = (value) =>
         minute: "2-digit",
       })
     : "Time needed";
-const pickupLabel = (value) =>
-  value
-    ? new Date(value).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : "";
-const today = () =>
-  new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-function FlightStatus({ group, workspace }) {
-  const [flight, setFlight] = useState(null),
-    [loading, setLoading] = useState(false);
-  const check = async () => {
-    setLoading(true);
-    try {
-      setFlight((await workspace.flightStatus(group)).flight);
-    } catch (error) {
-      setFlight({ available: false, reason: error.message });
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    if (group.method === "Flight" && group.day === today() && group.flight)
-      check();
-  }, [group.id]);
-  if (group.method !== "Flight" || !group.flight) return null;
-  return (
-    <div className="transport-flight-status">
-      {flight?.available ? (
-        <>
-          <strong>{flight.status}</strong>
-          {flight.estimated && (
-            <span>Latest: {pickupLabel(flight.estimated)}</span>
-          )}
-          <small>
-            Checked {new Date(flight.checkedAt).toLocaleTimeString()}
-          </small>
-        </>
-      ) : (
-        <small>
-          {flight?.reason ||
-            (group.day === today()
-              ? "Checking flight…"
-              : "Flight status available on the travel day")}
-        </small>
-      )}
-      <div>
-        {group.day === today() && (
-          <button className="text-button" disabled={loading} onClick={check}>
-            {loading ? "Checking…" : "Refresh flight"}
-          </button>
-        )}
-        <a
-          href={`https://www.google.com/search?q=${encodeURIComponent(group.flight + " flight status " + group.day)}`}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Flight tracker <ExternalLink size={12} />
-        </a>
-      </div>
-    </div>
-  );
-}
 export default function SheetTransport({ workspace, toast, readOnly = false }) {
   const [query, setQuery] = useState(""),
     [airport, setAirport] = useState("All"),
@@ -379,7 +308,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                         </li>
                       ))}
                     </ul>
-                    <FlightStatus group={group} workspace={workspace} />
+                    {group.method === "Flight" && group.flight && <FlightStatus group={group} workspace={workspace} />}
                   </div>
                   <div className="transport-plan">
                     {[

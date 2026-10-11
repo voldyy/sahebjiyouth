@@ -737,7 +737,7 @@ reply({ ready: true });
       };
     const cache = CacheService.getScriptCache();
     const cacheKey = [
-      "flight",
+      "flight-v2",
       number,
       day,
       req.direction,
@@ -760,8 +760,16 @@ reply({ ready: true });
       return { available: false, reason: "No matching flight at this airport." };
     const suffix = req.direction === "Arrivals" ? "GateArrival" : "GateDeparture";
     const times = leg.operationalTimes || {};
+    const scheduled = times["scheduled" + suffix] || {};
+    const latest = times["actual" + suffix] || times["estimated" + suffix] || {};
+    const landed = leg.status === "L" || !!times.actualRunwayArrival || !!times.actualGateArrival;
+    const inTransit = leg.status !== "C" && !landed && (leg.status === "A" || !!times.actualRunwayDeparture);
+    const providerDelay = leg.delays?.[req.direction === "Arrivals" ? "arrivalGateDelayMinutes" : "departureGateDelayMinutes"];
     const result = {
       available: true,
+      rawStatus: leg.status,
+      inTransit,
+      landed,
       status: {
         S: "Scheduled",
         A: "Active",
@@ -769,8 +777,11 @@ reply({ ready: true });
         C: "Cancelled",
         D: "Diverted"
       }[leg.status] || "Status unavailable",
-      scheduled: times["scheduled" + suffix]?.dateLocal || "",
-      estimated: times["actual" + suffix]?.dateLocal || times["estimated" + suffix]?.dateLocal || "",
+      scheduled: scheduled.dateLocal || "",
+      estimated: latest.dateLocal || "",
+      scheduledUtc: scheduled.dateUtc || "",
+      estimatedUtc: latest.dateUtc || "",
+      delayMinutes: typeof providerDelay === "number" && Number.isFinite(providerDelay) ? providerDelay : null,
       checkedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
     cache.put(cacheKey, JSON.stringify(result), 300);

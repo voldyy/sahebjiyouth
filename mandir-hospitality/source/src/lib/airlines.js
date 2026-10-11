@@ -27,11 +27,19 @@ const carriers = [
   ["NK", "NKS", "Spirit Airlines"],
 ];
 const byPrefix = new Map(carriers.flatMap(([iata, icao, name]) => [
-  [iata, { code: iata, name }], [icao, { code: iata, name }],
+  [iata, { code: iata, icao, name }], [icao, { code: iata, icao, name }],
 ]));
 
 export function airlineForFlight(flight) {
   const normalized = String(flight || "").toUpperCase().replace(/[\s-]/g, "");
   const prefix = normalized.match(/^([A-Z]{3}|[A-Z0-9]{2})\d{1,4}[A-Z]?$/)?.[1];
   return byPrefix.get(prefix) || null;
+}
+
+export function flightAwareUrl(flight) {
+  const normalized = String(flight || "").toUpperCase().replace(/[\s-]/g, "");
+  const match = normalized.match(/^([A-Z]{3}|[A-Z0-9]{2})(\d{1,4})([A-Z]?)$/);
+  if (!match) return "https://www.flightaware.com/";
+  const prefix = airlineForFlight(normalized)?.icao || match[1];
+  return `https://www.flightaware.com/live/flight/${encodeURIComponent(prefix + Number(match[2]) + match[3])}`;
 }
