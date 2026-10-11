@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  PlaneLanding,
-  PlaneTakeoff,
   BusFront,
   Car,
-  Users,
   Search,
   Plus,
   Trash2,
@@ -364,32 +361,22 @@ export default function SheetTransport({ workspace, toast }) {
                 )}
                 <div className="transport-journey-body">
                   <div>
-                    <p className="transport-guest-names">
-                      {group.guests.map((g) => g.name).join(", ")}
-                    </p>
-                    <details>
-                      <summary>
-                        <Users size={15} /> Guest details
-                      </summary>
-                      <ul className="transport-guests">
-                        {group.guests.map((g) => (
-                          <li key={g.id}>
-                            <span>
-                              {g.name}
-                              <small>
-                                {g.registrationId}
-                                {g.phone && (
-                                  <>
-                                    {" "}
-                                    · <a href={`tel:${g.phone}`}>{g.phone}</a>
-                                  </>
-                                )}
-                              </small>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </details>
+                    <ul className="transport-guest-names">
+                      {group.guests.map((guest) => (
+                        <li key={guest.id}>
+                          <strong>{guest.name}</strong>{" "}
+                          {guest.city && <small>({guest.city})</small>}{" "}
+                          {guest.phone && (
+                            <a
+                              href={`tel:${guest.phone.replace(/[\s().-]/g, "")}`}
+                              aria-label={`Call ${guest.name} at ${guest.phone}`}
+                            >
+                              {guest.phone}
+                            </a>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                     <FlightStatus group={group} workspace={workspace} />
                   </div>
                   <div className="transport-plan">

@@ -184,7 +184,7 @@ test("calendar layouts fit mobile and desktop and the weekly day header opens da
 
 test('transport drivers, vehicles and assignments persist across independent browsers with stale save protection',async({page,browser})=>{
   const rows=[plannerGuest('T1','Test Traveller One','2026-10-18','2026-10-20'),plannerGuest('T2','Test Traveller Two','2026-10-18','2026-10-20')];
-  rows.forEach(r=>Object.assign(r,{11:'Flight',12:'10/18/2026 2:30 PM',13:'10/20/2026 3:00 PM',14:'PHL',15:'AA 123',16:'EWR',17:'UA 456',18:'YES'}));
+  rows.forEach(r=>Object.assign(r,{5:'(555) 010-1234',7:'Allentown, PA',11:'Flight',12:'10/18/2026 2:30 PM',13:'10/20/2026 3:00 PM',14:'PHL',15:'AA 123',16:'EWR',17:'UA 456',18:'YES'}));
   const harness=await setup(page,'ok',rows);
   await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Transport',exact:true}).click();
   await expect(page.locator('.transport-journey')).toHaveCount(2);
@@ -192,6 +192,10 @@ test('transport drivers, vehicles and assignments persist across independent bro
   await expect(page.locator('.transport-guest-names').first()).toContainText('Test Traveller Two');
   await expect(page.getByRole('button',{name:'Arrivals',exact:true})).toHaveCount(0);
   await expect(page.getByRole('heading',{name:'UA456',exact:true})).toBeVisible();
+  await expect(page.locator('.transport-guest-names').first()).toContainText('(Allentown, PA)');
+  await expect(page.locator('.transport-guest-names a').first()).toHaveAttribute('href','tel:5550101234');
+  await expect(page.locator('.transport-journey details')).toHaveCount(0);
+  await expect(page.locator('.campus-label')).toContainText('Allentown Shri Swaminarayan Mandirji');
   await expect(page.getByText('Pickup requested',{exact:true})).toHaveCount(0);
   await page.getByRole('button',{name:'Drivers & vehicles',exact:true}).click();
   await page.getByLabel('New driver',{exact:true}).fill('Test Sevak');

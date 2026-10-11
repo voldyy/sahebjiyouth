@@ -171,6 +171,7 @@ i {
   border-radius: 9px;
 }
 .campus-mark {
+  flex-shrink: 0;
   color: #a98062;
   width: 31px;
   height: 34px;
@@ -501,6 +502,7 @@ i {
 }
 .workspace-context > span:first-child {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
 }

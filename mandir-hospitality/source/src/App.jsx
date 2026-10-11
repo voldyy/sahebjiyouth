@@ -231,7 +231,7 @@ export default function App() {
             <Temple size={22} />
           </span>
           <div>
-            <strong>Robbinsville Mandir</strong>
+            <strong>Allentown Shri Swaminarayan Mandirji</strong>
             <span>Hospitality operations</span>
           </div>
         </div>
@@ -342,7 +342,7 @@ export default function App() {
         <main id="main-content" className="main-content" tabIndex={-1}>
           <div className="workspace-context">
             <span>
-              <span className="context-dot" /> ROBBINSVILLE MANDIR{" "}
+              <span className="context-dot" /> Allentown Shri Swaminarayan Mandirji{" "}
               <span className="context-separator">/</span> SEVA WORKSPACE
             </span>
             <span>
@@ -546,7 +546,7 @@ export default function App() {
           title={
             modal === "profile" ? "Your seva workspace" : "Workspace settings"
           }
-          subtitle="Robbinsville Mandir · Hospitality team"
+          subtitle="Allentown Shri Swaminarayan Mandirji · Hospitality team"
           onClose={() => setModal(null)}
         >
           <div className="profile-card">

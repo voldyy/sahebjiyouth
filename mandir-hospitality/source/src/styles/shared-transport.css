@@ -174,36 +174,34 @@
   align-items: start;
 }
 .transport-guest-names {
-  margin: 0 0 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 6px;
+  display: grid;
+  gap: 6px;
   font-size: 14px;
-  font-weight: 700;
   line-height: 1.5;
   color: #273d33;
 }
-.transport-journey-body summary {
-  font-weight: 550;
-  color: #65755d;
-  cursor: pointer;
+.transport-guest-names li {
+  overflow-wrap: anywhere;
+}
+.transport-guest-names strong {
+  font-weight: 700;
+}
+.transport-guest-names small {
   font-size: 11px;
+  font-weight: 450;
+  color: #6b7666;
 }
-.transport-journey-body summary svg {
-  vertical-align: middle;
-}
-.transport-guests {
-  list-style: none;
-  padding: 0;
-  margin: 6px 0 0;
-}
-.transport-guests li {
-  padding: 6px 0;
-  border-bottom: 1px solid #eeeee5;
-  font-size: 12px;
-}
-.transport-guests small {
-  display: block;
-  margin-top: 3px;
-  color: #788170;
-  font-size: 10px;
+.transport-guest-names a {
+  font-size: 11px;
+  font-weight: 550;
+  color: #4c704e;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  display: inline-block;
 }
 .transport-plan {
   display: grid;
