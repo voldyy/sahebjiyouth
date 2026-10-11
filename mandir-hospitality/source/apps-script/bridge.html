@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta charset="utf-8"></head><body><p>Mandir Hospitality connection</p><script>
+const config = __CONFIG__;
+const reply = message => window.top.postMessage({ ...message, channel: config.channel, service: 'mandir-hospitality' }, config.origin);
+window.addEventListener('message', event => {
+  if (event.origin !== config.origin || event.source !== window.top || event.data?.channel !== config.channel || event.data?.service !== 'mandir-hospitality') return;
+  const { id, request } = event.data;
+  if (!id || !request) return;
+  google.script.run.withSuccessHandler(result => reply({ id, result })).withFailureHandler(error => reply({ id, result: { ok: false, error: error.message || 'Google could not complete this request.' } })).hospitalityRequest(request);
+});
+reply({ ready: true });
+</script></body></html>

@@ -107,7 +107,7 @@ export default function SheetAccommodation({ workspace, toast }) {
         })}</select></label>}
         <label className="field">Custom room code (AF)<input value={draft.roomCode} readOnly={draft.lodging === "Samarpan"} disabled={workspace.saving} onChange={(event) => setDraft({ ...draft, roomCode: event.target.value })} maxLength={100} required placeholder={draft.lodging === "Samarpan" ? "Generated from room and bed" : "Enter your customized code"} /></label>
         {selected && !stayRange(selected) && <a className="button secondary" href={SHEET_URL} target="_blank" rel="noreferrer">Open source sheet to add dates</a>}
-        {!workspace.connected && <button type="button" className="button secondary" onClick={workspace.connect}>Sign in with Google to save</button>}
+        {!workspace.connected && <p className="sheet-data-note">Waiting for the shared sheet connection…</p>}
         {(error || issue) && <p role="alert" className="op-form-error">{error || issue}</p>}
         <button className="button primary" disabled={!selected || !workspace.connected || workspace.saving || !selected?.sourceWritable || !!issue} type="submit">{workspace.saving ? "Saving…" : "Save assignment to sheet"}</button>
         {selected?.room && <button type="button" className="button secondary" disabled={!workspace.connected || workspace.saving} onClick={(event) => save(event, true)}>Clear lodging assignment (AD–AF)</button>}

@@ -1,32 +1,35 @@
 import { test, expect } from "@playwright/test";
 
+import { createHarness } from './helpers/apps-script-harness.js';
+
 async function setup(page, mode = "ok", attendeeRows = null) {
   const headers = Array(32).fill("");
   Object.assign(headers, { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" });
   const row = Array(32).fill("");
   Object.assign(row, { 0: "SYNTHETIC-001", 3: "Synthetic Primary", 8: "Synthetic Guest", 9: "Self", 12: "10/18/2026", 13: "10/20/2026", 20: "YES", 24: "Confirmed" });
-  const rows = [headers, ...(attendeeRows || [row])];
-  const writes = [];
-  await page.addInitScript(() => localStorage.setItem("mandir.google-client-id", "123-test.apps.googleusercontent.com"));
-  await page.route("https://accounts.google.com/gsi/client", (route) => route.fulfill({ contentType: "application/javascript", body: "window.google={accounts:{oauth2:{initTokenClient:(options)=>({requestAccessToken:()=>options.callback({access_token:'synthetic-token',expires_in:3600})})}}};" }));
-  await page.route("https://docs.google.com/spreadsheets/**", async (route) => {
-    const callback = new URL(route.request().url()).searchParams.get("tqx").split("responseHandler:")[1];
-    await route.fulfill({ contentType: "application/javascript", body: `${callback}(${JSON.stringify({ status: "ok", table: { cols: headers.map((label) => ({ label })), rows: rows.slice(1).map((r) => ({ c: r.map((v) => ({ v })) })) } })});` });
-  });
-  await page.route("https://sheets.googleapis.com/**", async (route) => {
-    const request = route.request();
-    if (request.method() === "PUT") {
-      writes.push(request.postDataJSON());
-      if (mode === "denied") return route.fulfill({ status: 403, json: {} });
-      const n = Number(writes.at(-1).range.match(/AD(\d+)/)[1]);
-      rows[n - 1].splice(29, 3, ...writes.at(-1).values[0]);
-      return route.fulfill({ json: { updatedCells: 3 } });
-    }
-    await route.fulfill({ json: request.url().includes("fields=sheets.properties") ? { sheets: [{ properties: { sheetId: 0, title: "Attendees" } }] } : { values: rows } });
-  });
+  const harness = createHarness([headers, ...(attendeeRows || [row])], mode === 'denied');
+  await mockBridge(page.context(),harness);
   await page.goto("/");
   await expect(page.locator(".mobile-guest-name").first()).toBeVisible();
-  return { rows, writes };
+  return harness;
+}
+async function mockBridge(context,harness) {
+  await context.route('https://script.google.com/macros/s/synthetic-hospitality/exec?**', route => {
+    const params=new URL(route.request().url()).searchParams;
+    const config={channel:params.get('channel'),origin:params.get('origin')};
+    return route.fulfill({contentType:'text/html',body:`<script>
+      const config=${JSON.stringify(config)};
+      window.addEventListener('message', async e=>{
+        if(e.origin!==config.origin||e.data.channel!==config.channel)return;
+        const result=await fetch('https://script.google.com/test-rpc',{method:'POST',body:JSON.stringify(e.data.request)}).then(r=>r.json());
+        window.top.postMessage({service:'mandir-hospitality',channel:config.channel,id:e.data.id,result},config.origin);
+      });
+      window.top.postMessage({service:'mandir-hospitality',channel:config.channel,ready:true},config.origin);
+    </script>`});
+  });
+  await context.route('https://script.google.com/test-rpc',route=>route.fulfill({json:harness.request(route.request().postDataJSON())}));
+  await context.route('https://sheets.googleapis.com/**',route=>route.abort());
+  await context.route('https://accounts.google.com/**',route=>route.abort());
 }
 async function openAssignment(page) {
   await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Rooms", exact: true }).click();
@@ -36,12 +39,10 @@ async function openAssignment(page) {
   await page.getByLabel("Room number (AE)").fill("021");
   await page.getByLabel("Custom room code (AF)").fill("CI-021");
 }
-test("sheet source replaces demo data and authorized assignment persists AD–AF only", async ({ page }) => {
+test("anonymous shared assignment persists AD–AF only", async ({ page }) => {
   const { rows, writes } = await setup(page);
   await expect(page.getByText("Girishbhai & Taraben Patel", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Add guest", exact: true })).toBeDisabled();
-  await page.getByRole("button", { name: "Sign in with Google", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
   await openAssignment(page);
   await page.getByRole("button", { name: "Save assignment to sheet" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -55,21 +56,19 @@ test("sheet source replaces demo data and authorized assignment persists AD–AF
   await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Rooms", exact: true }).click();
   await page.getByRole("button", { name: "Guest list", exact: true }).click();
   await expect(page.getByText("Room: 021", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Sign in with Google", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign in with Google", exact: true })).toHaveCount(0);
   const dimensions = await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]);
   expect(dimensions[0]).toBeLessThanOrEqual(dimensions[1]);
 });
-test("read-only source never writes an assignment before Google authorization", async ({ page }) => {
+test("shared source enables edits without Google authorization", async ({ page }) => {
   const { writes } = await setup(page);
   await openAssignment(page);
-  await expect(page.getByRole("button", { name: "Save assignment to sheet" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Save assignment to sheet" })).toBeEnabled();
   await page.screenshot({ path: test.info().outputPath("lodging-assignment.png"), fullPage: true });
   expect(writes).toHaveLength(0);
 });
-test("Google permission failure leaves the form open and does not report success", async ({ page }) => {
+test("Backend write failure leaves the form open and does not report success", async ({ page }) => {
   const { rows, writes } = await setup(page, "denied");
-  await page.getByRole("button", { name: "Sign in with Google", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
   await openAssignment(page);
   await page.getByRole("button", { name: "Save assignment to sheet" }).click();
   await expect(page.getByRole("dialog").getByRole("alert")).toContainText("cannot edit");
@@ -144,8 +143,6 @@ test("weekly calendar has six bounded weeks, correct room beds, and checkout-day
 
 test("daily view shows all 71 beds, date-filtered unassigned guests, and saves from an empty bed", async ({ page }) => {
   const { writes } = await openPlanner(page);
-  await page.getByRole("button", { name: "Sign in with Google", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Sign out", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Daily view", exact: true }).click();
   await expect(page.locator(".stay-day-room")).toHaveCount(9);
   await expect(page.locator(".stay-day-beds .stay-slot")).toHaveCount(71);
@@ -183,4 +180,66 @@ test("calendar layouts fit mobile and desktop and the weekly day header opens da
   await page.getByRole("button", { name: "Open daily view for Wednesday, October 14, 2026", exact: true }).click();
   await expect(page.getByLabel("Choose occupancy date")).toHaveValue("2026-10-14");
   await expect(slot(page, "204", "1", "2026-10-14")).toContainText("Bela Shah");
+});
+
+test('transport drivers, vehicles and assignments persist across independent browsers with stale save protection',async({page,browser})=>{
+  const rows=[plannerGuest('T1','Test Traveller One','2026-10-18','2026-10-20'),plannerGuest('T2','Test Traveller Two','2026-10-18','2026-10-20')];
+  rows.forEach(r=>Object.assign(r,{11:'Flight',12:'10/18/2026 2:30 PM',13:'10/20/2026 3:00 PM',14:'PHL',15:'AA 123',16:'EWR',17:'UA 456',18:'YES'}));
+  const harness=await setup(page,'ok',rows);
+  await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Transport',exact:true}).click();
+  await expect(page.locator('.transport-journey')).toHaveCount(2);
+  await expect(page.getByRole('heading',{name:'AA123',exact:true})).toBeVisible();
+  await expect(page.locator('.transport-guest-names').first()).toContainText('Test Traveller Two');
+  await expect(page.getByRole('button',{name:'Arrivals',exact:true})).toHaveCount(0);
+  await expect(page.getByRole('heading',{name:'UA456',exact:true})).toBeVisible();
+  await expect(page.getByText('Pickup requested',{exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'Drivers & vehicles',exact:true}).click();
+  await page.getByLabel('New driver',{exact:true}).fill('Test Sevak');
+  await page.getByRole('dialog').locator('form').first().getByRole('button',{name:'Add',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Remove driver Test Sevak'})).toBeVisible();
+  await page.getByLabel('New vehicle',{exact:true}).fill('Test Van');
+  await page.getByRole('dialog').locator('form').nth(1).getByRole('button',{name:'Add',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Remove vehicle Test Van'})).toBeVisible();
+  await page.getByRole('button',{name:'Close dialog',exact:true}).click();
+  await page.getByRole('button',{name:'Assign transport',exact:true}).first().click();
+  await page.getByRole('combobox',{name:'Sevak driver',exact:true}).selectOption('Test Sevak');
+  await page.getByRole('combobox',{name:'Vehicle',exact:true}).selectOption('Test Van');
+  await page.getByLabel('Driver notes',{exact:true}).fill('Terminal 2');
+  await page.getByRole('button',{name:'Save transport to sheet',exact:true}).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  const context=await browser.newContext({viewport:{width:1280,height:900}});
+  await mockBridge(context,harness);
+  const second=await context.newPage();await second.goto('http://localhost:5175/#transport');
+  await expect(second.locator('.transport-plan').first()).toContainText('Terminal 2');
+  await expect(second.getByRole('button',{name:'Sign in with Google'})).toHaveCount(0);
+  await second.getByRole('button',{name:'Edit transport assignment',exact:true}).click();
+  await page.getByRole('button',{name:'Edit transport assignment',exact:true}).click();
+  await page.getByLabel('Driver notes',{exact:true}).fill('Updated by first admin');
+  await page.getByRole('button',{name:'Save transport to sheet',exact:true}).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await second.getByLabel('Driver notes',{exact:true}).fill('Stale change');
+  await second.getByRole('button',{name:'Save transport to sheet',exact:true}).click();
+  await expect(second.getByRole('dialog').getByRole('alert')).toContainText('Another admin');
+  await second.getByRole('button',{name:'Close dialog',exact:true}).click();
+  await second.getByRole('button',{name:'Refresh sheet',exact:true}).click();
+  await expect(second.locator('.transport-plan').first()).toContainText('Updated by first admin');
+  await second.screenshot({path:test.info().outputPath('shared-transport-desktop.png'),fullPage:true});
+  await page.screenshot({path:test.info().outputPath('shared-transport-mobile.png'),fullPage:true});
+  for(const view of [page,second]) expect(await view.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
+  await expect(page.getByRole('heading',{name:'UA456',exact:true})).toBeVisible();
+  await expect(page.getByText('Suggested mandir departure',{exact:true})).toBeVisible();
+  await second.goto('http://localhost:5175/#transport?driver=Test+Sevak');
+  await expect(second.getByRole('heading',{name:'Airport Trips',exact:true})).toBeVisible();
+  await expect(second.locator('.transport-journey')).toHaveCount(1);
+  await expect(second.locator('.transport-journey')).toContainText('AA123');
+  await expect(second.getByRole('button',{name:'Copy driver link',exact:true})).toBeVisible();
+  await second.reload();
+  await expect(second.locator('.transport-journey')).toHaveCount(1);
+  await second.getByRole('button',{name:'Show all trips',exact:true}).click();
+  await expect(second.locator('.transport-journey')).toHaveCount(2);
+  await second.goto('http://localhost:5175/?driver=test%20sevak#transport');
+  await expect(second.locator('.transport-journey')).toHaveCount(1);
+  await second.goto('http://localhost:5175/#transport?driver=Unknown+Driver');
+  await expect(second.getByRole('heading',{name:'No journeys found',exact:true})).toBeVisible();
+  await context.close();
 });

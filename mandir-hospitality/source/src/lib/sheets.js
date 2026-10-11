@@ -67,7 +67,7 @@ export function guestsFromRows(rows) {
       group: "Individual", primaryContact: text(row[3]), relationship: text(row[9]),
       city: text(row[7]), phone: text(row[5]), count: 1,
       arrivalDate: arrival.date, arrivalTime: arrival.time,
-      departureDate: departure.date, accommodationIn: lodgingIn.date, accommodationOut: lodgingOut.date,
+      departureDate: departure.date, departureTime: departure.time, travelMethod: text(row[11]), arrivalAirport: text(row[14]), arrivalFlight: text(row[15]), departureAirport: text(row[16]), departureFlight: text(row[17]), accommodationIn: lodgingIn.date, accommodationOut: lodgingOut.date,
       status: /^cancel/i.test(rsvp) ? "Cancelled" : "Registered", rsvpStatus: rsvp,
       stay: lodging[0] || (/^(NO|N|FALSE)$/.test(overnight) ? "Day visitor" : "Pending lodging"),
       lodging: lodging[0], roomNo: lodging[1], roomCode: lodging[2], room: lodging[2] || lodging[1],

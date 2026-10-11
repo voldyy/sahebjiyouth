@@ -37,6 +37,7 @@ import { useSheetWorkspace } from "./lib/useSheetWorkspace";
 import { SHEET_URL } from "./lib/sheets";
 import "./styles/sheets.css";
 
+const SheetTransport = lazy(() => import("./views/SheetTransport"));
 const Transport = lazy(() => import("./views/Transport"));
 const Accommodation = lazy(() => import("./views/Accommodation"));
 const Kitchen = lazy(() => import("./views/Kitchen"));
@@ -58,8 +59,8 @@ const navigation = [
   },
 ];
 const currentRoute = () =>
-  navigation.some((n) => n.id === location.hash.slice(1))
-    ? location.hash.slice(1)
+  navigation.some((n) => n.id === location.hash.slice(1).split("?")[0])
+    ? location.hash.slice(1).split("?")[0]
     : "guests";
 
 export default function App() {
@@ -75,7 +76,6 @@ export default function App() {
   const [notification, setNotification] = useState(null);
   const toastTimer = useRef();
   const [storageError, setStorageError] = useState(false);
-  const [clientIdDraft, setClientIdDraft] = useState(sheetWorkspace.clientId);
   const toast = useCallback((message) => {
     setNotification(message);
     clearTimeout(toastTimer.current);
@@ -329,9 +329,8 @@ export default function App() {
           </div>
         </header>
         {!demoMode && <section className="sheet-connection" aria-label="Google Sheets connection">
-          <div><strong>Google Sheets guest roster</strong><p>{sheetWorkspace.loading ? "Refreshing attendee data…" : sheetWorkspace.refreshedAt ? `Last refreshed ${sheetWorkspace.refreshedAt.toLocaleTimeString()}` : "Waiting for source data"} · {sheetWorkspace.connected ? "Google authorized; sheet edit access is required" : "Read-only until Google sign-in"}</p></div>
+          <div><strong>Google Sheets guest roster</strong><p>{sheetWorkspace.loading ? "Refreshing attendee data…" : sheetWorkspace.refreshedAt ? `Last refreshed ${sheetWorkspace.refreshedAt.toLocaleTimeString()}` : "Waiting for source data"} · {sheetWorkspace.connected ? "Shared editing enabled" : "Connecting to shared editing…"}</p></div>
           <button className="button secondary small" disabled={sheetWorkspace.loading || sheetWorkspace.saving} onClick={sheetWorkspace.refresh}>Refresh sheet</button>
-          {sheetWorkspace.connected ? <button className="button secondary small" disabled={sheetWorkspace.saving} onClick={sheetWorkspace.disconnect}>Sign out</button> : <button className="button primary small" onClick={() => { if (!sheetWorkspace.clientId) setModal("settings"); else sheetWorkspace.connect(); }}>Sign in with Google</button>}
           {sheetWorkspace.error && <p className="sheet-connection-error" role="alert">{sheetWorkspace.error}</p>}
         </section>}
         {storageError && (
@@ -368,7 +367,8 @@ export default function App() {
                 onNavigate={navigate}
               />
             )}
-            {route === "transport" && (
+            {route === "transport" && !demoMode && <SheetTransport workspace={sheetWorkspace} toast={toast} />}
+            {route === "transport" && demoMode && (
               <Transport
                 guests={guests}
                 sheetMode={!demoMode}
@@ -560,13 +560,10 @@ export default function App() {
           <div className="settings-section">
             <h3>About this workspace</h3>
             {demoMode ? <p>This demo uses sample guests, saved in this browser.</p> : <>
-              <p>Guest data comes from the source sheet. Lodging changes write only AD (location), AE (room number), and AF (custom code). Other fields are read-only. Guest records and Google access tokens are not saved to browser storage.</p>
-              <p>Kitchen headcount adjustments remain device-local. Transport dispatch plans are session-only and clear on reload. Neither is written to this sheet.</p>
+              <p>Guest data comes from the source sheet. Lodging changes write only AD (location), AE (room number), and AF (custom code). Other fields are read-only. Guest records are not saved to browser storage.</p>
+              <p>Room and transport assignments are shared through Google Sheets. Anyone with this page can edit assignments. Kitchen headcount adjustments remain device-local.</p>
               <a className="button secondary" href={SHEET_URL} target="_blank" rel="noreferrer">Open source sheet</a>
-              <label className="field">Google OAuth client ID<input value={clientIdDraft} onChange={(e) => setClientIdDraft(e.target.value)} placeholder="…apps.googleusercontent.com" /></label>
-              <p>A Google web OAuth client ID is public configuration, not a password or client secret. The project must enable Google Sheets API and allow this website’s origin. Google’s Sheets permission can cover all spreadsheets accessible to your account; this app targets only the configured source sheet.</p>
-              <button className="button secondary" onClick={() => { try { sheetWorkspace.configureClientId(clientIdDraft); toast("Google sign-in configuration saved. Now sign in to enable lodging writes."); } catch (error) { toast(error.message); } }}>Save Google sign-in configuration</button>
-              <button className="button primary" onClick={sheetWorkspace.connect}>Sign in with Google</button>
+
             </>}
           </div>
           <button
