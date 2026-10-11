@@ -85,7 +85,7 @@ test("Samarpan offers only confirmed rooms with bed capacities", async ({ page }
   await page.getByRole("button", { name: "Assign lodging", exact: true }).click();
   const room = page.getByLabel("Room number (AE)");
   await expect(room).toHaveJSProperty("tagName", "SELECT");
-  await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "100 · 7 beds", "101 · 12 beds", "102 · 12 beds", "103 · 12 beds", "104 · 12 beds", "204 · 4 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds"]);
+  await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "204 · 4 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds", "100 · 7 beds", "101 · 12 beds", "102 · 12 beds", "103 · 12 beds", "104 · 12 beds"]);
   await room.selectOption("204");
   await expect(page.getByLabel("Bed number").locator("option")).toHaveCount(5);
   await page.getByLabel("Bed number").selectOption("1");

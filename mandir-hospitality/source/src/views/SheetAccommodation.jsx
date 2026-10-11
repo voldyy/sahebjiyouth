@@ -16,7 +16,7 @@ export default function SheetAccommodation({ workspace, toast }) {
   const [view, setView] = useState("weekly");
   const [weekIndex, setWeekIndex] = useState(0);
   const [day, setDay] = useState(FIRST_STAY_DAY);
-  const [roomNo, setRoomNo] = useState("100");
+  const [roomNo, setRoomNo] = useState(samarpanRooms[0].number);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All lodging");
   const [queueQuery, setQueueQuery] = useState("");
