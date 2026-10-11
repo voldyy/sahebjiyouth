@@ -97,7 +97,6 @@ export default function Kitchen({ guests = [], toast = () => {}, sheetMode = fal
     <div className="kit-page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">KITCHEN & ANNAKSHETRA</p>
           <h1 className="page-title">Yogi Prasad</h1>
           <p className="page-description">
             Plan your Yogi Prasad headcount, one day at a time.
