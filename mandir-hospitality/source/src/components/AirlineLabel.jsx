@@ -9,8 +9,8 @@ export default function AirlineLabel({ flight, airport }) {
   return <div className="transport-carrier">
     <span className="transport-airline-logo" aria-hidden="true">
       {airline && failedLogo !== airline.code
-        ? <img src={`${import.meta.env.BASE_URL}airlines/${airline.code}.png`} alt="" width="22" height="22" loading="lazy" decoding="async" onError={() => setFailedLogo(airline.code)} />
-        : <Plane size={17} />}
+        ? <img src={`${import.meta.env.BASE_URL}airlines/${airline.code}.png`} alt="" width="18" height="18" loading="lazy" decoding="async" onError={() => setFailedLogo(airline.code)} />
+        : <Plane size={14} />}
     </span>
     <span className="transport-carrier-text"><span className="transport-airline-name">{displayName || "Airline unknown"}</span><span className="transport-airport"> · {airport || "Location needed"}</span></span>
   </div>;

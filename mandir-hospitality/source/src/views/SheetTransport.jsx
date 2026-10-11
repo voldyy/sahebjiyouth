@@ -345,10 +345,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                       {group.airport || "Location needed"}
                     </span>}
                     <h3>{group.flight || `${group.method} journey`}</h3>
-                    <span>
-                      {group.guests.length}{" "}
-                      {group.guests.length === 1 ? "guest" : "guests"}
-                    </span>
+                    {group.guests.length > 1 && <span>{group.guests.length} guests</span>}
                   </div>
                   <span
                     className={`transport-status ${group.plan.driver && group.plan.vehicle ? "assigned" : ""}`}
