@@ -53,7 +53,7 @@ Airport Trips combines arrivals and departures chronologically. Groups use direc
 
 FlightStats lookups run only on flight day, with a five-minute server cache. Keep `FLIGHTSTATS_APP_ID` and `FLIGHTSTATS_APP_KEY` in private Apps Script properties. No guest data is sent to the provider.
 
-Yogi Prasad forecasts breakfast, lunch, and dinner from attendee dates and arrival times. Undated attendees are excluded with a warning. Volunteer/walk-in counts and preparation buffers are saved per day on the current device. Plan export is available to the team.
+Yogi Prasad serves breakfast 8–10 AM, lunch 12–2 PM, and dinner 6–8 PM. On arrival day, arrivals before 11 AM count for all three meals, 11 AM–before 3 PM count for lunch and dinner, and 3 PM–11:59 PM count for dinner. Guests staying from earlier days count for all meals. Undated attendees are excluded with a warning. The service card shows combined headcount and preparation target without category breakdowns. Kitchen updates and plan export have been removed. Headcount adjustments and preparation buffers remain saved per day on the current device.
 
 ## Shared backend
 

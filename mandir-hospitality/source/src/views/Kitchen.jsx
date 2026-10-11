@@ -3,8 +3,6 @@ import {
   ArrowRight,
   Check,
   ChefHat,
-  ClipboardCheck,
-  Download,
   Info,
   Moon,
   Settings2,
@@ -14,30 +12,31 @@ import {
 } from "lucide-react";
 import DaySelector from "../components/DaySelector";
 import Sheet from "../components/Sheet";
-import { exportCsv, useLocalStorage } from "../lib/storage";
+import { useLocalStorage } from "../lib/storage";
 import { dateISO } from "../lib/data";
 import "../styles/kitchen.css";
 
+// Arrival-day cutoffs are exclusive: 11 AM starts lunch, 3 PM starts dinner.
 const MEALS = [
   {
     id: "breakfast",
     name: "Breakfast",
-    time: "7:00 – 9:00 AM",
-    cutoff: 9 * 60,
+    time: "8:00 – 10:00 AM",
+    cutoff: 11 * 60,
     icon: Sunrise,
   },
   {
     id: "lunch",
     name: "Lunch",
-    time: "11:30 AM – 2:00 PM",
-    cutoff: 14 * 60,
+    time: "12:00 – 2:00 PM",
+    cutoff: 15 * 60,
     icon: Sun,
   },
   {
     id: "dinner",
     name: "Dinner",
-    time: "7:00 – 9:30 PM",
-    cutoff: 21 * 60 + 30,
+    time: "6:00 – 8:00 PM",
+    cutoff: 24 * 60,
     icon: Moon,
   },
 ];
@@ -74,7 +73,7 @@ function getForecast(guests, meal, plan, day) {
     if (guest.stay === "Day visitor" && guest.arrivalDate !== day) return false;
     return (
       (guest.arrivalDate && guest.arrivalDate < day) ||
-      arrivalMinutes(guest.arrivalTime) <= meal.cutoff
+      arrivalMinutes(guest.arrivalTime) < meal.cutoff
     );
   });
   const guestCount = attending.reduce(
@@ -124,10 +123,6 @@ function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode
   const [savedPlans, setPlans] = useLocalStorage(
     `${sheetMode ? "sheet" : "seva"}-kitchen-plans-v1-${day}`,
     () => defaultPlans(day, sheetMode),
-  );
-  const [activity, setActivity] = useLocalStorage(
-    `${sheetMode ? "sheet" : "seva"}-kitchen-activity-v1-${day}`,
-    [],
   );
   const [draft, setDraft] = useState(null);
   const [formError, setFormError] = useState("");
@@ -194,46 +189,8 @@ function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode
       [selected]: { ...plans[selected], ...next },
     }));
     const message = `${meal.name} headcount updated`;
-    setActivity((current) =>
-      [
-        { id: crypto.randomUUID(), meal: meal.name, message, time: Date.now() },
-        ...current,
-      ].slice(0, 12),
-    );
     toast(`${message} for ${formattedDate}.`);
     setDraft(null);
-  }
-  function exportPlan() {
-    const rows = [
-      [
-        "Date",
-        "Meal",
-        "Meal time",
-        "Roster guests",
-        "Volunteers",
-        "Walk-in visitors",
-        "Expected",
-        "Buffer plates",
-        "Prepare",
-      ],
-    ];
-    MEALS.forEach((item) => {
-      const count = forecasts[item.id];
-      const current = plans[item.id];
-      rows.push([
-        day,
-        item.name,
-        item.time,
-        count.guests,
-        current.volunteers,
-        current.visitors,
-        count.expected,
-        count.bufferCount,
-        count.target,
-      ]);
-    });
-    exportCsv(`mahaprasad-plan-${day}.csv`, rows);
-    toast(`Kitchen plan exported for ${formattedDate}.`);
   }
   return (
     <>
@@ -243,10 +200,6 @@ function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode
           <span />
           Connected to guest roster
         </span>
-        <button className="button secondary kit-export" onClick={exportPlan}>
-          <Download size={16} />
-          Export plan
-        </button>
       </div>
       <div className="kit-meals" role="group" aria-label="Choose a meal">
         {MEALS.map((item) => {
@@ -316,32 +269,9 @@ function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode
               <small>Includes {plan.buffer}% buffer</small>
             </div>
           </div>
-          <div className="kit-count-breakdown">
-            <div>
-              <span className="kit-dot roster" />
-              Roster guests<strong>{forecast.guests}</strong>
-            </div>
-            <div>
-              <span className="kit-dot volunteers" />
-              Volunteers<strong>{plan.volunteers}</strong>
-            </div>
-            <div>
-              <span className="kit-dot visitors" />
-              Walk-in visitors<strong>{plan.visitors}</strong>
-            </div>
-          </div>
-          <div className="kit-breakdown-bar" aria-hidden="true">
-            <span style={{ flex: forecast.guests || 0.01 }} />
-            <span style={{ flex: Number(plan.volunteers) || 0.01 }} />
-            <span style={{ flex: Number(plan.visitors) || 0.01 }} />
-          </div>
           <p className="kit-estimate-note">
             <Info size={14} />
-            <span>
-              {day === dateISO()
-                ? "Volunteer and walk-in adjustments are saved on this device."
-                : "Add this day’s expected volunteers and walk-in visitors to your plan."}
-            </span>
+            <span>Headcount adjustments are saved on this device.</span>
           </p>
           <div className="kit-service-actions">
             <button className="button secondary" onClick={openAdjustments}>
@@ -349,52 +279,6 @@ function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode
               Adjust headcount
             </button>
           </div>
-        </section>
-        <section
-          className="card kit-activity-card"
-          aria-labelledby="kit-activity-title"
-        >
-          <div className="kit-card-header">
-            <div>
-              <h2 id="kit-activity-title">Kitchen updates</h2>
-              <p>Plan changes for {formattedDate}.</p>
-            </div>
-            <ClipboardCheck size={20} />
-          </div>
-          {activity.length ? (
-            <ul className="kit-activity-list">
-              {activity.slice(0, 4).map((item) => (
-                <li key={item.id}>
-                  <span className="kit-activity-check">
-                    <Check size={14} />
-                  </span>
-                  <div>
-                    <strong>{item.message}</strong>
-                    <span>{item.meal}</span>
-                  </div>
-                  <time dateTime={new Date(item.time).toISOString()}>
-                    {new Date(item.time).toLocaleTimeString("en-US", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                  </time>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="kit-no-updates">
-              <span className="kit-activity-check">
-                <Check size={15} />
-              </span>
-              <div>
-                <strong>Your plan is ready to review</strong>
-                <p>
-                  Guest stays inform this day’s headcount. Adjustments for this
-                  date will appear here.
-                </p>
-              </div>
-            </div>
-          )}
         </section>
       </div>
       {draft && (
