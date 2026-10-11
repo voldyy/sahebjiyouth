@@ -100,8 +100,8 @@ export default function SheetTransport({ workspace, toast }) {
     [driver, setDriver] = useState(() => driverFromUrl(location.href)),
     [date, setDate] = useState("");
   const [resources, setResources] = useState(false),
-    [editing, setEditing] = useState(null),
-    [draft, setDraft] = useState(null),
+    [inlineDraft, setInlineDraft] = useState(null),
+    [saveState, setSaveState] = useState(null),
     [error, setError] = useState("");
   const [newDriver, setNewDriver] = useState(""),
     [newVehicle, setNewVehicle] = useState("");
@@ -157,6 +157,9 @@ export default function SheetTransport({ workspace, toast }) {
       window.removeEventListener("popstate", sync);
     };
   }, []);
+  useEffect(() => {
+    setSaveState(current => current?.error ? null : current);
+  }, [workspace.refreshedAt]);
   const selectDriver = (name) => {
     setDriver(name);
     history.replaceState(null, "", driverUrl(location.href, name));
@@ -180,20 +183,18 @@ export default function SheetTransport({ workspace, toast }) {
       setError(error.message);
     }
   };
-  const open = (group) => {
-    setEditing(group);
-    setDraft({ ...group.plan });
-    setError("");
-  };
-  const save = async (event) => {
-    event.preventDefault();
-    setError("");
+  const saveInline = async (group, field, value) => {
+    const plan = { ...group.plan, [field]: value };
+    if (!plan.driver || !plan.vehicle) plan.status = "Planned";
+    setInlineDraft({ id: group.id, plan });
+    setSaveState({ id: group.id, message: "Saving…" });
     try {
-      await workspace.saveTransport(editing, draft);
-      setEditing(null);
-      toast("Transport assignment saved to Google Sheets.");
+      await workspace.saveTransport(group, plan);
+      setSaveState({ id: group.id, message: "Saved to sheet" });
     } catch (error) {
-      setError(error.message);
+      setSaveState({ id: group.id, error: error.message });
+    } finally {
+      setInlineDraft(null);
     }
   };
   return (
@@ -337,7 +338,8 @@ export default function SheetTransport({ workspace, toast }) {
                   </div>
                   <div className="transport-service">
                     <span className="eyebrow">
-                      {group.method} · {group.airport || "Location needed"}
+                      {group.method === "Flight" ? "Airline" : group.method} ·{" "}
+                      {group.airport || "Location needed"}
                     </span>
                     <h3>{group.flight || `${group.method} journey`}</h3>
                     <span>
@@ -349,7 +351,7 @@ export default function SheetTransport({ workspace, toast }) {
                     className={`transport-status ${group.plan.driver && group.plan.vehicle ? "assigned" : ""}`}
                   >
                     {group.plan.driver && group.plan.vehicle
-                      ? group.plan.status
+                      ? "Assigned"
                       : "Unassigned"}
                   </span>
                 </div>
@@ -380,43 +382,61 @@ export default function SheetTransport({ workspace, toast }) {
                     <FlightStatus group={group} workspace={workspace} />
                   </div>
                   <div className="transport-plan">
-                    <div>
-                      <span>Sevak driver</span>
-                      <strong>{group.plan.driver || "Not assigned"}</strong>
-                    </div>
-                    <div>
-                      <span>Vehicle</span>
-                      <strong>{group.plan.vehicle || "Not assigned"}</strong>
-                    </div>
-                    {(group.plan.pickup || group.suggestedPickup) && (
-                      <div>
-                        <span>
-                          {group.plan.pickup
-                            ? "Pickup / mandir departure"
-                            : "Suggested mandir departure"}
-                        </span>
-                        <strong>
-                          {pickupLabel(
-                            group.plan.pickup || group.suggestedPickup,
-                          )}
-                        </strong>
-                      </div>
+                    {[
+                      {
+                        field: "driver",
+                        label: "Sevak driver",
+                        options: workspace.transport.drivers,
+                      },
+                      {
+                        field: "vehicle",
+                        label: "Vehicle",
+                        options: workspace.transport.vehicles,
+                      },
+                    ].map(({ field, label, options }) => (
+                      <label className="field" key={field}>
+                        {label}
+                        <select
+                          aria-label={`${label} for ${group.flight || group.method} ${group.direction} ${group.day}`}
+                          value={
+                            inlineDraft?.id === group.id
+                              ? inlineDraft.plan[field]
+                              : group.plan[field]
+                          }
+                          disabled={
+                            !workspace.connected ||
+                            workspace.saving ||
+                            !group.day ||
+                            group.guests.some((guest) => !guest.sourceWritable)
+                          }
+                          onChange={(event) =>
+                            saveInline(group, field, event.target.value)
+                          }
+                        >
+                          <option value="">Not assigned</option>
+                          {[
+                            ...new Set([
+                              ...options,
+                              ...(group.plan[field] ? [group.plan[field]] : []),
+                            ]),
+                          ].map((name) => (
+                            <option key={name}>{name}</option>
+                          ))}
+                        </select>
+                      </label>
+                    ))}
+                    {saveState?.id === group.id && (
+                      <small
+                        role={saveState.error ? "alert" : "status"}
+                        className={
+                          saveState.error
+                            ? "transport-save-error"
+                            : "transport-save-status"
+                        }
+                      >
+                        {saveState.error || saveState.message}
+                      </small>
                     )}
-                    {group.plan.notes && <p>{group.plan.notes}</p>}
-                    <button
-                      className="button secondary"
-                      disabled={
-                        !workspace.connected ||
-                        workspace.saving ||
-                        !group.day ||
-                        group.guests.some((g) => !g.sourceWritable)
-                      }
-                      onClick={() => open(group)}
-                    >
-                      {group.plan.revision
-                        ? "Edit transport assignment"
-                        : "Assign transport"}
-                    </button>
                     {!group.day && (
                       <small>
                         Add the travel date in the source sheet before
@@ -429,129 +449,6 @@ export default function SheetTransport({ workspace, toast }) {
             ))}
         </section>
       ))}
-      {editing && (
-        <Sheet
-          title={`Assign ${editing.flight || editing.method} · ${editing.airport || "Journey"}`}
-          subtitle={`${editing.day} · ${editing.guests.length} guests`}
-          onClose={() => {
-            if (!workspace.saving) setEditing(null);
-          }}
-        >
-          <form className="op-form" onSubmit={save}>
-            <label className="field">
-              Sevak driver
-              <select
-                value={draft.driver}
-                disabled={workspace.saving}
-                onChange={(e) => setDraft({ ...draft, driver: e.target.value })}
-              >
-                <option value="">Not assigned</option>
-                {[
-                  ...new Set([
-                    ...workspace.transport.drivers,
-                    ...(draft.driver ? [draft.driver] : []),
-                  ]),
-                ].map((d) => (
-                  <option key={d}>{d}</option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Vehicle
-              <select
-                value={draft.vehicle}
-                disabled={workspace.saving}
-                onChange={(e) =>
-                  setDraft({ ...draft, vehicle: e.target.value })
-                }
-              >
-                <option value="">Not assigned</option>
-                {[
-                  ...new Set([
-                    ...workspace.transport.vehicles,
-                    ...(draft.vehicle ? [draft.vehicle] : []),
-                  ]),
-                ].map((v) => (
-                  <option key={v}>{v}</option>
-                ))}
-              </select>
-            </label>
-            {(!workspace.transport.drivers.length ||
-              !workspace.transport.vehicles.length) && (
-              <p>
-                Add your driver and vehicle lists using “Drivers & vehicles”.
-              </p>
-            )}
-            <label className="field">
-              Pickup / mandir departure
-              <input
-                type="datetime-local"
-                value={draft.pickup}
-                disabled={workspace.saving}
-                onChange={(e) => setDraft({ ...draft, pickup: e.target.value })}
-              />
-            </label>
-            {editing.suggestedPickup && !draft.pickup && (
-              <button
-                className="text-button"
-                type="button"
-                onClick={() =>
-                  setDraft({ ...draft, pickup: editing.suggestedPickup })
-                }
-              >
-                Use suggested time: {pickupLabel(editing.suggestedPickup)}
-              </button>
-            )}
-            <label className="field">
-              Journey status
-              <select
-                value={draft.status}
-                disabled={workspace.saving}
-                onChange={(e) => setDraft({ ...draft, status: e.target.value })}
-              >
-                {["Planned", "Dispatched", "Completed"].map((s) => (
-                  <option key={s}>{s}</option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Driver notes
-              <input
-                value={draft.notes}
-                maxLength={500}
-                disabled={workspace.saving}
-                onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
-                placeholder="Pickup point or useful instructions"
-              />
-            </label>
-            {error && (
-              <p className="op-form-error" role="alert">
-                {error}
-              </p>
-            )}
-            <button className="button primary" disabled={workspace.saving}>
-              {workspace.saving ? "Saving…" : "Save transport to sheet"}
-            </button>
-            <button
-              className="button secondary"
-              type="button"
-              disabled={workspace.saving}
-              onClick={() =>
-                setDraft({
-                  ...draft,
-                  driver: "",
-                  vehicle: "",
-                  pickup: "",
-                  status: "Planned",
-                  notes: "",
-                })
-              }
-            >
-              Clear assignment fields
-            </button>
-          </form>
-        </Sheet>
-      )}
       {resources && (
         <Sheet
           title="Drivers & vehicles"

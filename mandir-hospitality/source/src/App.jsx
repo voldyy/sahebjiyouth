@@ -14,7 +14,6 @@ import {
   Bell,
   ChevronDown,
   ArrowUpRight,
-  HeartHandshake,
   CircleHelp,
   Settings,
   CheckCheck,
@@ -43,18 +42,18 @@ const Accommodation = lazy(() => import("./views/Accommodation"));
 const Kitchen = lazy(() => import("./views/Kitchen"));
 const SheetAccommodation = lazy(() => import("./views/SheetAccommodation"));
 const navigation = [
-  { id: "guests", label: "Guest roster", short: "Guests", icon: Users },
+  { id: "guests", label: "Main", short: "Main", icon: Users },
   {
     id: "transport",
-    label: "Transport dispatch",
+    label: "Transport",
     short: "Transport",
     icon: BusFront,
   },
-  { id: "rooms", label: "Accommodation", short: "Rooms", icon: BedDouble },
+  { id: "rooms", label: "Accommodations", short: "Accommodations", icon: BedDouble },
   {
     id: "kitchen",
-    label: "Mahaprasad kitchen",
-    short: "Kitchen",
+    label: "Yogi Prasad",
+    short: "Yogi Prasad",
     icon: Utensils,
   },
 ];
@@ -219,22 +218,10 @@ export default function App() {
           href="#guests"
           aria-label="Mandir Hospitality home"
         >
-          <span className="brand-symbol">
-            <Temple size={31} />
-          </span>
-          <span>
-            mandir<span className="brand-sub">HOSPITALITY</span>
-          </span>
+          <img className="mission-logo" src={`${import.meta.env.BASE_URL}am-logo.png`} alt="Anoopam Mission" width="180" height="64" />
+          <span className="brand-caption">Mandir Hospitality</span>
         </a>
-        <div className="campus-label">
-          <span className="campus-mark">
-            <Temple size={22} />
-          </span>
-          <div>
-            <strong>Allentown Shri Swaminarayan Mandirji</strong>
-            <span>Hospitality operations</span>
-          </div>
-        </div>
+        <p className="campus-subtitle">Allentown Shri Swaminarayan Mandirji</p>
         <div className="nav-section-label">WORKSPACE</div>
         <nav className="side-navigation" aria-label="Main navigation">
           {navigation.map((item) => (
@@ -263,18 +250,6 @@ export default function App() {
           <UserRoundCheck size={18} /> Quick check-in<span>↗</span>
         </button>
         <div className="sidebar-bottom">
-          <div className="seva-note">
-            <HeartHandshake size={24} />
-            <p>
-              A little care.
-              <br />
-              <strong>A meaningful stay.</strong>
-            </p>
-            <span>Every act of seva makes a difference.</span>
-            <div className="note-decoration" aria-hidden="true">
-              <Temple size={81} />
-            </div>
-          </div>
           <button className="side-utility" onClick={() => setModal("help")}>
             <CircleHelp size={18} /> Help & guidance
             <ArrowUpRight size={15} />
@@ -295,10 +270,8 @@ export default function App() {
       <div className="app-main">
         <header className="topbar">
           <a href="#guests" className="mobile-brand">
-            <Temple size={27} />
-            <span>
-              mandir<span>HOSPITALITY</span>
-            </span>
+            <img className="mission-logo" src={`${import.meta.env.BASE_URL}am-logo.png`} alt="Anoopam Mission" width="114" height="40" />
+            <span className="brand-caption">Mandir Hospitality</span>
           </a>
           <div className="breadcrumb">
             Workspace<span>/</span>

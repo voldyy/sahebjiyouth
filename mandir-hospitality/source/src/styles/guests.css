@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  color: #7c8794;
+  color: #3d7191;
   font-size: 11px;
 }
 .stat-icon {
@@ -21,20 +21,20 @@
   border-radius: 8px;
 }
 .stat-icon.amber {
-  background: #fbf0e2;
-  color: #b88141;
+  background: #ffe5ce;
+  color: #b96830;
 }
 .stat-icon.green {
-  background: #eef5ef;
-  color: #5d9780;
+  background: #edf7fe;
+  color: #3d7191;
 }
 .stat-icon.blue {
-  background: #eef3fa;
-  color: #6d91b6;
+  background: #edf7fe;
+  color: #3d7191;
 }
 .stat-icon.rose {
-  background: #f9eff0;
-  color: #b8858c;
+  background: #edf7fe;
+  color: #588aa6;
 }
 .stat-number {
   display: flex;
@@ -51,33 +51,33 @@
   font-family: Inter, sans-serif;
   font-size: 6.5px;
   letter-spacing: 0.65px;
-  color: #9ba2a9;
+  color: #588aa6;
   font-weight: 500;
 }
 .stat-tag.green {
-  color: #5c947d;
+  color: #3d7191;
 }
 .stat-tag.rose {
-  color: #b18088;
+  color: #588aa6;
 }
 .stat-foot {
   margin-top: 9px;
   font-size: 9px;
-  color: #9ca5af;
+  color: #588aa6;
 }
 .welcome-banner {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 15px 18px;
-  background: #fbf7ee;
-  border: 1px solid #f0e8d8;
+  background: #fff1e6;
+  border: 1px solid #fbd3b2;
   border-radius: 8px;
   margin: 3px 0 25px;
 }
 .welcome-icon {
-  background: #f3e9d7;
-  color: #b89055;
+  background: #fbd3b2;
+  color: #b96830;
   display: grid;
   place-items: center;
   width: 34px;
@@ -93,24 +93,24 @@
 .welcome-banner strong {
   font-size: 10px;
   font-weight: 500;
-  color: #9a7446;
+  color: #985127;
 }
 .welcome-banner > div > span {
   font-size: 10px;
-  color: #b39d7e;
+  color: #e59454;
 }
 .welcome-banner > button {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 10px;
-  color: #97703f;
+  color: #985127;
   margin-left: auto;
   padding: 7px 0 7px 15px;
   white-space: nowrap;
 }
 .welcome-banner > button:hover {
-  color: #a54b0d;
+  color: #985127;
 }
 .roster-card {
   overflow: hidden;
@@ -129,14 +129,14 @@
 }
 .roster-card-top p {
   font-size: 10px;
-  color: #9ba3ac;
+  color: #588aa6;
   margin-top: 7px;
 }
 .roster-total {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #98a2ad;
+  color: #588aa6;
   font-size: 10px;
 }
 .roster-controls {
@@ -145,7 +145,7 @@
 .roster-tabs {
   display: flex;
   gap: 24px;
-  border-bottom: 1px solid #ebedf0;
+  border-bottom: 1px solid #e0f0fb;
   min-height: 44px;
   margin-bottom: 17px;
 }
@@ -156,21 +156,21 @@
   gap: 6px;
   white-space: nowrap;
   font-size: 10px;
-  color: #98a1ad;
+  color: #588aa6;
   padding: 12px 0 15px;
   min-height: 44px;
 }
 .roster-tabs > button > span {
   font-size: 8px;
-  background: #f3f4f6;
+  background: #edf7fe;
   border-radius: 4px;
   padding: 3px 5px;
   min-width: 18px;
   text-align: center;
-  color: #909ba7;
+  color: #588aa6;
 }
 .roster-tabs > button.active {
-  color: #a85820;
+  color: #985127;
   font-weight: 600;
 }
 .roster-tabs > button.active:after {
@@ -179,13 +179,13 @@
   bottom: -1px;
   left: 0;
   right: 0;
-  background: #b46025;
+  background: #985127;
   height: 2px;
   border-radius: 2px 2px 0 0;
 }
 .roster-tabs > button.active > span {
-  background: #f8ece0;
-  color: #b07649;
+  background: #ffe5ce;
+  color: #b96830;
 }
 .roster-search-row {
   display: flex;
@@ -201,7 +201,7 @@
   border: 1px solid var(--border);
   padding: 0 11px;
   border-radius: 6px;
-  color: #8e99a7;
+  color: #588aa6;
   position: relative;
 }
 .stay-select select {
@@ -209,7 +209,7 @@
   background: none;
   appearance: none;
   outline: none;
-  color: #85909d;
+  color: #3d7191;
   font-size: 10px;
   padding: 10px 20px 10px 0;
   min-height: 40px;
@@ -224,12 +224,12 @@
   font-size: 10px;
   min-height: 41px;
   padding: 10px 12px;
-  color: #8b96a3;
+  color: #588aa6;
 }
 .filter-button.has-filters {
-  background: #fbf2e8;
+  background: #fff1e6;
   color: var(--primary);
-  border-color: #ead0b6;
+  border-color: #f5b47c;
 }
 .guest-table {
   width: 100%;
@@ -238,13 +238,13 @@
   table-layout: fixed;
 }
 .guest-table th {
-  background: #f8f9fb;
-  border-top: 1px solid #eaeef2;
-  border-bottom: 1px solid #eaeef2;
+  background: #f6fbff;
+  border-top: 1px solid #e0f0fb;
+  border-bottom: 1px solid #e0f0fb;
   font-weight: 500;
   font-size: 8px;
   letter-spacing: 0.85px;
-  color: #9ca6b2;
+  color: #588aa6;
   padding: 13px 12px;
 }
 .guest-table th:first-child {
@@ -267,7 +267,7 @@
 }
 .guest-table td {
   padding: 15px 12px;
-  border-bottom: 1px solid #f0f1f4;
+  border-bottom: 1px solid #edf7fe;
   vertical-align: middle;
   height: 84px;
 }
@@ -275,7 +275,7 @@
   border: 0;
 }
 .guest-table tbody tr:hover {
-  background: #fdfcf9;
+  background: #fff9f3;
 }
 .guest-table td:first-child {
   padding-left: 23px;
@@ -299,14 +299,14 @@
   font-weight: 500;
   font-size: 10.5px;
   line-height: 1.5;
-  color: #445466;
+  color: #244d65;
   display: block;
 }
 .guest-name-cell small {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #9ca6b2;
+  color: #588aa6;
   font-size: 8px;
   margin-top: 5px;
   white-space: nowrap;
@@ -315,7 +315,7 @@
   width: 2px;
   height: 2px;
   border-radius: 50%;
-  background: #b6c0ca;
+  background: #9ac7e2;
   margin: 0 2px;
 }
 .table-detail {
@@ -326,11 +326,11 @@
 .table-detail strong {
   font-size: 10px;
   font-weight: 500;
-  color: #596777;
+  color: #326681;
   line-height: 1.5;
 }
 .table-detail span {
-  color: #a2aab4;
+  color: #588aa6;
   font-size: 8px;
   display: flex;
   align-items: center;
@@ -342,7 +342,7 @@
 }
 .table-detail strong.needs-room-text,
 .needs-room-text {
-  color: #b28a64;
+  color: #b96830;
 }
 .row-actions {
   display: flex;
@@ -359,18 +359,18 @@
   font-size: 9px;
   min-height: 32px;
   white-space: nowrap;
-  color: #a86737;
-  border: 1px solid #efddc9;
+  color: #985127;
+  border: 1px solid #fbd3b2;
   border-radius: 5px;
-  background: #fffaf3;
+  background: #fff9f3;
 }
 .checkin-button:hover {
-  background: #f8e9d6;
-  border-color: #dbb58c;
+  background: #ffe5ce;
+  border-color: #e59454;
 }
 .details-button {
   font-size: 9px;
-  color: #95a0ad;
+  color: #588aa6;
   padding: 8px 2px;
   white-space: nowrap;
   min-height: 32px;
@@ -379,7 +379,7 @@
   color: var(--primary);
 }
 .roster-pagination {
-  border-top: 1px solid #edf0f3;
+  border-top: 1px solid #edf7fe;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -387,11 +387,11 @@
   min-height: 60px;
   padding: 12px 23px;
   font-size: 9px;
-  color: #99a4b1;
+  color: #588aa6;
 }
 .roster-pagination strong {
   font-weight: 500;
-  color: #7b899a;
+  color: #3d7191;
 }
 .roster-pagination > .button {
   font-size: 9px;
@@ -401,7 +401,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #95a696;
+  color: #588aa6;
   font-size: 9px;
 }
 .mobile-guest-list {
@@ -429,9 +429,9 @@
   height: 32px;
   display: grid;
   place-items: center;
-  background: #f4f6f8;
+  background: #edf7fe;
   border-radius: 7px;
-  color: #a0adba;
+  color: #588aa6;
 }
 .arrival-bars {
   margin-top: 21px;
@@ -444,7 +444,7 @@
   align-items: center;
   gap: 18px;
   font-size: 10px;
-  color: #738091;
+  color: #3d7191;
 }
 .arrival-bars > div > span {
   min-width: 85px;
@@ -452,42 +452,42 @@
 .arrival-bars small {
   display: block;
   font-size: 8px;
-  color: #b1b9c2;
+  color: #9ac7e2;
   margin-top: 4px;
 }
 .arrival-bars strong {
   font-size: 11px;
   font-weight: 500;
   min-width: 19px;
-  color: #677588;
+  color: #3d7191;
   text-align: right;
 }
 .arrival-bar-track {
   height: 5px;
-  background: #f1f3f5;
+  background: #edf7fe;
   border-radius: 4px;
   flex: 1;
   overflow: hidden;
 }
 .arrival-bar-track > div {
   height: 100%;
-  background: #d9b18b;
+  background: #e59454;
   border-radius: 4px;
   min-width: 3px;
 }
 .arrival-bars > div:first-child .arrival-bar-track > div {
-  background: #b5cabe;
+  background: #9ac7e2;
 }
 .arrival-bars > div:last-child .arrival-bar-track > div {
-  background: #b6c5d7;
+  background: #9ac7e2;
 }
 .care-card {
   position: relative;
-  background: #f0f3ef;
-  border: 1px solid #e4e9e2;
+  background: #edf7fe;
+  border: 1px solid #cce5f5;
   border-radius: 10px;
   padding: 22px 24px;
-  color: #73816b;
+  color: #3d7191;
   overflow: hidden;
 }
 .care-card:after {
@@ -497,23 +497,23 @@
   bottom: -63px;
   width: 180px;
   height: 180px;
-  border: 1px solid #dbe3d6;
+  border: 1px solid #cce5f5;
   border-radius: 50%;
   box-shadow:
-    0 0 0 18px #f0f3ef,
-    0 0 0 19px #e3e8df;
+    0 0 0 18px #edf7fe,
+    0 0 0 19px #cce5f5;
   pointer-events: none;
 }
 .care-top {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #94a08b;
+  color: #588aa6;
   font-size: 7px;
   letter-spacing: 1.2px;
 }
 .care-top > span:first-child {
-  color: #98a68f;
+  color: #588aa6;
 }
 .care-card h3 {
   font-size: 20px;
@@ -521,13 +521,13 @@
   line-height: 1.45;
   font-weight: 500;
   margin-top: 13px;
-  color: #607255;
+  color: #326681;
 }
 .care-card p {
   font-size: 10px;
   line-height: 1.75;
   margin-top: 9px;
-  color: #93a08b;
+  color: #588aa6;
   max-width: 265px;
   position: relative;
   z-index: 1;
@@ -538,7 +538,7 @@
   gap: 14px;
   font-size: 9px;
   font-weight: 500;
-  color: #728568;
+  color: #3d7191;
   padding: 0;
   min-height: 30px;
   margin-top: 8px;
@@ -546,7 +546,7 @@
   z-index: 1;
 }
 .care-card button:hover {
-  color: #3e6144;
+  color: #244d65;
 }
 .guest-detail-profile {
   display: flex;
@@ -566,13 +566,13 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #95a0ac;
+  color: #588aa6;
   font-size: 11px;
 }
 .guest-detail-profile p i {
   height: 3px;
   width: 3px;
-  background: #c1c7ce;
+  background: #9ac7e2;
   border-radius: 50%;
   margin: 0 4px;
 }
@@ -589,18 +589,18 @@
   padding-top: 22px;
 }
 .guest-detail-list > div > svg {
-  color: #b5a18b;
+  color: #e59454;
   flex-shrink: 0;
   margin-top: 1px;
 }
 .guest-detail-list > div > span {
   font-size: 10px;
-  color: #96a0ad;
+  color: #588aa6;
   line-height: 1.6;
 }
 .guest-detail-list strong {
   font-size: 12px;
-  color: #536171;
+  color: #326681;
   font-weight: 500;
   display: block;
   margin-top: 4px;
@@ -608,7 +608,7 @@
 .guest-detail-list small {
   font-size: 10px;
   display: block;
-  color: #a3acb7;
+  color: #588aa6;
   margin-top: 4px;
 }
 .guest-detail-list button,
@@ -616,7 +616,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #af783f;
+  color: #b96830;
   font-size: 12px;
   min-height: 32px;
   padding: 3px 0;
@@ -624,7 +624,7 @@
 .guest-detail-list strong.guest-note {
   font-weight: 400;
   line-height: 1.8;
-  color: #77818e;
+  color: #3d7191;
 }
 .filter-form .form-footer {
   margin-top: 22px;
@@ -963,7 +963,7 @@
     gap: 0;
     justify-content: space-between;
     min-height: 44px;
-    border-color: #e2e5e9;
+    border-color: #cce5f5;
   }
   .roster-tabs > button {
     font-size: 10px;
@@ -975,7 +975,7 @@
     font-size: 7px;
     padding: 3px 4px;
     min-width: 15px;
-    background: #eceef1;
+    background: #e0f0fb;
   }
   .roster-tabs > button.active:after {
     bottom: -1px;
@@ -985,7 +985,7 @@
   }
   .roster-search-row .search-field {
     background: white;
-    border-color: #e1e5eb;
+    border-color: #e0f0fb;
   }
   .roster-search-row .search-field input {
     font-size: 16px;
@@ -1003,7 +1003,7 @@
     padding: 10px;
     width: 44px;
     min-height: 44px;
-    border-color: #e1e5eb;
+    border-color: #e0f0fb;
   }
   .filter-button svg {
     width: 18px;
@@ -1027,10 +1027,10 @@
   }
   .mobile-guest-card {
     padding: 16px 15px 0;
-    border: 1px solid #e3e7eb;
+    border: 1px solid #e0f0fb;
     border-radius: 10px;
     background: white;
-    box-shadow: 0 2px 4px #21334202;
+    box-shadow: 0 2px 4px #193a5002;
   }
   .mobile-guest-top {
     display: flex;
@@ -1061,13 +1061,13 @@
     font-size: 11px;
     font-weight: 500;
     line-height: 1.6;
-    color: #445466;
+    color: #244d65;
     display: block;
     max-width: 174px;
   }
   .mobile-guest-name small {
     font-size: 8px;
-    color: #a0a8b2;
+    color: #588aa6;
     display: block;
     margin-top: 3px;
     line-height: 1.6;
@@ -1096,36 +1096,36 @@
     gap: 8px;
     font-size: 9px;
     line-height: 1.5;
-    color: #8a98a8;
+    color: #588aa6;
   }
   .mobile-guest-details svg {
-    color: #a8b2be;
+    color: #588aa6;
     width: 13px;
     height: 13px;
   }
   .mobile-guest-details i {
     height: 2px;
     width: 2px;
-    background: #b7c1cb;
+    background: #9ac7e2;
     border-radius: 50%;
     margin: 0 0 0 2px;
   }
   .mobile-guest-details > span.needs-room-text {
-    color: #b88a5b;
+    color: #b96830;
   }
   .mobile-guest-details > span.needs-room-text svg {
-    color: #c59f75;
+    color: #e59454;
   }
   .mobile-guest-bottom {
     display: flex;
     align-items: center;
     gap: 8px;
-    border-top: 1px solid #eff1f3;
+    border-top: 1px solid #edf7fe;
     padding: 10px 0;
     min-height: 54px;
   }
   .guest-id {
-    color: #b8bfc7;
+    color: #9ac7e2;
     font-size: 8px;
     letter-spacing: 0.5px;
   }
@@ -1134,7 +1134,7 @@
     gap: 1px;
     align-items: center;
     font-size: 9px;
-    color: #8593a3;
+    color: #588aa6;
     margin-left: auto;
     min-height: 35px;
     padding: 5px 4px;
@@ -1145,14 +1145,14 @@
     padding: 7px 10px;
     border-radius: 5px;
     gap: 5px;
-    background: #af561b;
-    border-color: #af561b;
+    background: #ffe5ce;
+    border-color: #f5b47c;
   }
   .checked-label {
     display: flex;
     align-items: center;
     gap: 4px;
-    color: #69a48a;
+    color: #3d7191;
     font-size: 9px;
     min-height: 34px;
     padding: 5px 3px;
@@ -1262,7 +1262,7 @@
   .guest-stat {
     padding: 13px 10px 12px;
     border: 0;
-    border-right: 1px solid #edf0f3;
+    border-right: 1px solid #edf7fe;
     border-radius: 0;
     box-shadow: none;
   }
@@ -1285,10 +1285,10 @@
     font-weight: 600;
   }
   .guest-stat.green .stat-number {
-    color: #40856f;
+    color: #326681;
   }
   .guest-stat.rose .stat-number {
-    color: #b6796d;
+    color: #b96830;
   }
   .welcome-banner {
     margin-bottom: 20px;
@@ -1300,7 +1300,7 @@
   .welcome-banner > div > span {
     font-size: 11px;
     margin: 0;
-    color: #a68d6b;
+    color: #b96830;
     line-height: 1.6;
     max-width: 225px;
   }
@@ -1360,7 +1360,7 @@
   }
   .mobile-guest-details > span {
     font-size: 11px;
-    color: #7a899a;
+    color: #3d7191;
   }
   .mobile-guest-details svg {
     height: 14px;

@@ -13,7 +13,7 @@
   margin: 4px 0 6px;
 }
 .shared-transport .page-heading p {
-  color: #66766a;
+  color: #326681;
   margin: 0;
 }
 .transport-summary {
@@ -26,17 +26,17 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: #f3f6ed;
-  border: 1px solid #d5ddce;
+  background: #edf7fe;
+  border: 1px solid #9ac7e2;
   border-radius: 12px;
 }
 .transport-summary strong {
   font-size: 24px;
-  color: #305c49;
+  color: #244d65;
 }
 .transport-summary span {
   font-size: 12px;
-  color: #53654f;
+  color: #326681;
   font-weight: 650;
 }
 .transport-toolbar {
@@ -83,7 +83,7 @@
   gap: 16px;
   flex-wrap: wrap;
   font-size: 13px;
-  color: #405d45;
+  color: #244d65;
 }
 .transport-driver-link a,
 .transport-driver-link button {
@@ -101,14 +101,14 @@
   align-items: center;
   gap: 8px;
   font-size: 15px;
-  color: #40533f;
+  color: #244d65;
   margin: 5px 0;
 }
 .transport-journey {
   overflow: hidden;
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr);
-  background: #fff;
+  background: #ffffff;
 }
 .transport-journey-head {
   display: grid;
@@ -116,8 +116,8 @@
   gap: 9px;
   align-content: start;
   padding: 16px;
-  border-right: 1px solid #e3e5d9;
-  background: #fcfcf6;
+  border-right: 1px solid #cce5f5;
+  background: #fff9f3;
 }
 .transport-time {
   display: flex;
@@ -131,8 +131,8 @@
 }
 .transport-time span {
   font-size: 11px;
-  color: #62765c;
-  background: #edf2e7;
+  color: #326681;
+  background: #e0f0fb;
   border-radius: 5px;
   padding: 3px 5px;
 }
@@ -149,7 +149,7 @@
 }
 .transport-service > span:last-child {
   font-size: 11px;
-  color: #687562;
+  color: #326681;
 }
 .transport-status {
   align-self: start;
@@ -157,14 +157,14 @@
   justify-self: start;
   padding: 4px 7px;
   border-radius: 6px;
-  background: #fff1d7;
-  color: #826019;
+  background: #ffe5ce;
+  color: #743d22;
   font-size: 10px;
   font-weight: 750;
 }
 .transport-status.assigned {
-  background: #e4eee1;
-  color: #365e42;
+  background: #e0f0fb;
+  color: #244d65;
 }
 .transport-journey-body {
   display: grid;
@@ -181,7 +181,7 @@
   gap: 6px;
   font-size: 14px;
   line-height: 1.5;
-  color: #273d33;
+  color: #193a50;
 }
 .transport-guest-names li {
   overflow-wrap: anywhere;
@@ -192,12 +192,12 @@
 .transport-guest-names small {
   font-size: 11px;
   font-weight: 450;
-  color: #6b7666;
+  color: #326681;
 }
 .transport-guest-names a {
   font-size: 11px;
   font-weight: 550;
-  color: #4c704e;
+  color: #326681;
   text-decoration: underline;
   text-underline-offset: 3px;
   white-space: nowrap;
@@ -224,17 +224,17 @@
 }
 .transport-plan span {
   font-size: 10px;
-  color: #69765f;
+  color: #326681;
 }
 .transport-plan strong {
-  color: #344831;
+  color: #193a50;
 }
 .transport-plan p {
   margin: 0;
   font-size: 12px;
 }
 .transport-plan small {
-  color: #827043;
+  color: #985127;
 }
 .transport-plan .button {
   min-height: 36px;
@@ -248,7 +248,7 @@
   gap: 5px;
   flex-direction: column;
   font-size: 11px;
-  color: #68735e;
+  color: #326681;
 }
 .transport-flight-status > div {
   display: flex;
@@ -259,7 +259,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #5d754c;
+  color: #326681;
 }
 .transport-flight-status .text-button {
   font-size: 11px;
@@ -269,14 +269,14 @@
   grid-row: 1;
   margin: 0;
   padding: 8px 16px;
-  background: #fff5dd;
+  background: #ffe5ce;
   font-size: 11px;
-  color: #816019;
+  color: #743d22;
 }
 .transport-empty {
   text-align: center;
   padding: 30px;
-  color: #6e7b61;
+  color: #326681;
 }
 .transport-resources {
   display: grid;
@@ -313,7 +313,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 0;
-  border-bottom: 1px solid #ecece0;
+  border-bottom: 1px solid #ffe5ce;
 }
 .transport-resources li > span {
   flex: 1;
@@ -384,7 +384,7 @@
     padding: 10px 12px;
     gap: 12px;
     border-right: 0;
-    border-bottom: 1px solid #e3e5d9;
+    border-bottom: 1px solid #cce5f5;
   }
   .transport-time {
     flex-direction: column;
@@ -431,3 +431,11 @@
     font-size: 13px;
   }
 }
+
+.transport-plan { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 8px; }
+.transport-plan .field { margin: 0; min-width: 0; gap: 5px; font-size: 11px; color: #326681; }
+.transport-plan select { width: 100%; min-height: 42px; padding: 8px 26px 8px 9px; font-size: 12px; background-color: #f6fbff; border-color: #9ac7e2; }
+.transport-plan > small { grid-column: 1 / -1; font-size: 10px; }
+.transport-plan .transport-save-status { color: #326681; }
+.transport-plan .transport-save-error { color: #9f3030; }
+@media (max-width: 700px) { .transport-plan select { font-size: 16px; min-height: 44px; } }

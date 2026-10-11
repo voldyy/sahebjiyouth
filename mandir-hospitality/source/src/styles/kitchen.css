@@ -12,14 +12,14 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #647184;
+  color: #3d7191;
   font-size: 11px;
 }
 .kit-roster-note > span {
   height: 6px;
   width: 6px;
   border-radius: 50%;
-  background: #319679;
+  background: #326681;
 }
 .kit-export {
   min-height: 44px;
@@ -33,10 +33,10 @@
 .kit-meal-card {
   text-align: left;
   padding: 20px;
-  border: 1px solid #e7e9ec;
+  border: 1px solid #e0f0fb;
   border-radius: 12px;
   background: white;
-  color: #172536;
+  color: #193a50;
   min-width: 0;
   transition:
     border-color 0.18s,
@@ -44,12 +44,12 @@
     box-shadow 0.18s;
 }
 .kit-meal-card:hover {
-  border-color: #c6ab93;
+  border-color: #e59454;
 }
 .kit-meal-card.is-selected {
-  border-color: #b45309;
-  background: #fffaf5;
-  box-shadow: 0 0 0 1px #b45309;
+  border-color: #985127;
+  background: #fff9f3;
+  box-shadow: 0 0 0 1px #985127;
 }
 .kit-meal-name {
   display: inline-flex;
@@ -59,15 +59,15 @@
   font-size: 14px;
 }
 .kit-meal-name svg {
-  color: #647184;
+  color: #3d7191;
 }
 .is-selected .kit-meal-name svg {
-  color: #b45309;
+  color: #985127;
 }
 .kit-meal-time {
   display: block;
   margin-top: 8px;
-  color: #647184;
+  color: #3d7191;
   font-size: 11px;
 }
 .kit-meal-bottom {
@@ -84,7 +84,7 @@
 }
 .kit-meal-count small {
   margin-left: 8px;
-  color: #647184;
+  color: #3d7191;
   font:
     400 11px/1.4 Inter,
     sans-serif;
@@ -96,14 +96,14 @@
   width: 29px;
   height: 29px;
   border-radius: 50%;
-  color: #647184;
+  color: #3d7191;
 }
 .is-selected .kit-meal-arrow {
-  color: #b45309;
-  background: #f9e7d6;
+  color: #985127;
+  background: #ffe5ce;
 }
 .is-selected .kit-meal-count {
-  color: #a84e0e;
+  color: #985127;
 }
 .kit-layout {
   display: grid;
@@ -132,8 +132,8 @@
   display: grid;
   place-items: center;
   border-radius: 11px;
-  background: #fff4e9;
-  color: #b45309;
+  background: #fff1e6;
+  color: #985127;
 }
 .kit-service-title h2,
 .kit-card-header h2 {
@@ -141,21 +141,21 @@
     650 16px/1.4 "Plus Jakarta Sans",
     sans-serif;
   letter-spacing: -0.3px;
-  color: #172536;
+  color: #193a50;
 }
 .kit-service-title p,
 .kit-card-header p {
   margin: 5px 0 0;
-  color: #647184;
+  color: #3d7191;
   font-size: 11px;
   line-height: 1.5;
 }
 .kit-detail-date {
-  color: #647184;
+  color: #3d7191;
   font-size: 11px;
   padding: 7px 9px;
   border-radius: 6px;
-  background: #f5f7f9;
+  background: #edf7fe;
   white-space: nowrap;
 }
 .kit-headcount-main {
@@ -169,7 +169,7 @@
   margin: 0 0 8px;
   font-size: 11px;
   letter-spacing: 1.3px;
-  color: #647184;
+  color: #3d7191;
   font-weight: 600;
 }
 .kit-big-number {
@@ -180,10 +180,10 @@
     700 55px/1.1 "Plus Jakarta Sans",
     sans-serif;
   letter-spacing: -2px;
-  color: #172536;
+  color: #193a50;
 }
 .kit-big-number > span {
-  color: #647184;
+  color: #3d7191;
   font:
     400 12px Inter,
     sans-serif;
@@ -195,26 +195,26 @@
   gap: 4px 11px;
   padding: 16px 17px;
   border-radius: 10px;
-  background: #f8f9fa;
-  color: #b45309;
+  background: #f6fbff;
+  color: #985127;
 }
 .kit-prepare-target > svg {
   margin-top: 5px;
 }
 .kit-prepare-target > span {
-  color: #647184;
+  color: #3d7191;
   font-size: 11px;
 }
 .kit-prepare-target strong {
   display: block;
   margin-top: 4px;
-  color: #172536;
+  color: #193a50;
   font-size: 15px;
   font-weight: 650;
 }
 .kit-prepare-target small {
   grid-column: 2;
-  color: #647184;
+  color: #3d7191;
   font-size: 11px;
 }
 .kit-count-breakdown {
@@ -227,12 +227,12 @@
   grid-template-columns: 7px 1fr;
   gap: 8px 7px;
   font-size: 11px;
-  color: #647184;
+  color: #3d7191;
 }
 .kit-count-breakdown strong {
   grid-column: 2;
   font-size: 16px;
-  color: #243344;
+  color: #193a50;
   font-weight: 650;
 }
 .kit-dot {
@@ -242,13 +242,13 @@
   margin-top: 3px;
 }
 .kit-dot.roster {
-  background: #bd600f;
+  background: #985127;
 }
 .kit-dot.volunteers {
-  background: #e5aa63;
+  background: #e59454;
 }
 .kit-dot.visitors {
-  background: #f2d9b9;
+  background: #f5b47c;
 }
 .kit-breakdown-bar {
   display: flex;
@@ -259,19 +259,19 @@
   overflow: hidden;
 }
 .kit-breakdown-bar span:first-child {
-  background: #bd600f;
+  background: #985127;
 }
 .kit-breakdown-bar span:nth-child(2) {
-  background: #e5aa63;
+  background: #e59454;
 }
 .kit-breakdown-bar span:nth-child(3) {
-  background: #f2d9b9;
+  background: #f5b47c;
 }
 .kit-estimate-note {
   display: flex;
   gap: 6px;
   align-items: flex-start;
-  color: #647184;
+  color: #3d7191;
   font-size: 11px;
   line-height: 1.5;
   margin-top: 14px;
@@ -281,7 +281,7 @@
 }
 .kit-service-actions {
   display: flex;
-  border-top: 1px solid #eff0f2;
+  border-top: 1px solid #edf7fe;
   margin-top: 23px;
   padding-top: 20px;
 }
@@ -293,7 +293,7 @@
   padding: 23px;
 }
 .kit-card-header > svg {
-  color: #647184;
+  color: #3d7191;
   flex-shrink: 0;
 }
 .kit-activity-list {
@@ -306,7 +306,7 @@
   align-items: flex-start;
   gap: 11px;
   padding: 15px 0;
-  border-top: 1px solid #f1f2f4;
+  border-top: 1px solid #edf7fe;
 }
 .kit-activity-list li:last-child {
   padding-bottom: 0;
@@ -318,8 +318,8 @@
   height: 26px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: #eef6f0;
-  color: #3e7057;
+  background: #edf7fe;
+  color: #326681;
 }
 .kit-activity-list li > div {
   flex: 1;
@@ -327,19 +327,19 @@
 }
 .kit-activity-list strong {
   display: block;
-  color: #546171;
+  color: #326681;
   font-size: 11px;
   font-weight: 550;
   line-height: 1.5;
 }
 .kit-activity-list li > div > span {
   display: block;
-  color: #647184;
+  color: #3d7191;
   font-size: 11px;
   margin-top: 4px;
 }
 .kit-activity-list time {
-  color: #647184;
+  color: #3d7191;
   font-size: 11px;
   white-space: nowrap;
   padding-top: 3px;
@@ -350,15 +350,15 @@
   gap: 12px;
   margin-top: 21px;
   padding-top: 18px;
-  border-top: 1px solid #f1f2f4;
+  border-top: 1px solid #edf7fe;
 }
 .kit-no-updates strong {
   font-size: 12px;
-  color: #566376;
+  color: #326681;
   font-weight: 500;
 }
 .kit-no-updates p {
-  color: #647184;
+  color: #3d7191;
   font-size: 11px;
   line-height: 1.65;
   margin: 5px 0 0;
@@ -375,24 +375,24 @@
   align-items: center;
   gap: 12px;
   padding: 15px;
-  background: #f7f9f8;
+  background: #f6fbff;
   border-radius: 10px;
-  color: #3e7057;
+  color: #326681;
 }
 .kit-roster-summary > span:first-of-type {
   flex: 1;
   font-size: 11px;
-  color: #3e7057;
+  color: #326681;
 }
 .kit-roster-summary strong {
   display: block;
   font-size: 15px;
-  color: #3a5343;
+  color: #244d65;
   margin-top: 5px;
 }
 .kit-sheet-form .field small {
   font-size: 11px;
-  color: #647184;
+  color: #3d7191;
   line-height: 1.5;
 }
 .kit-form-actions {
@@ -400,13 +400,13 @@
   justify-content: flex-end;
   gap: 10px;
   padding-top: 15px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #e0f0fb;
 }
 .kit-form-error {
   color: #9d3030;
   font-size: 12px;
   line-height: 1.5;
-  background: #fff1f1;
+  background: #f6fbff;
   padding: 12px;
   border-radius: 8px;
 }

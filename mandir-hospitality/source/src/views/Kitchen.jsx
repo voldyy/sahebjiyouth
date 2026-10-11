@@ -99,9 +99,9 @@ export default function Kitchen({ guests = [], toast = () => {}, sheetMode = fal
       <header className="page-header">
         <div>
           <p className="eyebrow">KITCHEN & ANNAKSHETRA</p>
-          <h1 className="page-title">Every plate, with care.</h1>
+          <h1 className="page-title">Yogi Prasad</h1>
           <p className="page-description">
-            Plan your Mahaprasad headcount, one day at a time.
+            Plan your Yogi Prasad headcount, one day at a time.
           </p>
         </div>
       </header>

@@ -32,7 +32,7 @@ async function mockBridge(context,harness) {
   await context.route('https://accounts.google.com/**',route=>route.abort());
 }
 async function openAssignment(page) {
-  await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Rooms", exact: true }).click();
+  await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Accommodations", exact: true }).click();
   await page.getByRole("button", { name: "Guest list", exact: true }).click();
   await page.getByRole("button", { name: "Assign lodging", exact: true }).click();
   await page.getByLabel("Lodging location (AD)").selectOption("Comfort Inn");
@@ -53,7 +53,7 @@ test("anonymous shared assignment persists AD–AF only", async ({ page }) => {
   expect(stored).not.toContain("Synthetic Guest");
   expect(stored).not.toContain("synthetic-token");
   await page.reload();
-  await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Rooms", exact: true }).click();
+  await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Accommodations", exact: true }).click();
   await page.getByRole("button", { name: "Guest list", exact: true }).click();
   await expect(page.getByText("Room: 021", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in with Google", exact: true })).toHaveCount(0);
@@ -79,7 +79,7 @@ test("Backend write failure leaves the form open and does not report success", a
 });
 test("Samarpan offers only confirmed rooms with bed capacities", async ({ page }) => {
   await setup(page);
-  await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Rooms", exact: true }).click();
+  await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Accommodations", exact: true }).click();
   await page.getByRole("button", { name: "Guest list", exact: true }).click();
   await page.getByRole("button", { name: "Assign lodging", exact: true }).click();
   const room = page.getByLabel("Room number (AE)");
@@ -115,7 +115,7 @@ const plannerRows = () => [
 ];
 async function openPlanner(page) {
   const result = await setup(page, "ok", plannerRows());
-  await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Rooms", exact: true }).click();
+  await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Accommodations", exact: true }).click();
   return result;
 }
 const slot = (page, room, bed, day) => page.locator(`.stay-slot[data-room="${room}"][data-bed="${bed}"][data-day="${day}"]`);
@@ -195,7 +195,7 @@ test('transport drivers, vehicles and assignments persist across independent bro
   await expect(page.locator('.transport-guest-names').first()).toContainText('(Allentown, PA)');
   await expect(page.locator('.transport-guest-names a').first()).toHaveAttribute('href','tel:5550101234');
   await expect(page.locator('.transport-journey details')).toHaveCount(0);
-  await expect(page.locator('.campus-label')).toContainText('Allentown Shri Swaminarayan Mandirji');
+  await expect(page.locator('.campus-subtitle')).toContainText('Allentown Shri Swaminarayan Mandirji');
   await expect(page.getByText('Pickup requested',{exact:true})).toHaveCount(0);
   await page.getByRole('button',{name:'Drivers & vehicles',exact:true}).click();
   await page.getByLabel('New driver',{exact:true}).fill('Test Sevak');
@@ -204,34 +204,39 @@ test('transport drivers, vehicles and assignments persist across independent bro
   await page.getByLabel('New vehicle',{exact:true}).fill('Test Van');
   await page.getByRole('dialog').locator('form').nth(1).getByRole('button',{name:'Add',exact:true}).click();
   await expect(page.getByRole('button',{name:'Remove vehicle Test Van'})).toBeVisible();
+  await page.getByLabel('New vehicle',{exact:true}).fill('Backup Van');
+  await page.getByRole('dialog').locator('form').nth(1).getByRole('button',{name:'Add',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Remove vehicle Backup Van'})).toBeVisible();
+  await page.screenshot({path:test.info().outputPath('resources-mobile.png'),fullPage:true,scale:'css'});
   await page.getByRole('button',{name:'Close dialog',exact:true}).click();
-  await page.getByRole('button',{name:'Assign transport',exact:true}).first().click();
-  await page.getByRole('combobox',{name:'Sevak driver',exact:true}).selectOption('Test Sevak');
-  await page.getByRole('combobox',{name:'Vehicle',exact:true}).selectOption('Test Van');
-  await page.getByLabel('Driver notes',{exact:true}).fill('Terminal 2');
-  await page.getByRole('button',{name:'Save transport to sheet',exact:true}).click();
+  const driverSelect = view => view.getByRole('combobox',{name:'Sevak driver for AA123 Arrivals 2026-10-18',exact:true});
+  const vehicleSelect = view => view.getByRole('combobox',{name:'Vehicle for AA123 Arrivals 2026-10-18',exact:true});
+  await expect(page.getByRole('button',{name:'Assign transport',exact:true})).toHaveCount(0);
+  await driverSelect(page).selectOption('Test Sevak');
+  await expect(driverSelect(page)).toBeEnabled();
+  await vehicleSelect(page).selectOption('Test Van');
+  await expect(vehicleSelect(page)).toBeEnabled();
   await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('.transport-journey').first()).toContainText('Airline · PHL');
+  await expect(page.getByLabel('Driver notes',{exact:true})).toHaveCount(0);
   const context=await browser.newContext({viewport:{width:1280,height:900}});
   await mockBridge(context,harness);
   const second=await context.newPage();await second.goto('http://localhost:5175/#transport');
-  await expect(second.locator('.transport-plan').first()).toContainText('Terminal 2');
+  await expect(vehicleSelect(second)).toHaveValue('Test Van');
   await expect(second.getByRole('button',{name:'Sign in with Google'})).toHaveCount(0);
-  await second.getByRole('button',{name:'Edit transport assignment',exact:true}).click();
-  await page.getByRole('button',{name:'Edit transport assignment',exact:true}).click();
-  await page.getByLabel('Driver notes',{exact:true}).fill('Updated by first admin');
-  await page.getByRole('button',{name:'Save transport to sheet',exact:true}).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  await second.getByLabel('Driver notes',{exact:true}).fill('Stale change');
-  await second.getByRole('button',{name:'Save transport to sheet',exact:true}).click();
-  await expect(second.getByRole('dialog').getByRole('alert')).toContainText('Another admin');
-  await second.getByRole('button',{name:'Close dialog',exact:true}).click();
+  await vehicleSelect(page).selectOption('Backup Van');
+  await expect(vehicleSelect(page)).toBeEnabled();
+  await driverSelect(second).selectOption('');
+  await expect(second.locator('.transport-plan').first().getByRole('alert')).toContainText('Another admin');
+  await expect(driverSelect(second)).toHaveValue('Test Sevak');
   await second.getByRole('button',{name:'Refresh sheet',exact:true}).click();
-  await expect(second.locator('.transport-plan').first()).toContainText('Updated by first admin');
-  await second.screenshot({path:test.info().outputPath('shared-transport-desktop.png'),fullPage:true});
-  await page.screenshot({path:test.info().outputPath('shared-transport-mobile.png'),fullPage:true});
+  await expect(vehicleSelect(second)).toHaveValue('Backup Van');
+  await expect(second.locator('.transport-plan').getByRole('alert')).toHaveCount(0);
+  await second.screenshot({path:test.info().outputPath('shared-transport-desktop.png'),fullPage:true,scale:'css'});
+  await page.screenshot({path:test.info().outputPath('shared-transport-mobile.png'),fullPage:true,scale:'css'});
   for(const view of [page,second]) expect(await view.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
   await expect(page.getByRole('heading',{name:'UA456',exact:true})).toBeVisible();
-  await expect(page.getByText('Suggested mandir departure',{exact:true})).toBeVisible();
+  await expect(page.getByText('Suggested mandir departure',{exact:true})).toHaveCount(0);
   await second.goto('http://localhost:5175/#transport?driver=Test+Sevak');
   await expect(second.getByRole('heading',{name:'Airport Trips',exact:true})).toBeVisible();
   await expect(second.locator('.transport-journey')).toHaveCount(1);
@@ -246,4 +251,29 @@ test('transport drivers, vehicles and assignments persist across independent bro
   await second.goto('http://localhost:5175/#transport?driver=Unknown+Driver');
   await expect(second.getByRole('heading',{name:'No journeys found',exact:true})).toBeVisible();
   await context.close();
+});
+
+
+test('mission branding, all four tabs, blue-orange theme and unassigned panel order', async ({page}) => {
+  await openPlanner(page);
+  await expect(page.locator('.stay-unassigned')).toBeVisible();
+  expect(await page.locator('.stay-unassigned').evaluate(el => el.nextElementSibling.classList.contains('stay-calendar-panel'))).toBe(true);
+  await expect(page.getByText('A little care.',{exact:true})).toHaveCount(0);
+  await expect(page.getByText('Hospitality operations',{exact:true})).toHaveCount(0);
+  for (const width of [360,390,1095,1440]) {
+    await page.setViewportSize({width,height:960});
+    const nav = page.getByRole('navigation',{name:width<=760?'Mobile navigation':'Main navigation'});
+    for(const name of ['Main','Transport','Accommodations','Yogi Prasad']) await expect(nav.getByRole('link',{name:new RegExp('^'+name)})).toBeVisible();
+    const logo=page.locator(width<=760?'.mobile-brand img':'.brand img');
+    await expect(logo).toHaveAttribute('alt','Anoopam Mission');
+    await expect(logo).toHaveJSProperty('naturalWidth',300);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
+    await page.screenshot({path:test.info().outputPath(`accommodations-${width}.png`),fullPage:true,scale:'css'});
+  }
+  const nav=page.getByRole('navigation',{name:'Main navigation'});
+  for(const [label,heading] of [['Main','Main'],['Yogi Prasad','Yogi Prasad']]) {
+    await nav.getByRole('link',{name:new RegExp('^'+label)}).click();
+    await expect(page.getByRole('heading',{name:new RegExp('^'+heading)}).first()).toBeVisible();
+    await page.screenshot({path:test.info().outputPath(`${label}.png`),fullPage:true,scale:'css'});
+  }
 });

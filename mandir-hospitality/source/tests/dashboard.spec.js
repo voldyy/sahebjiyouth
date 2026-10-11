@@ -17,7 +17,7 @@ test('the four workspaces fit small phones and preserve browser navigation', asy
 
   for (const width of [360, 390, 430]) {
     await page.setViewportSize({ width, height: 844 });
-    for (const [label, route] of [['Guests', 'guests'], ['Transport', 'transport'], ['Rooms', 'rooms'], ['Kitchen', 'kitchen']]) {
+    for (const [label, route] of [['Main', 'guests'], ['Transport', 'transport'], ['Accommodations', 'rooms'], ['Yogi Prasad', 'kitchen']]) {
       const link = mobileNav(page).getByRole('link', { name: label, exact: true });
       await link.click();
       await expect(page).toHaveURL(new RegExp(`#${route}$`));
@@ -28,7 +28,7 @@ test('the four workspaces fit small phones and preserve browser navigation', asy
   }
 
   await page.goBack();
-  await expect(mobileNav(page).getByRole('link', { name: 'Rooms', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(mobileNav(page).getByRole('link', { name: 'Accommodations', exact: true })).toHaveAttribute('aria-current', 'page');
   await page.setViewportSize({ width: 1440, height: 1000 });
   await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeVisible();
   await expectNoOverflow(page);
@@ -85,7 +85,7 @@ test('assigning a room updates both the bed matrix and the guest roster', async 
   await expect(room).toContainText('Kiritbhai & Family');
   await expect(room).toContainText('4 of 4 beds allocated');
 
-  await mobileNav(page).getByRole('link', { name: 'Guests', exact: true }).click();
+  await mobileNav(page).getByRole('link', { name: 'Main', exact: true }).click();
   await page.getByRole('textbox', { name: 'Search guests' }).fill('Kiritbhai');
   await expect(page.locator('.mobile-guest-card')).toContainText('Samarpan · A-101');
   await page.reload();
@@ -101,7 +101,7 @@ test('checkout returns the used beds to the linen queue', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Check out', exact: true }).click();
   await dialog.getByRole('button', { name: 'Close dialog' }).click();
 
-  await mobileNav(page).getByRole('link', { name: 'Rooms', exact: true }).click();
+  await mobileNav(page).getByRole('link', { name: 'Accommodations', exact: true }).click();
   await page.getByRole('button', { name: /^Linen refresh/ }).click();
   const room = page.locator('.room-card').filter({ has: page.getByRole('heading', { name: 'Room C-312', exact: true }) });
   await expect(room).toBeVisible();
@@ -121,7 +121,7 @@ test('a new offsite group can be assigned a hotel room', async ({ page }) => {
   await guestForm.getByRole('combobox', { name: 'Accommodation', exact: true }).selectOption('Offsite');
   await guestForm.getByRole('button', { name: 'Add guest', exact: true }).click();
 
-  await mobileNav(page).getByRole('link', { name: 'Rooms', exact: true }).click();
+  await mobileNav(page).getByRole('link', { name: 'Accommodations', exact: true }).click();
   await page.getByRole('button', { name: 'Assign room', exact: true }).click();
   const assignment = page.getByRole('dialog', { name: 'Make room for a warm welcome' });
   const guestId = await assignment.getByRole('option', { name: /Sonal Mehta & Family/ }).getAttribute('value');
@@ -129,7 +129,7 @@ test('a new offsite group can be assigned a hotel room', async ({ page }) => {
   await assignment.getByRole('combobox', { name: 'Room', exact: true }).selectOption('F-216');
   await assignment.getByRole('button', { name: 'Assign room', exact: true }).click();
 
-  await mobileNav(page).getByRole('link', { name: 'Guests', exact: true }).click();
+  await mobileNav(page).getByRole('link', { name: 'Main', exact: true }).click();
   await page.getByRole('textbox', { name: 'Search guests' }).fill('Sonal Mehta');
   await expect(page.locator('.mobile-guest-card')).toContainText('Fairfield Inn · F-216');
   await page.reload();
@@ -148,7 +148,7 @@ test('transport assignment, dispatch and completion stay connected to the roster
   await trip.getByRole('button', { name: 'Dispatch', exact: true }).click();
   await expect(trip.locator('.badge')).toHaveText('On the way');
 
-  await mobileNav(page).getByRole('link', { name: 'Guests', exact: true }).click();
+  await mobileNav(page).getByRole('link', { name: 'Main', exact: true }).click();
   await page.getByRole('textbox', { name: 'Search guests' }).fill('Kiritbhai');
   await page.locator('.mobile-guest-card').getByRole('button', { name: 'Details', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Vehicle assigned');

@@ -143,7 +143,7 @@ export default function Guests({
         <div>
           <div className="eyebrow">EVERY ARRIVAL MATTERS</div>
           <h1 className="page-title">
-            Guest roster<span className="title-dot">.</span>
+            Main<span className="title-dot">.</span>
           </h1>
           <p className="page-description">
             A warm welcome starts with a little thoughtful planning.
