@@ -609,3 +609,31 @@
     padding: 18px 15px;
   }
 }
+
+.kit-diners {
+  padding: 16px 0;
+  border-top: 1px solid #e0f0fb;
+  border-bottom: 1px solid #e0f0fb;
+}
+.kit-diners h3 {
+  margin: 0 0 10px;
+  color: #244d65;
+  font-size: 12px;
+  font-weight: 650;
+}
+.kit-diner-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 5px 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kit-diner-list li {
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.kit-diner-name { color: #193a50; font-weight: 600; }
+.kit-diner-location { color: #526f81; font-size: 11px; font-weight: 400; }
+.kit-diners-empty { margin: 8px 0 0; color: #526f81; font-size: 11px; line-height: 1.6; }

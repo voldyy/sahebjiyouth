@@ -12,6 +12,8 @@ const req = (h,r) => h.request({requestId:randomUUID(),...r});
 const assign = (h, guest, assignment) => req(h, {action:'lodging',identity:guest.sourceIdentity,expected:guest.sourceLodging,stay:{start:guest.arrivalDate,end:guest.departureDate},assignment});
 test('public and forged roles cannot mutate anything and receive only meal data', () => {
   const h=createHarness([header(),row('Private Guest')]);
+  h.rows[1][7]='Edison, NJ';
+  h.rows[1][5]='555-010-1234';
   for (const accessKey of ['',undefined,'forged']) {
     for (const action of ['lodging','offsite','linen','transport','resource','flight']) {
       const result=req(h,{action,accessKey,role:'admin'});
@@ -20,7 +22,11 @@ test('public and forged roles cannot mutate anything and receive only meal data'
     const snapshot=h.request({action:'snapshot',accessKey,role:'admin'});
     assert.equal(snapshot.role,'kitchen');
     assert.equal(snapshot.rows,undefined);assert.equal(snapshot.transport,undefined);assert.equal(snapshot.offsiteRooms,undefined);assert.equal(snapshot.housekeeping,undefined);
-    assert.equal(JSON.stringify(snapshot).includes('Private Guest'),false);
+    assert.equal(snapshot.kitchenGuests[0].name,'Private Guest');
+    assert.equal(snapshot.kitchenGuests[0].city,'Edison, NJ');
+    assert.equal(snapshot.kitchenGuests[0].phone,undefined);
+    assert.equal(snapshot.kitchenGuests[0].registrationId,undefined);
+    assert.equal(snapshot.kitchenGuests[0].roomCode,undefined);
     assert.equal(snapshot.kitchenGuests[0].count,1);
   }
   assert.equal(h.sheets.size,1); assert.equal(h.writes.length,0);

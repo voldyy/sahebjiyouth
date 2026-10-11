@@ -84,6 +84,7 @@ function getForecast(guests, meal, plan, day) {
   const bufferCount = Math.ceil((expected * Number(plan.buffer)) / 100);
   return {
     guests: guestCount,
+    diners: attending.sort((a, b) => (a.name || "").localeCompare(b.name || "")),
     expected,
     bufferCount,
     target: expected + bufferCount,
@@ -267,6 +268,20 @@ function DailyKitchenPlan({ day, guests, selected, setSelected, toast, sheetMode
               </span>
               <small>Includes {plan.buffer}% buffer</small>
             </div>
+          </div>
+          <div className="kit-diners">
+            <h3>Dining guests</h3>
+            {forecast.diners.length ? (
+              <ul className="kit-diner-list" aria-label={`${meal.name} diners`}>
+                {forecast.diners.map((guest, index) => (
+                  <li key={guest.sourceIdentity || guest.id || index}>
+                    <span className="kit-diner-name">{guest.name || "Name not provided"}</span>
+                    {guest.city && <span className="kit-diner-location"> ({guest.city})</span>}
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="kit-diners-empty">No guests scheduled for this meal.</p>}
+            {forecast.expected > forecast.guests && <p className="kit-diners-empty">{forecast.expected - forecast.guests} additional diners have no names recorded.</p>}
           </div>
           <p className="kit-estimate-note">
             <Info size={14} />

@@ -23,7 +23,7 @@ The shareable team link is `https://www.sahebjiyouth.org/mandir-hospitality/#kit
 
 Full access uses a private link with an `admin` parameter in the URL fragment. The key is generated on the backend and stored in the Apps Script property `ADMIN_ACCESS_KEY`. The frontend consumes it into this tab's session storage and removes it from the address bar. It is never bundled in source or production assets. Possession grants admin access, so share this link only with admins. Rotating the script property invalidates old links. No Google sign-in is required for dashboard users.
 
-The backend checks the key on every lodging, transport, resource, flight, offsite, and linen action. Anonymous snapshots contain only the dates/counts needed for meal forecasts, not the guest roster, contact information, transport plans, room inventory, or housekeeping records. Source-sheet link sharing must remain **Viewer**, with named editors retained. Anonymous source-sheet editing would bypass dashboard restrictions.
+The backend checks the key on every lodging, transport, resource, flight, offsite, and linen action. Team snapshots contain names, home city/state, and the dates/counts needed for meal forecasts and diner lists. They exclude contact details, registration identifiers, transport plans, room inventory, and housekeeping records. Source-sheet link sharing must remain **Viewer**, with named editors retained. Anonymous source-sheet editing would bypass dashboard restrictions.
 
 Yogi Prasad headcount adjustments remain device-local; they do not change other dashboard sections or the source sheet.
 
@@ -53,7 +53,7 @@ Airport Trips combines arrivals and departures chronologically. Groups use direc
 
 FlightStats lookups run only on flight day, with a five-minute server cache. Keep `FLIGHTSTATS_APP_ID` and `FLIGHTSTATS_APP_KEY` in private Apps Script properties. No guest data is sent to the provider.
 
-Yogi Prasad serves breakfast 8–10 AM, lunch 12–2 PM, and dinner 6–8 PM. On arrival day, arrivals before 11 AM count for all three meals, 11 AM–before 3 PM count for lunch and dinner, and 3 PM–11:59 PM count for dinner. Guests staying from earlier days count for all meals. Undated attendees are excluded with a warning. The service card shows combined headcount and preparation target without category breakdowns. Kitchen updates and plan export have been removed. Headcount adjustments and preparation buffers remain saved per day on the current device.
+Yogi Prasad serves breakfast 8–10 AM, lunch 12–2 PM, and dinner 6–8 PM. On arrival day, arrivals before 11 AM count for all three meals, 11 AM–before 3 PM count for lunch and dinner, and 3 PM–11:59 PM count for dinner. Guests staying from earlier days count for all meals. Undated attendees are excluded with a warning. The service card shows combined headcount and preparation target without category breakdowns, plus a compact alphabetical list of diners for the selected meal and date. Home city/state appears in smaller muted text in parentheses. This list uses the exact attendance selection used by the meal count; unnamed extra headcount is noted separately. Kitchen updates and plan export have been removed. Headcount adjustments and preparation buffers remain saved per day on the current device.
 
 ## Shared backend
 

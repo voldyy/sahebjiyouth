@@ -421,8 +421,8 @@ reply({ ready: true });
     const current = roster(book);
     if (role !== "admin") return {
       role: "kitchen",
-      // Only the fields needed for meal headcounts leave the backend.
-      kitchenGuests: current.guests.map((g, index) => ({ sourceIdentity: `meal-${index}`, count: g.count, arrivalDate: g.arrivalDate, arrivalTime: g.arrivalTime, departureDate: g.departureDate, status: g.status, stay: g.stay === "Day visitor" ? "Day visitor" : "Overnight" })),
+      // The meal roster includes names and home locations, without admin details.
+      kitchenGuests: current.guests.map((g, index) => ({ sourceIdentity: `meal-${index}`, name: g.name, city: g.city, count: g.count, arrivalDate: g.arrivalDate, arrivalTime: g.arrivalTime, departureDate: g.departureDate, status: g.status, stay: g.stay === "Day visitor" ? "Day visitor" : "Overnight" })),
       refreshedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
     return {
