@@ -33,3 +33,11 @@ app.http('register', {
     ...createServices(process.env), origins,
   }),
 });
+
+const { createYogiPrasadHandler, TIMER_SCHEDULE } = require('./yogi-prasad');
+app.timer('yogiPrasadDaily', {
+  schedule: TIMER_SCHEDULE,
+  runOnStartup: false,
+  useMonitor: true,
+  handler: createYogiPrasadHandler({ table: registrationTable, env: process.env }),
+});

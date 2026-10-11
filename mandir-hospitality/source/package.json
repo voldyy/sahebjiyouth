@@ -9,6 +9,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "playwright test",
     "build:backend": "node scripts/build-apps-script.mjs",
+    "build:notifications": "node scripts/build-notifications.mjs",
+    "preview:whatsapp": "node scripts/preview-yogi-prasad.mjs",
     "test:unit": "node --test tests/unit/*.test.js",
     "test:sheets": "node scripts/build-apps-script.mjs && playwright test --config playwright.sheets.config.js"
   },

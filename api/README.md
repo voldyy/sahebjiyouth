@@ -42,3 +42,6 @@ Additional server settings:
 The system-assigned identity also needs Storage Table Data Contributor scoped to `RegRegistrations`. Deploy API changes separately before publishing a frontend that uses them; the GitHub workflow currently publishes only the static frontend. The function timeout is two minutes.
 
 Do not blindly retry registrations marked `processing` or `review`, or message sends with `unknown` status. Apps Script and Twilio are external side effects and cannot be made atomic with Azure Table updates. After an uncertain network result, staff must check the sheet/Twilio before retrying manually. New request IDs do not deduplicate across sessions. Queued confirmations must be checked in Twilio for delivery; no background resend is configured.
+# Yogi Prasad nightly notification
+
+The `yogiPrasadDaily` Azure timer sends the next day's meal counts at 9 PM America/New_York. It reuses the existing Twilio credentials and a separate partition in `RegRegistrations`. Enable/pause with `YOGI_PRASAD_WHATSAPP_ENABLED`; the private recipient setting is `YOGI_PRASAD_WHATSAPP_TO`. There is no application-side approval guard. See [notification operations and build instructions](../mandir-hospitality/source/notifications/README.md). The registration route and registration template configuration are independent of this job.

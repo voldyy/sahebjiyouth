@@ -14,6 +14,7 @@ import DaySelector from "../components/DaySelector";
 import Sheet from "../components/Sheet";
 import { useLocalStorage } from "../lib/storage";
 import { dateISO } from "../lib/data";
+import { getForecast, MEAL_CUTOFFS } from "../lib/mealForecast.js";
 import "../styles/kitchen.css";
 
 // Arrival-day cutoffs are exclusive: 11 AM starts lunch, 3 PM starts dinner.
@@ -22,21 +23,21 @@ const MEALS = [
     id: "breakfast",
     name: "Breakfast",
     time: "8:00 – 10:00 AM",
-    cutoff: 11 * 60,
+    cutoff: MEAL_CUTOFFS.breakfast,
     icon: Sunrise,
   },
   {
     id: "lunch",
     name: "Lunch",
     time: "12:00 – 2:00 PM",
-    cutoff: 15 * 60,
+    cutoff: MEAL_CUTOFFS.lunch,
     icon: Sun,
   },
   {
     id: "dinner",
     name: "Dinner",
     time: "6:00 – 8:00 PM",
-    cutoff: 24 * 60,
+    cutoff: MEAL_CUTOFFS.dinner,
     icon: Moon,
   },
 ];
@@ -54,41 +55,6 @@ function defaultPlans(day, sheetMode = false) {
         : { volunteers: 0, visitors: 0, buffer: 10 },
     ]),
   );
-}
-function arrivalMinutes(value) {
-  const match = String(value || "").match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-  if (!match) return 0;
-  let hours = Number(match[1]);
-  if (match[3])
-    hours = (hours % 12) + (match[3].toUpperCase() === "PM" ? 12 : 0);
-  return hours * 60 + Number(match[2]);
-}
-function getForecast(guests, meal, plan, day) {
-  const attending = guests.filter((guest) => {
-    if (guest.status === "Departed") return false;
-    if (guest.status === "Cancelled") return false;
-    if (guest.sourceIdentity && (!guest.arrivalDate || !guest.departureDate)) return false;
-    if (guest.arrivalDate && guest.arrivalDate > day) return false;
-    if (guest.departureDate && guest.departureDate < day) return false;
-    if (guest.stay === "Day visitor" && guest.arrivalDate !== day) return false;
-    return (
-      (guest.arrivalDate && guest.arrivalDate < day) ||
-      arrivalMinutes(guest.arrivalTime) < meal.cutoff
-    );
-  });
-  const guestCount = attending.reduce(
-    (sum, guest) => sum + Number(guest.count || 1),
-    0,
-  );
-  const expected = guestCount + Number(plan.volunteers) + Number(plan.visitors);
-  const bufferCount = Math.ceil((expected * Number(plan.buffer)) / 100);
-  return {
-    guests: guestCount,
-    diners: attending.sort((a, b) => (a.name || "").localeCompare(b.name || "")),
-    expected,
-    bufferCount,
-    target: expected + bufferCount,
-  };
 }
 
 export default function Kitchen({ guests = [], toast = () => {}, sheetMode = false, readOnly = false }) {
