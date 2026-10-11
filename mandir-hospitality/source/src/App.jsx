@@ -31,6 +31,7 @@ import { roomInventory, initialLinen } from "./lib/rooms";
 import Temple from "./components/Temple";
 import Sheet from "./components/Sheet";
 import GuestForm from "./components/GuestForm";
+import WorkspaceLoading from "./components/WorkspaceLoading";
 import Guests from "./views/Guests";
 import { useSheetWorkspace } from "./lib/useSheetWorkspace";
 import { SHEET_URL } from "./lib/sheets";
@@ -212,6 +213,7 @@ export default function App() {
     month: "short",
     day: "numeric",
   }).format(new Date());
+  if (!demoMode && !sheetWorkspace.refreshedAt) return <WorkspaceLoading loading={sheetWorkspace.loading} error={sheetWorkspace.error} onRetry={sheetWorkspace.refresh} />;
   return (
     <>
       <a className="skip-link" href="#main-content">

@@ -11,6 +11,7 @@ import {
   Clock,
 } from "lucide-react";
 import Sheet from "../components/Sheet";
+import AirlineLabel from "../components/AirlineLabel";
 import { transportGroups, transportWithPlans } from "../lib/transport";
 import { driverFromUrl, driverUrl } from "../lib/driverLinks";
 import { fullDay } from "../lib/occupancy";
@@ -339,10 +340,10 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                     </span>
                   </div>
                   <div className="transport-service">
-                    <span className="eyebrow">
-                      {group.method === "Flight" ? "Airline" : group.method} ·{" "}
+                    {group.method === "Flight" ? <AirlineLabel flight={group.flight} airport={group.airport} /> : <span className="eyebrow">
+                      {group.method} ·{" "}
                       {group.airport || "Location needed"}
-                    </span>
+                    </span>}
                     <h3>{group.flight || `${group.method} journey`}</h3>
                     <span>
                       {group.guests.length}{" "}

@@ -1,0 +1,23 @@
+html, body { margin: 0; min-height: 100%; }
+.workspace-loading {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 32px 24px;
+  background: #f6fbff;
+  color: #244d65;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.workspace-loader-card { display: grid; justify-items: center; text-align: center; max-width: 360px; gap: 10px; }
+.workspace-loader-mark { width: 42px; height: 42px; position: relative; margin-bottom: 12px; }
+.workspace-loader-mark > span { position: absolute; inset: 0; border: 2px solid #dbeefa; border-top-color: #588aa6; border-right-color: #e5a06c; border-radius: 50%; }
+.workspace-loader-mark > i { position: absolute; inset: 17px; background: #e5a06c; border-radius: 50%; }
+.workspace-loader-mark.is-loading > span { animation: workspace-orbit 1.5s linear infinite; }
+.workspace-loader-card h1 { margin: 0; font-size: 17px; line-height: 1.5; font-weight: 600; letter-spacing: -.2px; }
+.workspace-loader-card p { margin: 0; color: #526f81; font-size: 12px; line-height: 1.7; }
+.workspace-loader-card button { margin-top: 10px; padding: 10px 20px; border: 1px solid #9ac7e2; border-radius: 9px; background: white; color: #244d65; font: inherit; font-size: 13px; cursor: pointer; }
+.workspace-loader-card button:focus-visible { outline: 2px solid #588aa6; outline-offset: 3px; }
+@keyframes workspace-orbit { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .workspace-loader-mark.is-loading > span { animation: none; } }

@@ -49,7 +49,7 @@ Housekeeping records linen tasks for assigned Samarpan beds when the accommodati
 
 ## Transport and Yogi Prasad
 
-Airport Trips combines arrivals and departures chronologically. Groups use direction, date, airport and flight/service. Unknown services remain separated by registration. Names include supplied city/state and phone links. Inline driver/vehicle selectors save on selection. Driver URLs such as `#transport?driver=Driver+Name` filter the admin view and still require admin access.
+Airport Trips combines arrivals and departures chronologically. Groups use direction, date, airport and flight/service. Unknown services remain separated by registration. Names include supplied city/state and phone links. Flight prefixes display the carrier name and a small locally bundled airline logo; unknown prefixes use a neutral fallback. IATA and common ICAO prefixes are supported, and bus labels remain unchanged. Inline driver/vehicle selectors save on selection. Driver URLs such as `#transport?driver=Driver+Name` filter the admin view and still require admin access.
 
 FlightStats lookups run only on flight day, with a five-minute server cache. Keep `FLIGHTSTATS_APP_ID` and `FLIGHTSTATS_APP_KEY` in private Apps Script properties. No guest data is sent to the provider.
 
@@ -70,3 +70,5 @@ The browser uses an Apps Script iframe with nonce/source/origin-checked postMess
 Unit tests cover backend permissions, stale writes, room conflicts, provisional numbering, successive checkout/linen cycles, date corrections, Allentown day boundaries and bus travel. Sheets Playwright tests exercise Chromium and WebKit with synthetic records and a mocked backend, including real pointer drags, responsive views, persistent saves and team restrictions. They never change real guest assignments.
 
 `VITE_DEMO_MODE=true` and `npm test` use the separate original sample-data workspace. Its registration, check-in, dispatch and housekeeping behavior is device-local and is not the live system of record.
+
+The initial page includes a minimal loading indicator before React starts and while the first Sheets snapshot loads. It respects reduced-motion preferences, keeps normal background refreshes unobtrusive, and displays a retry action on initial connection errors.

@@ -13,10 +13,11 @@
     />
     <link rel="icon" type="image/png" href="%BASE_URL%mission-icon.png" />
     <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <link rel="stylesheet" href="/src/styles/workspace-loading.css" />
     <title>Mandir Hospitality · Seva, thoughtfully connected</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><main class="workspace-loading" aria-busy="true"><div class="workspace-loader-card"><div class="workspace-loader-mark is-loading" aria-hidden="true"><span></span><i></i></div><h1>Loading your workspace</h1><p role="status">Getting guest details from Google Sheets…</p></div></main></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
