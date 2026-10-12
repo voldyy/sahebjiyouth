@@ -196,7 +196,10 @@ function lodging(book, req) {
   if (values[0]) {
     if (!needsLodging(guest))
       throw new Error("This guest no longer needs overnight accommodation.");
-    if (!equal(stayRange(guest), req.stay))
+    const currentStay = stayRange(guest);
+    // google.script.run may reorder object keys. Compare the normalized days,
+    // not their JSON property order, while still rejecting stale stay dates.
+    if (currentStay?.start !== req.stay?.start || currentStay?.end !== req.stay?.end)
       throw new Error(
         "This guest’s stay dates changed. Refresh before assigning.",
       );

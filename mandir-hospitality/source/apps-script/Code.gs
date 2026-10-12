@@ -479,7 +479,8 @@ reply({ ready: true });
     if (values[0]) {
       if (!needsLodging(guest))
         throw new Error("This guest no longer needs overnight accommodation.");
-      if (!equal(stayRange(guest), req.stay))
+      const currentStay = stayRange(guest);
+      if (currentStay?.start !== req.stay?.start || currentStay?.end !== req.stay?.end)
         throw new Error(
           "This guest\u2019s stay dates changed. Refresh before assigning."
         );
