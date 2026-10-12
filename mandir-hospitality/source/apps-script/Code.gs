@@ -28,6 +28,7 @@ var Hospitality = (() => {
 
   // src/lib/lodgingRooms.js
   var samarpanRooms = [
+    { number: "203", beds: 4 },
     { number: "204", beds: 4 },
     { number: "205", beds: 4 },
     { number: "206", beds: 4 },
@@ -221,7 +222,7 @@ var Hospitality = (() => {
     if (values.every((v) => v === "")) return values;
     const provisional = OFFSITE_HOTELS.includes(values[0]) && /^O[a-zA-Z0-9-]+B[1-9]\d*$/.test(values[2]);
     if (!LODGING_LOCATIONS.includes(values[0]) || !values[1] && !provisional || !values[2]) throw new Error("Choose a lodging location and enter both the room number and custom room code.");
-    if (values[0] === "Samarpan" && !samarpanRooms.some((room) => room.number === values[1])) throw new Error("Choose a confirmed Samarpan room: 100\u2013104 or 204\u2013207.");
+    if (values[0] === "Samarpan" && !samarpanRooms.some((room) => room.number === values[1])) throw new Error("Choose a confirmed Samarpan room: 100\u2013104 or 203\u2013207.");
     if (values[0] === "Samarpan") {
       const bed = values[2].match(/^S\d+B([1-9]\d*)$/)?.[1];
       if (!bed || samarpanRoomCode(values[1], bed) !== values[2]) throw new Error("Select a valid bed in the chosen Samarpan room to generate its code.");

@@ -1,5 +1,6 @@
 // Confirmed Samarpan inventory; hotel inventories have not been supplied.
 export const samarpanRooms = [
+  { number: "203", beds: 4 },
   { number: "204", beds: 4 },
   { number: "205", beds: 4 },
   { number: "206", beds: 4 },

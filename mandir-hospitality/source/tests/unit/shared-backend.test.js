@@ -16,6 +16,17 @@ test('serialized backend prevents overlapping reservations, preserves other fiel
   assert.deepEqual(h.rows[1].slice(0,29),row('A').slice(0,29));
   assert.equal(h.sheets.get('Assignment History').rows.length,2);
 });
+test('room 203 accepts its four beds and rejects a fifth bed or overlapping stay',()=>{
+  const h=createHarness([header(),row('A'),row('B')]);
+  const [a,b]=guestsFromRows(h.rows);
+  const assign=(guest,bed)=>request(h,{action:'lodging',identity:guest.sourceIdentity,expected:guest.sourceLodging,
+    stay:stayRange(guest),assignment:{lodging:'Samarpan',roomNo:'203',roomCode:`S203B${bed}`}});
+  assert.match(assign(a,5).error,/valid bed/);
+  assert.equal(assign(a,4).ok,true);
+  assert.deepEqual(h.rows[1].slice(29),['Samarpan','203','S203B4']);
+  assert.match(assign(b,4).error,/occupied/);
+  assert.equal(assign(b,1).ok,true);
+});
 test('fresh stay changes and stale lodging are rejected; row sorting uses stable identity',()=>{
   const h=createHarness([header(),row('A'),row('B')]);const [a,b]=guestsFromRows(h.rows);
   h.rows[1][12]='10/19/2026';assert.match(lodging(h,a).error,/dates changed/);

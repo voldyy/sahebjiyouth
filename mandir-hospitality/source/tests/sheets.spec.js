@@ -84,7 +84,7 @@ test("Samarpan offers only confirmed rooms with bed capacities", async ({ page }
   await page.getByRole("button", { name: "Assign lodging", exact: true }).click();
   const room = page.getByLabel("Room number (AE)");
   await expect(room).toHaveJSProperty("tagName", "SELECT");
-  await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "204 · 4 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds", "100 · 7 beds", "101 · 12 beds", "102 · 12 beds", "103 · 12 beds", "104 · 12 beds"]);
+  await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "203 · 4 beds", "204 · 4 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds", "100 · 7 beds", "101 · 12 beds", "102 · 12 beds", "103 · 12 beds", "104 · 12 beds"]);
   await room.selectOption("204");
   await expect(page.getByLabel("Bed number").locator("option")).toHaveCount(5);
   await page.getByLabel("Bed number").selectOption("1");
@@ -141,11 +141,11 @@ test("weekly calendar has six bounded weeks, correct room beds, and checkout-day
   await expect(page.getByRole("heading", { name: "Nov 8 – Nov 14, 2026" })).toBeVisible();
 });
 
-test("daily view shows all 71 beds, date-filtered unassigned guests, and saves from an empty bed", async ({ page }) => {
+test("daily view shows all 75 beds, date-filtered unassigned guests, and saves from an empty bed", async ({ page }) => {
   const { writes } = await openPlanner(page);
   await page.getByRole("button", { name: "Daily view", exact: true }).click();
-  await expect(page.locator(".stay-day-room")).toHaveCount(9);
-  await expect(page.locator(".stay-day-beds .stay-slot")).toHaveCount(71);
+  await expect(page.locator(".stay-day-room")).toHaveCount(10);
+  await expect(page.locator(".stay-day-beds .stay-slot")).toHaveCount(75);
   await expect(page.getByRole("button", { name: "Assign Chirag Mehta", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Assign Dev Shah", exact: true })).toHaveCount(0);
   await expect(page.getByText("1 unassigned guests need stay dates")).toBeVisible();
