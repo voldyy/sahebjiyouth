@@ -29,11 +29,11 @@ export function flightPresentation(flight) {
   return { label: "Unavailable", tone: "unknown", phase, delayed: false };
 }
 
-export function airportTimeLabel(value) {
+export function airportTimeLabel(value, includeDate = true) {
   // dateLocal is already the airport's wall clock. Do not convert it to the
   // driver's/device's time zone when formatting the updated pickup/drop-off time.
   const parsed = timestamp(value);
   return parsed === null ? "" : new Date(parsed).toLocaleString("en-US", {
-    timeZone: "UTC", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+    timeZone: "UTC", ...(includeDate ? { month: "short", day: "numeric" } : {}), hour: "numeric", minute: "2-digit",
   });
 }

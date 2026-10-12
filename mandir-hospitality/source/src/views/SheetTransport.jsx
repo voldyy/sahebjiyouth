@@ -11,19 +11,12 @@ import {
 } from "lucide-react";
 import Sheet from "../components/Sheet";
 import AirlineLabel from "../components/AirlineLabel";
-import FlightStatus from "../components/FlightStatus";
+import FlightStatus, { FlightTime, LiveFlightProvider } from "../components/FlightStatus";
 import { transportGroups, transportWithPlans } from "../lib/transport";
 import { driverFromUrl, driverUrl } from "../lib/driverLinks";
 import { fullDay } from "../lib/occupancy";
 import "../styles/operations.css";
 import "../styles/shared-transport.css";
-const timeLabel = (value) =>
-  value
-    ? new Date(`2000-01-01T${value}`).toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : "Time needed";
 export default function SheetTransport({ workspace, toast, readOnly = false }) {
   const [query, setQuery] = useState(""),
     [airport, setAirport] = useState("All"),
@@ -259,11 +252,12 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
           {filtered
             .filter((g) => g.day === day)
             .map((group) => (
-              <article className="card transport-journey" key={group.id}>
+              <LiveFlightProvider key={group.id} group={group} workspace={workspace}>
+              <article className="card transport-journey">
                 <div className="transport-journey-head">
                   <div className="transport-time">
                     <Clock size={16} />
-                    <strong>{timeLabel(group.time)}</strong>
+                    <FlightTime group={group} />
                     <span>
                       {group.direction === "Arrivals" ? "Arrival" : "Departure"}
                     </span>
@@ -286,8 +280,8 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                 </div>
                 {group.timeMismatch && (
                   <p className="transport-review">
-                    Guests have different times for this service. Showing the
-                    earliest; verify with the airline.
+                    Guests have different recorded times for this service.
+                    Verify their travel details.
                   </p>
                 )}
                 <div className="transport-journey-body">
@@ -308,7 +302,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                         </li>
                       ))}
                     </ul>
-                    {group.method === "Flight" && group.flight && <FlightStatus group={group} workspace={workspace} />}
+                    {group.method === "Flight" && group.flight && <FlightStatus group={group} />}
                   </div>
                   <div className="transport-plan">
                     {[
@@ -375,6 +369,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                   </div>
                 </div>
               </article>
+              </LiveFlightProvider>
             ))}
         </section>
       ))}

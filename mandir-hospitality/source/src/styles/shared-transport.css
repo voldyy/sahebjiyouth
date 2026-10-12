@@ -449,18 +449,30 @@
 .transport-airport { color: #526f81; font-size: 10px; white-space: nowrap; }
 
 .transport-flight-status { gap: 7px; margin-top: 10px; }
-.transport-flight-status .flight-glance { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 12px; color: #526f81; }
-.flight-glance-heading { display: flex; align-items: center; gap: 9px; min-height: 24px; }
-.flight-glance-heading strong { color: inherit; font-size: 14px; line-height: 1.5; font-weight: 700; }
-.transport-flight-status .flight-glance--on-time { color: #24724c; }
-.transport-flight-status .flight-glance--delayed { color: #a65a13; }
-.transport-flight-status .flight-glance--canceled { color: #b3323b; }
-.transport-flight-status .flight-glance--early { color: #27779b; }
-.flight-status-dot { position: relative; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: currentColor; }
-.flight-status-dot::after { content: ""; position: absolute; inset: -4px; border-radius: inherit; background: currentColor; opacity: .14; animation: flight-status-breathe 2.8s ease-in-out infinite; }
+.transport-flight-status .flight-glance { --flight-surface: #f2f6f9; --flight-border: #d4e0e8; --flight-halo: #526f8120; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; color: #526f81; }
+.flight-glance-heading { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 8px 13px; border: 1px solid var(--flight-border); border-radius: 10px; background: var(--flight-surface); animation: flight-badge-breathe 2.4s ease-in-out infinite; }
+.flight-glance-heading strong { color: inherit; font-size: 16px; line-height: 1.5; font-weight: 750; }
+.transport-flight-status .flight-glance--on-time { color: #24724c; --flight-surface: #edf8f1; --flight-border: #b7dfc6; --flight-halo: #24724c25; }
+.transport-flight-status .flight-glance--delayed { color: #a65a13; --flight-surface: #fff4e7; --flight-border: #efcea2; --flight-halo: #a65a1325; }
+.transport-flight-status .flight-glance--canceled { color: #b3323b; --flight-surface: #fff0f1; --flight-border: #ebbdc2; --flight-halo: #b3323b25; }
+.transport-flight-status .flight-glance--early { color: #7441a0; --flight-surface: #f6effc; --flight-border: #d9c4ed; --flight-halo: #7441a02b; }
+.flight-status-dot { position: relative; width: 10px; height: 10px; flex: 0 0 10px; border-radius: 50%; background: currentColor; }
+.flight-status-dot::after { content: ""; position: absolute; inset: -5px; border-radius: inherit; background: currentColor; opacity: .2; animation: flight-status-breathe 2.4s ease-in-out infinite; }
 .flight-glance--unknown .flight-status-dot::after { animation: none; opacity: .08; }
 .flight-phase { display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; border: 1px solid #cce5f5; border-radius: 6px; background: #f6fbff; color: #326681; font-size: 11px; font-weight: 600; }
-.flight-updated-time { flex-basis: 100%; font-size: 12px; font-weight: 600; line-height: 1.5; }
 .transport-flight-status > a { align-self: flex-start; font-size: 11px; text-underline-offset: 3px; }
-@keyframes flight-status-breathe { 0%, 100% { transform: scale(.72); opacity: .1; } 50% { transform: scale(1.12); opacity: .24; } }
-@media (prefers-reduced-motion: reduce) { .flight-status-dot::after { animation: none; } }
+@keyframes flight-status-breathe { 0%, 100% { transform: scale(.7); opacity: .12; } 50% { transform: scale(1.3); opacity: .36; } }
+@keyframes flight-badge-breathe { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 0 5px var(--flight-halo); } }
+.flight-glance--unknown .flight-glance-heading { animation: none; }
+@media (prefers-reduced-motion: reduce) { .flight-status-dot::after, .flight-glance-heading { animation: none; } }
+
+.transport-time:has(.flight-time-live) { flex-direction: column; align-items: flex-start; gap: 5px; }
+.transport-time:has(.flight-time-live) > svg { display: none; }
+.flight-time-live { display: grid; gap: 3px; min-width: 0; color: #244d65; }
+.transport-time .flight-time-scheduled, .transport-time .flight-time-caption { padding: 0; background: none; border-radius: 0; color: #617789; font-size: 10px; line-height: 1.5; }
+.flight-time-scheduled s { text-decoration-thickness: 1px; }
+.transport-time .flight-time-latest { color: inherit; font-size: 24px; line-height: 1.2; font-weight: 750; letter-spacing: -.5px; }
+.flight-time-live--early { color: #7441a0; }
+.flight-time-live--delayed { color: #a65a13; }
+.flight-time-live--canceled { color: #b3323b; }
+@media (max-width: 700px) { .transport-time .flight-time-latest { font-size: 21px; } }
