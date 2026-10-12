@@ -68,7 +68,7 @@ export function FlightTime({ group }) {
   return <div className={`flight-time-live flight-time-live--${status.tone}`} aria-live="polite" aria-atomic="true">
     {scheduledLabel && <span className="flight-time-scheduled">Scheduled <s>{scheduledLabel}</s></span>}
     <strong className="flight-time-latest">{canceled ? "Canceled" : diverted ? "ETA pending" : latestLabel || "ETA pending"}</strong>
-    {!canceled && !diverted && <span className="flight-time-caption">{latestLabel ? `Latest ${group.direction === "Arrivals" ? "arrival" : "departure"}${changedDay ? ` · ${airportTimeLabel(flight.estimated).split(",")[0]}` : ""}` : "Updated time not available"}</span>}
+    {!canceled && !diverted && changedDay && <span className="flight-time-caption">{airportTimeLabel(flight.estimated).split(",")[0]}</span>}
   </div>;
 }
 
