@@ -49,6 +49,8 @@ Each recipient/event is claimed before calling Twilio. Both SM and MM message id
 
 The worker sends up to 25 new messages per pass and stops before the Azure execution timeout. Remaining queued items resume on the next minute. Individual failures are logged without stopping unrelated notifications. Review claims and Azure logs if a message is missing.
 
+The function-key-protected `GET /api/hospitality-notifications/health` endpoint reports enablement, aggregate roster readability and initialization state without returning attendee details or credentials.
+
 ## Build and release
 
 ```sh

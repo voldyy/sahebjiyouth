@@ -42,7 +42,7 @@ app.timer('yogiPrasadDaily', {
   handler: createYogiPrasadHandler({ table: registrationTable, env: process.env }),
 });
 
-const { createHospitalityWorker, createAccommodationHandler, SCHEDULE } = require('./hospitality-notifications');
+const { createHospitalityWorker, createAccommodationHandler, loadSnapshot, SCHEDULE } = require('./hospitality-notifications');
 app.timer('hospitalityNotifications', {
   schedule: SCHEDULE, runOnStartup: false, useMonitor: true,
   handler: createHospitalityWorker({ table: registrationTable, env: process.env }),
@@ -50,4 +50,20 @@ app.timer('hospitalityNotifications', {
 app.http('hospitalityNotificationActions', {
   route: 'hospitality-notifications', methods: ['POST'], authLevel: 'anonymous',
   handler: createAccommodationHandler({ table: registrationTable }),
+});
+app.http('hospitalityNotificationHealth', {
+  route: 'hospitality-notifications/health', methods: ['GET'], authLevel: 'function',
+  handler: async () => {
+    let stage = 'source';
+    try {
+      const snapshot = await loadSnapshot();
+      stage = 'storage';
+      let initialized = false;
+      try { await registrationTable.getEntity('hospitality-notification-state', 'initialized'); initialized = true; }
+      catch (error) { if (error.statusCode !== 404) throw error; }
+      return { jsonBody: { ok: true, enabled: process.env.HOSPITALITY_NOTIFICATIONS_ENABLED === 'true', attendees: snapshot.guests.length, initialized } };
+    } catch (error) {
+      return { status: 503, jsonBody: { ok: false, stage, error: String(error.message).slice(0, 200), code: error.code || error.cause?.code || '' } };
+    }
+  },
 });
