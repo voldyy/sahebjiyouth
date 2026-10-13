@@ -12,6 +12,9 @@ export default function AirlineLabel({ flight, airport }) {
         ? <img src={`${import.meta.env.BASE_URL}airlines/${airline.code}.png`} alt="" width="18" height="18" loading="lazy" decoding="async" onError={() => setFailedLogo(airline.code)} />
         : <Plane size={14} />}
     </span>
-    <span className="transport-carrier-text"><span className="transport-airline-name">{displayName || "Airline unknown"}</span><span className="transport-airport"> · {airport || "Location needed"}</span></span>
+    <div className="transport-flight-identity">
+      <h3 className="transport-flight-number">{flight || "Flight journey"}</h3>
+      <span className="transport-carrier-text"><span className="transport-airline-name">{displayName || "Airline unknown"}</span><span className="transport-airport"> · {airport || "Location needed"}</span></span>
+    </div>
   </div>;
 }

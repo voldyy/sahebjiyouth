@@ -441,7 +441,13 @@
 @media (max-width: 700px) { .transport-plan select { font-size: 16px; min-height: 44px; } }
 .transport-read-value { display: block; padding: 10px 12px; background: #f6fbff; border: 1px solid #cce5f5; border-radius: 8px; color: #244d65; font-size: 13px; font-weight: 600; }
 
-.transport-carrier { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.transport-carrier { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.transport-flight-identity { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; min-width: 0; }
+.transport-service .transport-flight-number { margin: 0; color: #244d65; font-size: 14px; font-weight: 650; line-height: 20px; letter-spacing: .1px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.transport-journey--flight .transport-service { grid-column: 1 / -1; grid-row: 1; }
+.transport-journey--flight .transport-time { grid-row: 2; }
+.transport-journey--flight .transport-status { grid-row: 3; }
+.transport-guest-count { display: block; margin-top: 3px; }
 .transport-airline-logo { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 20px; width: 20px; height: 20px; border: 1px solid #e0e9ee; border-radius: 5px; background: #fff; color: #588aa6; overflow: hidden; }
 .transport-airline-logo img { display: block; width: 18px; height: 18px; object-fit: contain; }
 .transport-carrier-text { min-width: 0; font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
@@ -478,13 +484,13 @@
 @media (max-width: 700px) { .transport-time .flight-time-latest { font-size: 21px; } }
 
 @media (max-width: 700px) {
-  .transport-journey-head:has(.flight-time-live) {
+  .transport-journey--flight .transport-journey-head {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 6px 10px;
   }
-  .transport-journey-head:has(.flight-time-live) .transport-service {
+  .transport-journey--flight .transport-journey-head .transport-service {
     grid-column: 1;
     grid-row: 1;
     display: flex;
@@ -492,15 +498,15 @@
     align-items: center;
     gap: 3px 8px;
   }
-  .transport-journey-head:has(.flight-time-live) .transport-carrier { margin-bottom: 0; }
-  .transport-journey-head:has(.flight-time-live) .transport-service h3 { margin: 0; }
-  .transport-journey-head:has(.flight-time-live) .transport-status {
+  .transport-journey--flight .transport-journey-head .transport-carrier { margin-bottom: 0; }
+  .transport-journey--flight .transport-journey-head .transport-service h3 { margin: 0; }
+  .transport-journey--flight .transport-journey-head .transport-status {
     grid-column: 2;
     grid-row: 1;
     margin-left: 0;
     align-self: center;
   }
-  .transport-journey-head:has(.flight-time-live) .transport-time {
+  .transport-journey--flight .transport-journey-head .transport-time {
     grid-column: 1 / -1;
     grid-row: 2;
     flex-direction: row;
@@ -509,7 +515,7 @@
     gap: 5px 8px;
     min-width: 0;
   }
-  .transport-time:has(.flight-time-live) > span { order: -1; }
+  .transport-journey--flight .transport-time > span { order: -1; }
   .transport-time .flight-time-live {
     display: flex;
     align-items: baseline;

@@ -253,7 +253,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
             .filter((g) => g.day === day)
             .map((group) => (
               <LiveFlightProvider key={group.id} group={group} workspace={workspace}>
-              <article className="card transport-journey">
+              <article className={`card transport-journey${group.method === "Flight" ? " transport-journey--flight" : ""}`}>
                 <div className="transport-journey-head">
                   <div className="transport-time">
                     <Clock size={16} />
@@ -263,12 +263,11 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                     </span>
                   </div>
                   <div className="transport-service">
-                    {group.method === "Flight" ? <AirlineLabel flight={group.flight} airport={group.airport} /> : <span className="eyebrow">
+                    {group.method === "Flight" ? <AirlineLabel flight={group.flight} airport={group.airport} /> : <><span className="eyebrow">
                       {group.method} ·{" "}
                       {group.airport || "Location needed"}
-                    </span>}
-                    <h3>{group.flight || `${group.method} journey`}</h3>
-                    {group.guests.length > 1 && <span>{group.guests.length} guests</span>}
+                    </span><h3>{group.method} journey</h3></>}
+                    {group.guests.length > 1 && <span className="transport-guest-count">{group.guests.length} guests</span>}
                   </div>
                   <span
                     className={`transport-status ${group.plan.driver && group.plan.vehicle ? "assigned" : ""}`}
