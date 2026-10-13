@@ -193,6 +193,8 @@ var Hospitality = (() => {
         count: 1,
         arrivalDate: arrival.date,
         arrivalTime: arrival.time,
+        arrivalTimeKnown: typeof row[12] === "number" ? row[12] % 1 !== 0 : /(?:[T ]\d{1,2}:\d{2}|^Date\(\d+,\d+,\d+,\d+,\d+)/.test(text(row[12])),
+        departureTimeKnown: typeof row[13] === "number" ? row[13] % 1 !== 0 : /(?:[T ]\d{1,2}:\d{2}|^Date\(\d+,\d+,\d+,\d+,\d+)/.test(text(row[13])),
         departureDate: departure.date,
         departureTime: departure.time,
         travelMethod: text(row[11]),
@@ -315,6 +317,7 @@ reply({ ready: true });
 
   // apps-script/server.js
   var TABLES = {
+    "Transport Display": ["Journey ID", "Collapsed", "Revision", "Request ID"],
     "Offsite Rooms": ["ID", "Hotel", "Room number", "Beds", "Planning label", "Revision"],
     "Housekeeping": ["Checkout ID", "Room", "Bed", "Bed code", "Guest", "Checkout date", "Linens refreshed at", "Request ID", "State"],
     "Transport Assignments": [
@@ -395,6 +398,20 @@ reply({ ready: true });
   function hotelRooms(book, readOnly = false) {
     return table(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
   }
+  function tripDisplay(book) {
+    return table(book, "Transport Display", true).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], collapsed: r[1] === "Yes", revision: r[2] }));
+  }
+  function setTripDisplay(book, req) {
+    if (typeof req.collapsed !== "boolean" || !["Arrivals", "Departures"].some((direction) => transportGroups(roster(book).guests, direction).some((g) => g.id === req.id))) throw new Error("This trip changed. Refresh before changing its display.");
+    const current = table(book, "Transport Display");
+    const matches = current.rows.map((row, index) => ({ row, index })).filter((x) => x.index > 0 && x.row[0] === req.id);
+    if (matches.length > 1) throw new Error("Duplicate trip display records. Review the sheet.");
+    if (matches[0]?.row[3] === req.requestId) return;
+    const values = [req.id, req.collapsed ? "Yes" : "No", Utilities.getUuid(), req.requestId];
+    writeRow(current.sheet, matches[0] ? matches[0].index + 1 : current.sheet.getLastRow() + 1, values);
+    SpreadsheetApp.flush();
+    if (!equal(table(book, "Transport Display").rows.find((r) => r[0] === req.id), values)) throw new Error("Trip display could not be confirmed. Refresh before retrying.");
+  }
   function housekeeping(book, guests, readOnly = false) {
     const current = table(book, "Housekeeping", readOnly);
     const today = Utilities.formatDate(/* @__PURE__ */ new Date(), "America/New_York", "yyyy-MM-dd");
@@ -429,6 +446,7 @@ reply({ ready: true });
     const current = roster(book);
     if (role !== "admin") return {
       role: "viewer",
+      tripDisplay: tripDisplay(book),
       // All dashboard views use normalized display data, never the raw source rows.
       guests: current.guests,
       transport: plans(book, true),
@@ -440,6 +458,7 @@ reply({ ready: true });
     };
     return {
       role,
+      tripDisplay: tripDisplay(book),
       rows: current.rows,
       transport: plans(book),
       offsiteRooms: hotelRooms(book),
@@ -534,6 +553,14 @@ reply({ ready: true });
     const primary = field("primaryContact") || name;
     const row = Array(32).fill("");
     Object.assign(row, { 0: id, 1: (/* @__PURE__ */ new Date()).toISOString(), 2: primary === name ? "YES" : "NO", 3: primary, 5: field("phone"), 7: field("city"), 8: name, 9: field("relationship") || (primary === name ? "Self (Primary)" : ""), 11: mode, 12: time("arrivalTime", start), 13: time("departureTime", end), 18: transport2, 20: overnight, 21: start, 22: end, 23: notes });
+    if (req.assignment) {
+      const values = validateAssignment(req.assignment);
+      const proposed = guestsFromRows([current.rows[0], row])[0];
+      if (!values[0] || overnight !== "YES" || !stayRange(proposed)) throw new Error("Enter valid check-in and checkout dates for the walk-in stay.");
+      const problem = assignmentIssue(current.guests, proposed, { lodging: values[0], roomNo: values[1], roomCode: values[2] }, hotelRooms(book, true));
+      if (problem) throw new Error(problem);
+      row.splice(29, 3, ...values);
+    }
     const target = current.sheet.getLastRow() + 1;
     writeRow(current.sheet, target, row);
     SpreadsheetApp.flush();
@@ -723,17 +750,24 @@ reply({ ready: true });
     try {
       if (!req || JSON.stringify(req).length > 16e3)
         throw new Error("Invalid or oversized request.");
-      if (!["snapshot", "lodging", "transport", "resource", "flight", "linen", "offsite", "guest"].includes(
+      if (!["snapshot", "lodging", "transport", "resource", "flight", "linen", "offsite", "guest", "trip-display", "trip-display-read"].includes(
         req.action
       ))
         throw new Error("Unknown action.");
       const key = PropertiesService.getScriptProperties().getProperty("ADMIN_ACCESS_KEY");
       const role = key && typeof req.accessKey === "string" && req.accessKey === key ? "admin" : "viewer";
-      if (!["snapshot", "flight"].includes(req.action) && role !== "admin") throw new Error("Admin access is required to change this view-only dashboard. Open your private admin link.");
+      if (!["snapshot", "flight", "trip-display", "trip-display-read"].includes(req.action) && role !== "admin") throw new Error("Admin access is required to change this view-only dashboard. Open your private admin link.");
       if (req.action === "flight") return { ok: true, flight: flightStatus(req) };
       if (!lock.tryLock(2e4))
         throw new Error("Another save is in progress. Please retry shortly.");
       const book = spreadsheet();
+      if (["trip-display", "trip-display-read"].includes(req.action)) {
+        if (req.action === "trip-display") {
+          if (!/^[a-zA-Z0-9-]{20,80}$/.test(req.requestId || "")) throw new Error("Missing request identifier.");
+          setTripDisplay(book, req);
+        }
+        return { ok: true, tripDisplay: tripDisplay(book) };
+      }
       if (req.action !== "snapshot") {
         if (!/^[a-zA-Z0-9-]{20,80}$/.test(req.requestId || ""))
           throw new Error("Missing request identifier.");

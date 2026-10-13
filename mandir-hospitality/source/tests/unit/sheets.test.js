@@ -17,6 +17,8 @@ test("attendees are not multiplied by registration groups and dates are interpre
   assert.equal(guests.reduce((sum, g) => sum + g.count, 0), 2);
   assert.equal(guests[0].arrivalDate, "2026-10-18");
   assert.equal(guests[0].arrivalTime, "14:30");
+  assert.equal(guests[0].arrivalTimeKnown, true);
+  assert.equal(guests[0].departureTimeKnown, false);
   assert.equal(guests[0].status, "Registered");
   assert.equal(guests[0].stay, "Pending lodging");
   assert.notEqual(guests[0].id, guests[1].id);

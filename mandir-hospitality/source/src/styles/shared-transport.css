@@ -2,6 +2,10 @@
   display: grid;
   gap: 14px;
 }
+.transport-collapse { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 0; color: #326681; text-align: left; border-top: 1px solid #e0f0fb; font-size: 12px; }
+.transport-collapse > span { flex: 1; overflow-wrap: anywhere; }
+.transport-collapse[aria-expanded="true"] > svg { transform: rotate(180deg); }
+.transport-collapse small { font-weight: 700; }
 .shared-transport .page-heading {
   display: flex;
   align-items: center;

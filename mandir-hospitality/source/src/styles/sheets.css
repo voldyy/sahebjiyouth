@@ -15,3 +15,8 @@
 .settings-section .field { margin-top: 16px; }
 .settings-section .button { margin-top: 12px; }
 @media (max-width: 640px) { .sheet-summary-grid { grid-template-columns: 1fr; } .sheet-connection { padding: 12px 16px; gap: 8px; } .sheet-attendee { padding: 16px; gap: 12px; } }
+.guest-form fieldset { min-inline-size: 0; }
+.guest-form .field, .guest-form .form-grid { min-width: 0; }
+.guest-form input, .guest-form select { min-width: 0; max-width: 100%; }
+.guest-form .form-footer { flex-wrap: wrap; }
+@media (max-width: 700px) { .guest-form input, .guest-form select, .guest-form textarea { font-size: 16px; } }

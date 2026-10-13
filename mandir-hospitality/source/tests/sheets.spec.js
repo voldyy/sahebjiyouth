@@ -42,7 +42,7 @@ async function openAssignment(page) {
 test("admin shared assignment persists AD–AF only", async ({ page }) => {
   const { rows, writes } = await setup(page);
   await expect(page.getByText("Girishbhai & Taraben Patel", { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Add guest", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Add guest", exact: true })).toBeEnabled();
   await openAssignment(page);
   await page.getByRole("button", { name: "Save assignment to sheet" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -126,7 +126,7 @@ test("weekly calendar has six bounded weeks, correct room beds, and checkout-day
   await expect(page.getByRole("heading", { name: "Oct 11 – Oct 17, 2026" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Previous week", exact: true })).toBeDisabled();
   await page.getByRole("button", { name: "Room 204 3 beds", exact: true }).click();
-  await expect(page.locator(".stay-week-grid tbody tr")).toHaveCount(4);
+  await expect(page.locator(".stay-week-grid tbody tr")).toHaveCount(3);
   await expect(slot(page, "204", "1", "2026-10-13")).toContainText("Amal Patel");
   await expect(slot(page, "204", "1", "2026-10-14")).toContainText("Bela Shah");
   await expect(slot(page, "204", "1", "2026-10-14")).not.toContainText("Amal Patel");
@@ -407,4 +407,63 @@ test('bus arrivals show Bus and ABE with no flight tracker', async({page})=>{
   await expect(bus).toContainText('Bus · ABE');
   await expect(bus).toContainText('Priya Sharma');
   await expect(bus.getByRole('link',{name:/Flight tracker/})).toHaveCount(0);
+});
+
+test('day overview adds a walk-in to the chosen bed and Main displays both dates', async ({ page }) => {
+  test.setTimeout(60000);
+  const h=await openPlanner(page);
+  await page.getByRole('button',{name:'Day at a glance',exact:true}).click();
+  await page.getByLabel('Choose occupancy date').fill('2026-10-14');
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(page.locator('.stay-overview-room')).toHaveCount(10);
+  await expect(page.locator('.stay-overview-bed')).toHaveCount(74);
+  await expect(page.locator('.stay-overview')).toContainText('Bela Shah');
+  await expect(page.locator('.stay-overview')).not.toContainText('Amal Patel');
+  await page.getByRole('button',{name:'Add walk-in to room 203 bed 2',exact:true}).click();
+  await expect(page.getByLabel('Walk-in room')).toHaveValue('203');
+  await expect(page.getByLabel('Walk-in bed')).toHaveValue('2');
+  await page.getByLabel('Guest name',{exact:true}).fill('Synthetic Walk In');
+  await page.getByLabel('Checkout',{exact:true}).fill('2026-10-17');
+  await page.getByLabel('Checkout',{exact:true}).press('Tab');
+  await page.getByRole('button',{name:'Add guest & assign bed',exact:true}).click({timeout:10000});
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('.stay-overview')).toContainText('Synthetic Walk In');
+  expect(h.rows.find(r=>r[8]==='Synthetic Walk In').slice(29)).toEqual(['Samarpan','203','S203B2']);
+  await page.setViewportSize({width:1440,height:1100});
+  await page.screenshot({path:test.info().outputPath('overview-desktop.png'),fullPage:true});
+  await page.goto('/#guests');
+  await page.getByLabel('Search guests',{exact:true}).fill('Synthetic Walk In');
+  const row=page.locator('.guest-table tbody tr').filter({hasText:'Synthetic Walk In'});
+  await expect(row).toContainText('In · Oct 14');await expect(row).toContainText('Out · Oct 17');
+  await page.setViewportSize({width:390,height:900});
+  const card=page.locator('.mobile-guest-card').filter({hasText:'Synthetic Walk In'});
+  await expect(card).toContainText('In · Oct 14');await expect(card).toContainText('Out · Oct 17');
+  await expect(card).not.toContainText('12:00 AM');
+  await page.screenshot({path:test.info().outputPath('main-dates-mobile.png'),fullPage:true});
+});
+
+test('trip collapse defaults for past dates and synchronizes between admin and viewer', async ({ page, browser }) => {
+  const row=plannerGuest('T','Synthetic Traveller','2000-10-11','2099-10-15');
+  Object.assign(row,{11:'BUS',14:'ABE',16:'ABE'});
+  const h=await setup(page,'ok',[row]);
+  await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Transport',exact:true}).click();
+  const past=page.getByRole('button',{name:'Expand Bus Arrivals 2000-10-11',exact:true});
+  await expect(past).toHaveAttribute('aria-expanded','false');
+  await expect(page.getByRole('button',{name:'Collapse Bus Departures 2099-10-15',exact:true})).toHaveAttribute('aria-expanded','true');
+  const context=await browser.newContext({viewport:{width:390,height:900}});
+  await mockBridge(context,h,false);
+  const viewer=await context.newPage();await viewer.goto('http://localhost:5175/#transport');
+  await expect(viewer.getByRole('button',{name:'Expand Bus Arrivals 2000-10-11',exact:true})).toHaveAttribute('aria-expanded','false');
+  await past.click();
+  await expect(page.getByRole('button',{name:'Collapse Bus Arrivals 2000-10-11',exact:true})).toHaveAttribute('aria-expanded','true');
+  await expect(viewer.getByRole('button',{name:'Collapse Bus Arrivals 2000-10-11',exact:true})).toHaveAttribute('aria-expanded','true',{timeout:15000});
+  await viewer.getByRole('button',{name:'Collapse Bus Arrivals 2000-10-11',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Expand Bus Arrivals 2000-10-11',exact:true})).toHaveAttribute('aria-expanded','false',{timeout:15000});
+  await viewer.goto('http://localhost:5175/#rooms');
+  await viewer.getByRole('button',{name:'Day at a glance',exact:true}).click();
+  await expect(viewer.getByRole('button',{name:'Add walk-in',exact:true})).toHaveCount(0);
+  await expect(viewer.getByRole('button',{name:/Add walk-in to room/})).toHaveCount(0);
+  expect(h.rows.length).toBe(2);expect(h.writes).toHaveLength(0);
+  await page.screenshot({path:test.info().outputPath('transport-shared-mobile.png'),fullPage:true});
+  await context.close();
 });

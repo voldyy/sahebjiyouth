@@ -30,9 +30,11 @@ import { dateISO, formatTime, statusTone } from "../lib/data";
 import { exportCsv } from "../lib/storage";
 import Sheet from "../components/Sheet";
 import GuestForm from "../components/GuestForm";
+import { shortDay } from "../lib/occupancy";
 import "../styles/guests.css";
 
 const statuses = ["All guests", "Arriving", "Checked in", "Needs room"];
+const dateAndTime = (day, time, known = true) => `${day ? shortDay(day) : "Date needed"}${time && known ? ` · ${formatTime(time)}` : ""}`;
 export default function Guests({
   guests,
   onUpdateGuest,
@@ -310,7 +312,7 @@ export default function Guests({
             <thead>
               <tr>
                 <th>GUEST / GROUP</th>
-                <th>ARRIVAL</th>
+                <th>ARRIVAL / DEPARTURE</th>
                 <th>ACCOMMODATION</th>
                 <th>STATUS</th>
                 <th className="table-action-heading">ACTION</th>
@@ -340,7 +342,8 @@ export default function Guests({
                   </td>
                   <td>
                     <div className="table-detail">
-                      <strong>{formatTime(g.arrivalTime)}</strong>
+                      <strong>In · {dateAndTime(g.arrivalDate, g.arrivalTime, g.arrivalTimeKnown)}</strong>
+                      {(readOnly || g.departureDate) && <strong>Out · {dateAndTime(g.departureDate, g.departureTime, g.departureTimeKnown)}</strong>}
                       <span>
                         <Plane size={12} />
                         {g.travel}
@@ -441,9 +444,9 @@ export default function Guests({
               <div className="mobile-guest-details">
                 <span>
                   <Clock3 size={14} />
-                  {formatTime(g.arrivalTime)}
-                  <i /> {g.count} guests
+                  In · {dateAndTime(g.arrivalDate, g.arrivalTime, g.arrivalTimeKnown)}
                 </span>
+                {(readOnly || g.departureDate) && <span><CalendarDays size={14} />Out · {dateAndTime(g.departureDate, g.departureTime, g.departureTimeKnown)}</span>}
                 <span
                   className={
                     !g.room && g.stay !== "Day visitor" ? "needs-room-text" : ""
@@ -681,17 +684,12 @@ export default function Guests({
                   <span>
                     Arrival
                     <strong>
-                      {new Date(
-                        `${selected.arrivalDate}T12:00:00`,
-                      ).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}{" "}
-                      · {formatTime(selected.arrivalTime)}
+                      {dateAndTime(selected.arrivalDate, selected.arrivalTime, selected.arrivalTimeKnown)}
                     </strong>
                     <small>{selected.travel}</small>
                   </span>
                 </div>
+                {(readOnly || selected.departureDate) && <div><CalendarDays size={19} /><span>Departure<strong>{dateAndTime(selected.departureDate, selected.departureTime, selected.departureTimeKnown)}</strong></span></div>}
                 <div>
                   <BedDouble size={19} />
                   <span>

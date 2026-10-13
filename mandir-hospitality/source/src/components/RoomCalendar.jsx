@@ -13,6 +13,25 @@ export function RoomStrip({ selected, onSelect, rooms = samarpanRooms, lodging =
   </section>;
 }
 
+export function RoomOverview({ guests, day, rooms, onAssign, onEdit, onWalkIn, saving, readOnly }) {
+  return <section className="stay-overview" aria-label="All rooms and daily assignments">{rooms.map(room => {
+    const beds = Array.from({ length: room.beds }, (_, i) => ({ number: i + 1, state: bedState(guests, room.number, i + 1, { start: day, end: moveDay(day, 1) }, null, room.lodging || "Samarpan", rooms) }));
+    const free = beds.filter(b => b.state.free).length;
+    return <article className="stay-overview-room" key={room.number}>
+      <header><div><small>{room.lodging || "Samarpan"}</small><h2>{roomLabel(room)}</h2></div><span>{room.beds - free}/{room.beds} occupied</span></header>
+      <div className="stay-overview-beds">{beds.map(({ number, state }) => <div className={`stay-overview-bed ${state.free ? "is-free" : state.uncertain.length || state.occupants.length > 1 ? "needs-review" : ""}`} key={number}>
+        <span className="stay-overview-number">{number}</span><div>
+          {state.occupants.map(guest => <button key={guest.id} disabled={saving} onClick={() => onEdit(guest)}>{guest.name}</button>)}
+          {state.uncertain.map(guest => <button key={guest.id} disabled={saving} onClick={() => onEdit(guest)}>{guest.name} · review</button>)}
+          {state.occupants.length > 1 && <small>Double booking</small>}
+          {state.free && (readOnly ? <span>Empty</span> : <button disabled={saving} onClick={() => onAssign(room.number, number, day)} aria-label={`Assign existing guest to room ${room.number} bed ${number}`}>Empty</button>)}
+        </div>
+        {state.free && !readOnly && <button className="stay-overview-walkin" disabled={saving} onClick={() => onWalkIn(room.number, number, day)} aria-label={`Add walk-in to room ${room.number} bed ${number}`}><Plus size={15} /></button>}
+      </div>)}</div>
+    </article>;
+  })}</section>;
+}
+
 function BedSlot({ guests, room, bed, day, onAssign, onEdit, saving, compact = false, rooms = [], drag, readOnly = false }) {
   const state = bedState(guests, room.number, bed, { start: day, end: moveDay(day, 1) }, null, room.lodging || "Samarpan", rooms);
   const conflict = state.occupants.length > 1;

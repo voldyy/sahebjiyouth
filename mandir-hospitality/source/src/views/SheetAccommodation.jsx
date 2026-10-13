@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { BedDouble, CalendarDays, ChevronLeft, ChevronRight, List, Plus, Search, Users, GripVertical, Building2, Sparkles, Settings2 } from "lucide-react";
 import Sheet from "../components/Sheet";
-import { DailyRooms, RoomStrip, WeeklyRooms } from "../components/RoomCalendar";
+import { DailyRooms, RoomStrip, WeeklyRooms, RoomOverview } from "../components/RoomCalendar";
+import WalkInForm from "../components/WalkInForm";
+import { allentownDay } from "../lib/housekeeping";
 import Housekeeping from "./Housekeeping";
 import { LODGING_LOCATIONS, SHEET_URL } from "../lib/sheets";
 import { samarpanRooms, samarpanBedCount, samarpanRoomCode } from "../lib/lodgingRooms";
@@ -34,6 +36,11 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
   const [dragTarget, setDragTarget] = useState(null);
   const [roomDraft, setRoomDraft] = useState(null);
   const [roomError, setRoomError] = useState("");
+  const [walkIn, setWalkIn] = useState(null);
+  const allRooms = [...samarpanRooms, ...workspace.offsiteRooms];
+  const openWalkIn = (number = "", bed = "", date = allentownDay()) => {
+    if (!readOnly) { setAssignment(null); setWalkIn({ room: number, bed, day: date }); }
+  };
   const lodging = section === "Offsite" ? hotel : "Samarpan";
   const rooms = section === "Offsite" ? workspace.offsiteRooms.filter((r) => r.lodging === hotel) : samarpanRooms;
   const room = rooms.find((r) => r.number === roomNo) || rooms[0];
@@ -41,7 +48,7 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
   const week = WEEK_STARTS[weekIndex];
   const draftRooms = draft.lodging === "Samarpan" ? samarpanRooms : workspace.offsiteRooms.filter((r) => r.lodging === draft.lodging);
   const selectedRoom = draftRooms.find((r) => draft.lodging === "Samarpan" ? r.number === draft.roomNo : r.id === hotelRoomId);
-  const windowRange = view === "daily" ? { start: day, end: moveDay(day, 1) } : { start: week, end: moveDay(week, 7) };
+  const windowRange = ["daily", "overview"].includes(view) ? { start: day, end: moveDay(day, 1) } : { start: week, end: moveDay(week, 7) };
   const queue = guests.filter((g) => unassignedGuest(g) && overlaps(stayRange(g), windowRange));
   const undated = guests.filter((g) => unassignedGuest(g) && !stayRange(g));
   const review = guests.filter((g) => g.lodging === lodging && (g.roomNo || g.roomCode) && (!bedForGuest(g, workspace.offsiteRooms) || !stayRange(g)));
@@ -61,7 +68,7 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
   };
   const openBed = (number, bed, date) => {
     if (readOnly) return;
-    const target = rooms.find((r) => r.number === number);
+    const target = allRooms.find((r) => r.number === number);
     resetForm(); setDraft(assignmentFor(target, bed)); setHotelRoomId(target.id || "");
     setBedNo(String(bed)); setAssignment({ day: date, guestFirst: false });
   };
@@ -100,11 +107,12 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
   </section>;
 
   return <div className="stay-workspace">
+    {walkIn && <Sheet title="Add a walk-in guest" subtitle="Guest details and a bed, together." onClose={() => { if (!workspace.saving) setWalkIn(null); }}><WalkInForm workspace={workspace} rooms={allRooms} initial={walkIn} onCancel={() => setWalkIn(null)} onSaved={name => { setWalkIn(null); toast(`${name} added and assigned for their full stay.`); }} /></Sheet>}
     <div className="stay-section-switch" role="group" aria-label="Accommodation sections">{[{ label: "Samarpan", icon: BedDouble }, { label: "Offsite", icon: Building2 }, { label: "Housekeeping", icon: Sparkles }].map(({ label, icon: Icon }) => <button key={label} aria-pressed={section === label} onClick={() => { setSection(label); setRoomNo(""); setDropError(""); }}><Icon size={19} />{label}</button>)}</div>
     {!workspace.refreshedAt ? <p role="status">{workspace.loading ? "Loading room occupancy from the sheet…" : "Room occupancy is unavailable. Refresh the sheet to load the calendar."}</p> : section === "Housekeeping" ? <Housekeeping workspace={workspace} toast={toast} readOnly={readOnly} /> : <>
-      <header className="page-header"><div><p className="eyebrow">{section === "Samarpan" ? `SAMARPAN · ${samarpanRooms.length} ROOMS · ${samarpanBedCount} BEDS` : `${hotel.toUpperCase()} · ${rooms.length} PLANNING ROOMS`}</p><h1 className="page-title">Accommodations</h1><p className="page-description">See who’s staying, find an empty bed, and make room for the next arrival.</p></div>{!readOnly && <button className="button primary" onClick={openAssign} disabled={workspace.saving || !workspace.connected || !rooms.length}><Plus size={17} />Assign guest</button>}</header>
+      <header className="page-header"><div><p className="eyebrow">{section === "Samarpan" ? `SAMARPAN · ${samarpanRooms.length} ROOMS · ${samarpanBedCount} BEDS` : `${hotel.toUpperCase()} · ${rooms.length} PLANNING ROOMS`}</p><h1 className="page-title">Accommodations</h1><p className="page-description">See who’s staying, find an empty bed, and make room for the next arrival.</p></div>{!readOnly && <div className="page-actions"><button className="button secondary" onClick={() => openWalkIn()} disabled={workspace.saving || !workspace.connected}><Plus size={17} />Add walk-in</button><button className="button primary" onClick={openAssign} disabled={workspace.saving || !workspace.connected || !rooms.length}><Plus size={17} />Assign guest</button></div>}</header>
       {section === "Offsite" && <div className="stay-offsite-toolbar"><label className="field">Hotel<select aria-label="Offsite hotel" value={hotel} onChange={(e) => { setHotel(e.target.value); setRoomNo(""); }}>{OFFSITE_HOTELS.map((name) => <option key={name}>{name}</option>)}</select></label>{!readOnly && <button className="button secondary" onClick={() => openRoom()} disabled={workspace.saving}><Plus size={17} />Add planning room</button>}{room && !readOnly && <button className="button secondary" onClick={() => openRoom(room)} disabled={workspace.saving}><Settings2 size={17} />Edit room details</button>}<p>Provisional rooms are used until the hotel confirms its room numbers.{!readOnly && " Enter the planned bed count when adding each room."}</p></div>}
-      <div className="stay-view-switch" role="group" aria-label="Accommodation views">{[{ id: "weekly", label: "Weekly view", icon: CalendarDays }, { id: "daily", label: "Daily view", icon: BedDouble }, { id: "list", label: "Guest list", icon: List }].map((tab) => <button key={tab.id} aria-pressed={view === tab.id} onClick={() => setView(tab.id)}><tab.icon size={17} />{tab.label}</button>)}</div>
+      <div className="stay-view-switch" role="group" aria-label="Accommodation views">{[{ id: "weekly", label: "Weekly view", icon: CalendarDays }, { id: "daily", label: "Daily view", icon: BedDouble }, { id: "overview", label: "Day at a glance", icon: Building2 }, { id: "list", label: "Guest list", icon: List }].map((tab) => <button key={tab.id} aria-pressed={view === tab.id} onClick={() => { setView(tab.id); if (tab.id === "overview") selectDay(allentownDay() < FIRST_STAY_DAY ? FIRST_STAY_DAY : allentownDay() > LAST_STAY_DAY ? LAST_STAY_DAY : allentownDay()); }}><tab.icon size={17} />{tab.label}</button>)}</div>
       {dropError && <p className="op-form-error stay-drop-error" role="alert">{dropError}</p>}
       {dragGuest && <p className="stay-drag-status" role="status">{drag.problem || `Place ${dragGuest.name} · ${stayLabel(dragGuest)}`}</p>}
       {view === "weekly" && <>
@@ -113,9 +121,9 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
         {queuePanel}
         {room && <WeeklyRooms guests={guests} room={room} week={week} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} rooms={workspace.offsiteRooms} drag={readOnly ? null : drag} readOnly={readOnly} onChooseDay={(next) => { selectDay(next); setView("daily"); }} />}
       </>}
-      {view === "daily" && <>
-        <div className="stay-date-toolbar"><div><span className="stay-kicker">ALL {lodging.toUpperCase()} ROOMS</span><h2 aria-live="polite">{fullDay(day)}</h2></div><div className="stay-date-controls"><button className="stay-arrow" aria-label="Previous occupancy day" disabled={day === FIRST_STAY_DAY} onClick={() => selectDay(moveDay(day, -1))}><ChevronLeft size={20} /></button><label className="stay-date-input"><CalendarDays size={17} /><input type="date" aria-label="Choose occupancy date" min={FIRST_STAY_DAY} max={LAST_STAY_DAY} value={day} onChange={(e) => { if (e.target.value) selectDay(e.target.value); }} /></label><button className="stay-arrow" aria-label="Next occupancy day" disabled={day === LAST_STAY_DAY} onClick={() => selectDay(moveDay(day, 1))}><ChevronRight size={20} /></button></div></div>
-        {queuePanel}<div className="stay-daily-heading"><h2>Room availability</h2><p>Checkout day is free{!readOnly && " · Drag a guest or tap an empty bed"}</p></div><DailyRooms guests={guests} day={day} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} rooms={rooms} lodging={lodging} drag={readOnly ? null : drag} readOnly={readOnly} />
+      {["daily", "overview"].includes(view) && <>
+        <div className="stay-date-toolbar"><div><span className="stay-kicker">{view === "overview" ? "ALL ROOMS" : `ALL ${lodging.toUpperCase()} ROOMS`}</span><h2 aria-live="polite">{fullDay(day)}</h2></div><div className="stay-date-controls"><button className="stay-arrow" aria-label="Previous occupancy day" disabled={day === FIRST_STAY_DAY} onClick={() => selectDay(moveDay(day, -1))}><ChevronLeft size={20} /></button><label className="stay-date-input"><CalendarDays size={17} /><input type="date" aria-label="Choose occupancy date" min={FIRST_STAY_DAY} max={LAST_STAY_DAY} value={day} onChange={(e) => { if (e.target.value) selectDay(e.target.value); }} /></label><button className="stay-arrow" aria-label="Next occupancy day" disabled={day === LAST_STAY_DAY} onClick={() => selectDay(moveDay(day, 1))}><ChevronRight size={20} /></button></div></div>
+        {view === "daily" ? <>{queuePanel}<div className="stay-daily-heading"><h2>Room availability</h2><p>Checkout day is free{!readOnly && " · Drag a guest or tap an empty bed"}</p></div><DailyRooms guests={guests} day={day} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} rooms={rooms} lodging={lodging} drag={readOnly ? null : drag} readOnly={readOnly} /></> : <><p className="stay-overview-note">All Samarpan and offsite rooms · Checkout day is free. {queue.length} unassigned guests staying today.</p><RoomOverview guests={guests} day={day} rooms={allRooms} onAssign={openBed} onEdit={openGuest} onWalkIn={openWalkIn} saving={workspace.saving} readOnly={readOnly} /></>}
       </>}
       {!rooms.length && view !== "list" && <div className="stay-clean-state"><Building2 size={30} /><h2>No planning rooms yet</h2><p>{readOnly ? `No rooms have been added for ${hotel}.` : `Add a provisional room and its bed count to start assigning stays at ${hotel}.`}</p>{!readOnly && <button className="button primary" onClick={() => openRoom()}>Add planning room</button>}</div>}
       {view !== "list" && review.length > 0 && <details className="stay-review"><summary>{review.length} {lodging} assignments need review</summary><p>These assignments have missing dates, an unknown room, or a code that doesn’t identify a bed. Affected beds stay marked for review.</p>{review.map((g) => <button key={g.id} onClick={() => openGuest(g)}>{g.name} · {g.roomCode || `Room ${g.roomNo}`}</button>)}</details>}
@@ -128,7 +136,7 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
         <p>{selected?.lodging || "Lodging pending"} · Room {selected?.roomNo || "pending"}</p>
         <p>{selected?.roomCode || "Bed not assigned"}</p>
       </div> : <form className="op-form" onSubmit={save}>
-        {!assignment.guestFirst && <label className="field">Guest<select aria-label="Guest to assign" value={selected?.id || ""} required disabled={workspace.saving} onChange={(e) => { setSelected(candidates.find((g) => g.id === e.target.value)); setError(""); }}><option value="" disabled>Select an unassigned guest</option>{candidates.map((g) => <option key={g.id} value={g.id} disabled={!g.sourceWritable}>{g.name} · {stayLabel(g)}</option>)}</select>{!candidates.length && <small>No unassigned guests have a stay on this date.</small>}</label>}
+        {!assignment.guestFirst && <><button type="button" className="button secondary" disabled={workspace.saving} onClick={() => openWalkIn(selectedRoom?.number || "", bedNo, assignment.day || allentownDay())}><Plus size={16} />New walk-in guest</button><label className="field">Guest<select aria-label="Guest to assign" value={selected?.id || ""} required disabled={workspace.saving} onChange={(e) => { setSelected(candidates.find((g) => g.id === e.target.value)); setError(""); }}><option value="" disabled>Select an unassigned guest</option>{candidates.map((g) => <option key={g.id} value={g.id} disabled={!g.sourceWritable}>{g.name} · {stayLabel(g)}</option>)}</select>{!candidates.length && <small>No unassigned guests have a stay on this date.</small>}</label></>}
         {selected && <div className="stay-assignment-dates"><CalendarDays size={18} /><div><strong>{stayLabel(selected)}</strong><span>{stayRange(selected) ? "Checkout day is available for the next guest" : "Add valid stay dates in the source sheet first"}</span></div></div>}
         <label className="field">Lodging location (AD)<select value={draft.lodging} disabled={workspace.saving} onChange={(e) => { setDraft({ lodging: e.target.value, roomNo: "", roomCode: "" }); setBedNo(""); setHotelRoomId(""); setError(""); }} required><option value="" disabled>Select lodging</option>{!LODGING_LOCATIONS.includes(draft.lodging) && <option disabled>{draft.lodging}</option>}{LODGING_LOCATIONS.map((name) => <option key={name}>{name}</option>)}</select></label>
         <label className="field">{draft.lodging === "Samarpan" ? "Room number (AE)" : "Hotel planning room"}<select aria-label={draft.lodging === "Samarpan" ? "Room number (AE)" : "Hotel planning room"} value={draft.lodging === "Samarpan" ? draft.roomNo : hotelRoomId} disabled={workspace.saving} onChange={(e) => { const target = draftRooms.find((r) => r.number === e.target.value); setDraft({ ...draft, roomNo: target?.lodging ? target.roomNo : e.target.value, roomCode: "" }); setHotelRoomId(target?.id || ""); setBedNo(""); setError(""); }} required><option value="" disabled>{draft.lodging === "Samarpan" ? "Choose a Samarpan room" : "Choose a hotel planning room"}</option>{draftRooms.map((r) => <option key={r.number} value={r.number}>{draft.lodging === "Samarpan" ? r.number : roomLabel(r)} · {r.beds} beds</option>)}</select></label>

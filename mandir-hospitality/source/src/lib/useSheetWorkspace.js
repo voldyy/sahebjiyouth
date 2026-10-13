@@ -9,6 +9,7 @@ export function useSheetWorkspace(enabled) {
   const [transport, setTransport] = useState(EMPTY_TRANSPORT);
   const [offsiteRooms, setOffsiteRooms] = useState([]);
   const [housekeeping, setHousekeeping] = useState([]);
+  const [tripDisplay, setTripDisplay] = useState([]);
   const [role, setRole] = useState(null);
   const [state, setState] = useState({
     loading: enabled,
@@ -19,8 +20,20 @@ export function useSheetWorkspace(enabled) {
   });
   const generation = useRef(0),
     busy = useRef(false);
+  const displayGeneration = useRef(0);
+  const refreshTripDisplay = useCallback(async () => {
+    const version = ++displayGeneration.current;
+    const result = await sheetRequest({ action: "trip-display-read" });
+    if (version === displayGeneration.current) setTripDisplay(result.tripDisplay || []);
+  }, []);
+  const setTripCollapsed = useCallback(async (id, collapsed) => {
+    const version = ++displayGeneration.current;
+    const result = await sheetRequest({ action: "trip-display", id, collapsed, requestId: crypto.randomUUID() });
+    if (version === displayGeneration.current) setTripDisplay(result.tripDisplay || []);
+  }, []);
   const apply = useCallback((result) => {
     setRole(result.role || "viewer");
+    setTripDisplay(result.tripDisplay || []);
     setGuests(result.role === "admin" ? guestsFromRows(result.rows) : result.guests || result.kitchenGuests || []);
     setTransport(result.transport || EMPTY_TRANSPORT);
     setOffsiteRooms(result.offsiteRooms || []);
@@ -93,10 +106,14 @@ export function useSheetWorkspace(enabled) {
     transport,
     offsiteRooms,
     housekeeping,
+    tripDisplay,
     role,
     ...state,
     refresh,
     addGuest: (guest, requestId) => save({ action: "guest", guest, requestId }),
+    addWalkIn: (guest, assignment, requestId) => save({ action: "guest", guest, assignment, requestId }),
+    refreshTripDisplay,
+    setTripCollapsed,
     saveAssignment: (guest, assignment) =>
       save({
         action: "lodging",

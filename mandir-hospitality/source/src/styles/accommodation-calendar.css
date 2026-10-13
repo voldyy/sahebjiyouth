@@ -1,5 +1,29 @@
 .stay-workspace { display: grid; gap: 22px; min-width: 0; }
+.stay-overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; gap: 12px; }
+.stay-overview-room { background: white; border: 1px solid #9ac7e2; border-radius: 12px; overflow: hidden; }
+.stay-overview-room header { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px; background: #edf7fe; }
+.stay-overview-room h2 { font-size: 15px; margin-top: 3px; }
+.stay-overview-room header small, .stay-overview-room header > span { font-size: 10px; color: #326681; }
+.stay-overview-bed { display: flex; align-items: center; gap: 7px; min-height: 37px; padding: 3px 10px; border-top: 1px solid #e0f0fb; background: #e0f0fb; font-size: 11px; }
+.stay-overview-bed.is-free { background: white; color: #326681; }
+.stay-overview-bed.needs-review { background: #fff1e6; }
+.stay-overview-number { flex: 0 0 19px; color: #326681; font-weight: 700; }
+.stay-overview-bed > div { flex: 1; min-width: 0; }
+.stay-overview-bed > div > button { display: block; text-align: left; color: inherit; padding: 5px 0; line-height: 1.4; overflow-wrap: anywhere; }
+.stay-overview-walkin { display: flex; align-items: center; justify-content: center; min-width: 30px; min-height: 30px; border-radius: 6px; color: #743d22; background: #ffe5ce; }
+.stay-overview-note { font-size: 12px; color: #326681; }
+.stay-overview-beds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stay-overview-bed { grid-column: 1 / -1; }
+.stay-overview-bed.is-free { grid-column: auto; gap: 4px; padding: 3px 7px; }
+.stay-overview-bed.is-free .stay-overview-number { flex-basis: 12px; }
+@media (max-width: 700px) { .stay-overview-beds { grid-template-columns: minmax(0, 1fr); } }
+.stay-view-switch { flex-wrap: wrap; max-width: 100%; }
+@media (max-width: 1100px) { .stay-overview { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .stay-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .stay-overview-bed { min-height: 44px; padding: 4px 7px; } }
+@media (max-width: 380px) { .stay-overview { grid-template-columns: minmax(0, 1fr); } }
 .stay-workspace .page-header { margin-bottom: 0; }
+.stay-workspace .page-header { flex-wrap: wrap; }
+.stay-workspace .page-actions { flex-wrap: wrap; max-width: 100%; }
 .stay-workspace .page-description { color: #326681; }
 .stay-workspace h2, .stay-workspace .field { font-weight: 700; }
 .stay-workspace input::placeholder { color: #3d7191; opacity: 1; }
