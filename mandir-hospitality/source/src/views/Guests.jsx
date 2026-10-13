@@ -158,7 +158,7 @@ export default function Guests({
             <Download size={17} />
             <span>Export</span>
           </button>
-          {!viewOnly && <button className="button primary add-guest" disabled={readOnly} onClick={onAdd}>
+          {!viewOnly && <button className="button primary add-guest" onClick={onAdd}>
             <Plus size={18} /> Add guest
           </button>}
         </div>

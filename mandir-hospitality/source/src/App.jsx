@@ -31,6 +31,7 @@ import { roomInventory, initialLinen } from "./lib/rooms";
 import Temple from "./components/Temple";
 import Sheet from "./components/Sheet";
 import GuestForm from "./components/GuestForm";
+import SheetGuestForm from "./components/SheetGuestForm";
 import WorkspaceLoading from "./components/WorkspaceLoading";
 import Guests from "./views/Guests";
 import { useSheetWorkspace } from "./lib/useSheetWorkspace";
@@ -344,7 +345,7 @@ export default function App() {
                 viewOnly={!isAdmin}
                 onUpdateGuest={onUpdateGuest}
                 toast={toast}
-                onAdd={() => demoMode ? setModal("add") : toast("Add attendees in the Google source sheet, then refresh.")}
+                onAdd={() => { if (isAdmin) setModal("add"); }}
                 onNavigate={navigate}
               />
             )}
@@ -408,7 +409,11 @@ export default function App() {
           subtitle="A few details to make their arrival seamless."
           onClose={() => setModal(null)}
         >
-          <GuestForm onSave={addGuest} onCancel={() => setModal(null)} />
+          {demoMode ? <GuestForm onSave={addGuest} onCancel={() => setModal(null)} /> : <SheetGuestForm saving={sheetWorkspace.saving} onCancel={() => { if (!sheetWorkspace.saving) setModal(null); }} onSave={async (guest, requestId) => {
+            await sheetWorkspace.addGuest(guest, requestId);
+            setModal(null);
+            toast(`${guest.name} added to Google Sheets.`);
+          }} />}
         </Sheet>
       )}
       {modal === "quick" && (

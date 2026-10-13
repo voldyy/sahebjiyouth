@@ -39,7 +39,9 @@ Travel choices include `CAR`, `FLIGHT`, `BUS`, and `Bus (arrival)`. The last app
 
 The top selector switches between **Samarpan**, **Offsite**, and **Housekeeping**.
 
-Samarpan has rooms 203–207 (4 beds each), 100 (7 beds), and 101–104 (12 beds each), totaling 75 beds. Room 204 remains the initial selection. Generated codes are `S{room}B{bed}`. Weekly view covers six Sunday–Saturday weeks from October 11 through November 21, 2026. The unassigned list is filtered to the selected week or day; choose the guest's stay dates or use Guest list to see future arrivals. Daily view displays every room in the selected location. Guest list supports search and assignment editing.
+Samarpan has room 204 (3 beds), rooms 203 and 205–207 (4 beds each), 100 (7 beds), and 101–104 (12 beds each), totaling 74 beds. Generated codes are `S{room}B{bed}`. Weekly view covers six Sunday–Saturday weeks from October 11 through November 21, 2026. The unassigned list is filtered to the selected week or day; choose the guest's stay dates or use Guest list to see future arrivals. Daily view displays every room in the selected location. Guest list supports search and assignment editing.
+
+Admins can use Main's Add guest button to append one attendee to Sheets. Optional details remain blank; each save uses a stable request ID to prevent duplicate rows on retry. This action does not send registration emails or assign a room.
 
 Offsite offers **Comfort Inn** and **Hilton Garden Inn**, with the same weekly, daily, and guest-list views. Admins add a provisional planning room and its planned bed count; no inventory is invented. The hotel room number is optional. Until confirmed, AE stays blank and AF uses a stable internal bed code. Editing the planning room to add its actual number updates its assigned guests' AE values while retaining bed codes and stay dates. Assigned beds cannot be removed from inventory.
 

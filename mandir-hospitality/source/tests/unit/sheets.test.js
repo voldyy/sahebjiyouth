@@ -88,10 +88,11 @@ test("permission failure does not retry or change the snapshot", async (t) => {
   assert.equal(google.writes.length, 1);
   assert.deepEqual(google.rows[1].slice(29), ["", "", ""]);
 });
-test("confirmed Samarpan inventory contains ten rooms and 75 beds", () => {
-  assert.equal(samarpanBedCount, 75);
+test("confirmed Samarpan inventory contains ten rooms and 74 beds", () => {
+  assert.equal(samarpanBedCount, 74);
   assert.deepEqual(samarpanRooms.map((r) => r.number), ["203", "204", "205", "206", "207", "100", "101", "102", "103", "104"]);
-  assert.deepEqual(samarpanRooms.map((r) => r.beds), [4, 4, 4, 4, 4, 7, 12, 12, 12, 12]);
+  assert.deepEqual(samarpanRooms.map((r) => r.beds), [4, 3, 4, 4, 4, 7, 12, 12, 12, 12]);
+  assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "204", roomCode: "S204B4" }), /valid bed/);
   assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "105", roomCode: "CUSTOM" }), /confirmed Samarpan/);
   assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "204", roomCode: "S204B1" }), ["Samarpan", "204", "S204B1"]);
   assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "204", roomCode: "S204B5" }), /valid bed/);

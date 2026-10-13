@@ -4,6 +4,7 @@ import {
   validateAssignment,
   attendeeKey,
   lodgingValues,
+  sheetDate,
 } from "../src/lib/sheets.js";
 import {
   assignmentIssue,
@@ -222,6 +223,49 @@ function lodging(book, req) {
     throw new Error("Save could not be confirmed. Refresh before retrying.");
   history(book, req, req.identity, before, values);
 }
+function guest(book, req) {
+  const form = req.guest || {};
+  const field = (key, max = 200) => {
+    const value = text(form[key]);
+    if (value.length > max || /[\x00\r\n]/.test(value)) throw new Error("Guest details must be single-line text within the field limits.");
+    return value;
+  };
+  const name = field("name");
+  if (!name) throw new Error("Enter the attendee's full name.");
+  const date = (key) => {
+    const value = field(key);
+    if (value && (!/^\d{4}-\d{2}-\d{2}$/.test(value) || sheetDate(value).date !== value)) throw new Error("Enter valid stay dates.");
+    return value;
+  };
+  const start = date("arrivalDate"), end = date("departureDate");
+  if (start && end && end < start) throw new Error("Checkout cannot be before check-in.");
+  const time = (key, day) => {
+    const value = field(key);
+    if (value && (!day || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value))) throw new Error("Enter a valid time and its date, or leave the time blank.");
+    return value ? `${day} ${value}` : day;
+  };
+  const overnight = field("overnight"), transport = field("airportTransport"), mode = field("travelMethod");
+  if (!["", "YES", "NO"].includes(overnight) || !["", "YES", "NO"].includes(transport) || !["", "CAR", "FLIGHT", "BUS", "Bus (arrival)"].includes(mode)) throw new Error("Choose valid accommodation and transport options.");
+  if (overnight === "YES" && start && end && start === end) throw new Error("An overnight stay needs a checkout date after check-in.");
+  const notes = text(form.notes);
+  if (notes.length > 1000 || /\x00/.test(notes)) throw new Error("Notes must be up to 1,000 characters.");
+  const id = `MAN-2026-${req.requestId}`;
+  const current = roster(book);
+  // The request ID also identifies the roster row, so a retry is safe even if
+  // the original response or history write failed after the row was saved.
+  const existing = current.rows.slice(1).filter(r => text(r[0]) === id);
+  if (existing.length > 1) throw new Error("Duplicate guest entry found. Refresh and review the sheet.");
+  if (existing.length === 1) return;
+  const primary = field("primaryContact") || name;
+  const row = Array(32).fill("");
+  Object.assign(row, { 0: id, 1: new Date().toISOString(), 2: primary === name ? "YES" : "NO", 3: primary, 5: field("phone"), 7: field("city"), 8: name, 9: field("relationship") || (primary === name ? "Self (Primary)" : ""), 11: mode, 12: time("arrivalTime", start), 13: time("departureTime", end), 18: transport, 20: overnight, 21: start, 22: end, 23: notes });
+  const target = current.sheet.getLastRow() + 1;
+  writeRow(current.sheet, target, row);
+  SpreadsheetApp.flush();
+  const confirmed = roster(book).rows.slice(1).filter(r => text(r[0]) === id);
+  if (confirmed.length !== 1 || !equal(confirmed[0], row)) throw new Error("Guest save could not be confirmed. Retry this form before adding another entry.");
+  history(book, req, attendeeKey(row), {}, row);
+}
 function linen(book, req) {
   const events = housekeeping(book, roster(book).guests).filter((e) => e.roomCode === req.roomCode && !e.refreshedAt);
   if (!Array.isArray(req.expected) || !events.length || !equal(events.map((e) => e.id).sort(), [...req.expected].sort())) throw new Error("The checkout list changed. Refresh before marking this bed clean.");
@@ -426,7 +470,7 @@ export function hospitalityRequest(req) {
     if (!req || JSON.stringify(req).length > 16000)
       throw new Error("Invalid or oversized request.");
     if (
-      !["snapshot", "lodging", "transport", "resource", "flight", "linen", "offsite"].includes(
+      !["snapshot", "lodging", "transport", "resource", "flight", "linen", "offsite", "guest"].includes(
         req.action,
       )
     )
@@ -452,7 +496,7 @@ export function hospitalityRequest(req) {
         );
       const linenCommitted = req.action === "linen" && table(book, "Housekeeping").rows.some((r, i) => i > 0 && r[7] === req.requestId);
       if (!past && !committed && !linenCommitted)
-        ({ lodging, transport, resource, linen, offsite })[req.action](book, req);
+        ({ lodging, transport, resource, linen, offsite, guest })[req.action](book, req);
     }
     return { ok: true, ...snapshot(book, role) };
   } catch (error) {

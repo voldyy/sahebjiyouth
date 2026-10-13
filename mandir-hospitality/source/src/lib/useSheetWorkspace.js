@@ -77,7 +77,7 @@ export function useSheetWorkspace(enabled) {
     const saveGeneration = ++generation.current;
     setState((s) => ({ ...s, saving: true, loading: false, error: "" }));
     try {
-      const result = await sheetRequest({ ...request, requestId: crypto.randomUUID() });
+      const result = await sheetRequest({ requestId: crypto.randomUUID(), ...request });
       if (saveGeneration === generation.current) apply(result);
     } catch (error) {
       setState((s) => ({ ...s, error: error.message }));
@@ -96,6 +96,7 @@ export function useSheetWorkspace(enabled) {
     role,
     ...state,
     refresh,
+    addGuest: (guest, requestId) => save({ action: "guest", guest, requestId }),
     saveAssignment: (guest, assignment) =>
       save({
         action: "lodging",
