@@ -29,7 +29,7 @@ export default function LodgingNotifications({ workspace, toast }) {
         {busy && !preview && <p role="status">Checking current assignments and previous notifications…</p>}
         {preview && <>
           <p><strong>{preview.eligible} ready to send</strong>. Previously sent or queued details will be skipped.</p>
-          {preview.skippedMissingContact > 0 && <p className="sheet-data-note">{preview.skippedMissingContact} attendees have no valid contact phone. Update their registration phone before sending.</p>}
+          {(preview.skippedIncompleteData || preview.skippedMissingContact) > 0 && <p className="sheet-data-note">{preview.skippedIncompleteData || preview.skippedMissingContact} attendees are skipped because required details are missing or marked NA. Complete their name, registration status, phone, arrival date/time, lodging and room number before sending.</p>}
           <ul className="notification-attendees" aria-label="Accommodation notification recipients">
             {preview.attendees.map((a, i) => <li key={`${a.name}-${i}`}><strong>{a.name}</strong><span>{a.lodging} · Room {a.roomNo}</span><small>Phone ending {a.phoneEnding} · {a.status}</small></li>)}
           </ul>

@@ -19,6 +19,12 @@ The driver assignment includes the primary passenger's name and City/State, phon
 
 Lodging messages are **one per attendee**, including family members sharing a phone. Each is addressed to that attendee and contains that attendee's assigned lodging and literal room number. The contact text names Monica Matalia without inventing contact details.
 
+## Required data
+
+Blank values and placeholders (NA, N/A, N.A., N A, TBD, Unknown, Pending, None and dashes) block notifications when they occur in relevant fields. Transport validates registration/primary identity, primary name and City/State, contact phones, active driver details, travel method, RSVP status, and the applicable trip date/time, airport and recognizable airline/flight. Incomplete accompanying-attendee records also block the registration’s transport messages instead of producing an incorrect count. Unrelated return-trip columns do not affect an arrival notification.
+
+Both timed and bulk lodging messages require the attendee name, registration identity/status, valid phone, known arrival date/time, lodging and room number. The bulk preview reports skipped incomplete attendees. Queued messages are rebuilt from fresh source data and invalidated if required details are cleared or changed; a final send-time variable check also rejects placeholders.
+
 ## Data and timing
 
 - The worker reads fresh public-viewer data from Sheet1, Transport Assignments and Transport Resources. It validates headers and rejects duplicate assignment records. No Google sharing permissions are changed.

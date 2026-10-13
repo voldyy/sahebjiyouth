@@ -7,9 +7,30 @@ export const HOUR = 3600000;
 const easternAirports = new Set(["ABE", "EWR", "JFK", "PHL"]);
 export const digest = value => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 export const oneLine = value => String(value ?? "").replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim();
+export function hasData(value) {
+  const text = oneLine(value).replace(/^'/, "");
+  if (!text || /^n[\s./_\\-]*a[\s./_\\-]*$/i.test(text)) return false;
+  return !/^(?:not\s+(?:available|applicable|provided|set)|unknown|pending|tbd|none|null|nil|[-–—]+)$/i.test(text);
+}
+export function completeLodgingData(g) {
+  return g.sourceWritable && [g.registrationId, g.name, g.rsvpStatus, g.lodging, g.roomNo].every(hasData)
+    && !["Cancelled", "Departed"].includes(g.status) && !!phoneAddress(g.phone)
+    && g.arrivalTimeKnown === true && easternInstant(g.arrivalDate, g.arrivalTime) !== null;
+}
+function completeTravelData(g, arrival) {
+  const day = arrival ? g.arrivalDate : g.departureDate;
+  const time = arrival ? g.arrivalTime : g.departureTime;
+  const known = arrival ? g.arrivalTimeKnown : g.departureTimeKnown;
+  const airport = arrival ? g.arrivalAirport : g.departureAirport;
+  const flight = arrival ? g.arrivalFlight : g.departureFlight;
+  if (![g.registrationId, g.name, g.travelMethod, g.rsvpStatus].every(hasData) || !g.sourceWritable) return false;
+  if (known !== true || easternInstant(day, time) === null) return false;
+  if (/flight|air/i.test(g.travelMethod)) return hasData(airport) && hasData(flight) && !!airlineForFlight(flight);
+  return true;
+}
 export function phoneAddress(value) {
   const raw = oneLine(value).replace(/^'/, "");
-  if (!raw || !/^[+\d ().-]+$/.test(raw)) return "";
+  if (!hasData(raw) || !/^[+\d ().-]+$/.test(raw)) return "";
   let digits = raw.replace(/\D/g, "");
   if (!raw.startsWith("+") && digits.length === 10) digits = "1" + digits;
   if (!raw.startsWith("+") && !(digits.length === 11 && digits.startsWith("1"))) return "";
@@ -48,7 +69,7 @@ export function driverDirectory(rows) {
   for (const row of rows.slice(1)) {
     if (row[0] !== "Driver" || row[2] !== "Yes") continue;
     const name = oneLine(row[1]), key = name.toLowerCase(), phone = phoneAddress(row[4]);
-    if (!name) continue;
+    if (!hasData(name)) continue;
     result.set(key, result.has(key) ? null : { name, phone });
   }
   return result;
@@ -65,16 +86,19 @@ export function tripParties(snapshot, group) {
   const arrival = group.direction === "Arrivals";
   const times = group.guests.map(g => arrival ? [g.arrivalTime, g.arrivalTimeKnown] : [g.departureTime, g.departureTimeKnown]);
   const at = easternAirports.has(group.airport) && times.every(([time, known]) => known && time === group.time) ? easternInstant(group.day, group.time) : null;
-  if (!driver?.phone || at === null || group.plan.status === "Completed") return [];
+  if (!driver?.phone || !hasData(driver.name) || !hasData(group.plan.driver) || !hasData(group.plan.status) || at === null || group.plan.status === "Completed") return [];
+  if (!hasData(group.airport) || (group.method === "Flight" && (!hasData(group.flight) || !airlineForFlight(group.flight)))) return [];
   const flight = group.method === "Flight" ? [airlineForFlight(group.flight)?.name, group.flight].filter(Boolean).join(" ") : group.method === "Bus" ? "Bus service (no flight)" : "Ground transport (no flight)";
   const registrations = [...new Set(group.guests.map(g => g.registrationId))];
   return registrations.flatMap(registrationId => {
+    if (!hasData(registrationId) || snapshot.incompleteTransportRegistrations?.has(registrationId)) return [];
     const family = snapshot.guests.filter(g => g.registrationId === registrationId && !["Cancelled", "Departed"].includes(g.status));
     const primaries = family.filter(g => g.isPrimaryContact);
     if (primaries.length !== 1 || !primaries[0].sourceWritable) return [];
+    if (family.some(g => !completeTravelData(g, arrival))) return [];
     const primary = primaries[0], passengerPhone = phoneAddress(primary.phone);
     // Never substitute a secondary attendee for the primary passenger.
-    if (!passengerPhone || !group.guests.some(g => g.sourceIdentity === primary.sourceIdentity)) return [];
+    if (![primary.name, primary.primaryContact, primary.city].every(hasData) || !passengerPhone || !group.guests.some(g => g.sourceIdentity === primary.sourceIdentity)) return [];
     const travelers = group.guests.filter(g => g.registrationId === registrationId);
     if (travelers.some(g => !g.sourceWritable)) return [];
     const companions = travelers.filter(g => !g.isPrimaryContact).length;
@@ -113,7 +137,7 @@ export function airborneMessage(party, flight, now) {
 }
 export function lodgingCandidates(snapshot, now, manual = false) {
   return snapshot.guests.flatMap(g => {
-    if (!g.sourceWritable || ["Cancelled", "Departed"].includes(g.status) || !g.lodging || !g.roomNo) return [];
+    if (!completeLodgingData(g)) return [];
     const recipient = phoneAddress(g.phone);
     if (!recipient) return [];
     const at = g.arrivalTimeKnown ? easternInstant(g.arrivalDate, g.arrivalTime) : null;

@@ -4,7 +4,7 @@ import { HOUR, easternInstant, phoneAddress, driverDirectory, assignedTrips, tri
 import { createHospitalityWorker, createAccommodationHandler, sendOnce } from "../../notifications/hospitality-service.js";
 
 function snapshot() {
-  const base = { sourceWritable: true, status: "Registered", registrationId: "R1", arrivalDate: "2026-10-20", arrivalTime: "16:30", arrivalTimeKnown: true, departureDate: "2026-10-24", departureTime: "12:00", departureTimeKnown: true, arrivalFlight: "UA308", departureFlight: "AA123", arrivalAirport: "EWR", departureAirport: "PHL", travelMethod: "FLIGHT", transport: "Needed", city: "Edison, NJ", phone: "202-555-0123", lodging: "Samarpan", roomNo: "007", count: 1 };
+  const base = { sourceWritable: true, status: "Registered", rsvpStatus: "Confirmed", primaryContact: "Alex Patel", registrationId: "R1", arrivalDate: "2026-10-20", arrivalTime: "16:30", arrivalTimeKnown: true, departureDate: "2026-10-24", departureTime: "12:00", departureTimeKnown: true, arrivalFlight: "UA308", departureFlight: "AA123", arrivalAirport: "EWR", departureAirport: "PHL", travelMethod: "FLIGHT", transport: "Needed", city: "Edison, NJ", phone: "202-555-0123", lodging: "Samarpan", roomNo: "007", count: 1 };
   const guests = [{ ...base, sourceIdentity: "primary", name: "Alex Patel", isPrimaryContact: true }, { ...base, sourceIdentity: "child", name: "Sam Patel", isPrimaryContact: false }];
   const s = { guests, assignments: [], drivers: driverDirectory([["Type", "Name", "Active", "Updated at", "Phone number"], ["Driver", "Raj", "Yes", "", "2025550124"], ["Driver", "Mira", "Yes", "", "+12025550125"]]) };
   s.assignments = assignedTrips(s).map(g => ({ id: g.id, driver: "Raj", status: "Planned", vehicle: "Van" }));
@@ -153,4 +153,57 @@ test('delays, missing departure times and failures never start repeated paid che
     }
     assert.equal(calls, mode === 'delayed' ? 2 : 1);
   }
+});
+
+test('all relevant lodging fields reject blanks and NA variants for automatic and bulk sends', () => {
+  const now=easternInstant('2026-10-19','16:30');
+  for(const field of ['registrationId','name','phone','rsvpStatus','arrivalDate','arrivalTime','lodging','roomNo']) {
+    for(const value of ['', ' ', 'NA', 'n/a', 'N.A.', 'N A', 'TBD', 'Unknown', '-']) {
+      const s=snapshot();s.guests=[s.guests[0]];s.guests[0][field]=value;
+      assert.equal(lodgingCandidates(s,now).length,0,`${field}: ${value}`);
+      assert.equal(lodgingCandidates(s,now,true).length,0,`bulk ${field}: ${value}`);
+    }
+  }
+  const valid=snapshot();valid.guests[0].departureFlight='NA';
+  assert.equal(lodgingCandidates(valid,now,true).length,2,'unrelated flight fields do not block lodging');
+});
+
+test('incomplete primary, companion or driver data suppresses transport messages', () => {
+  for(const field of ['name','primaryContact','city','phone','registrationId','rsvpStatus','travelMethod','arrivalDate','arrivalTime','arrivalAirport','arrivalFlight']) {
+    for(const value of ['', 'NA', 'N/A']) {
+      const s=snapshot();const group=assignedTrips(s)[0];s.guests[0][field]=value;
+      assert.equal(tripParties(s,group).length,0,`${field}: ${value}`);
+    }
+  }
+  for(const field of ['name','arrivalTime','arrivalFlight']) {
+    const s=snapshot(), group=assignedTrips(s)[0];s.guests[1][field]='NA';
+    assert.equal(tripParties(s,group).length,0,`companion ${field}`);
+  }
+  const s=snapshot(), group=assignedTrips(s)[0];s.drivers.get('raj').name='N/A';
+  assert.equal(tripParties(s,group).length,0);
+  const rawInvalid=snapshot();rawInvalid.incompleteTransportRegistrations=new Set(['R1']);
+  assert.equal(tripParties(rawInvalid,assignedTrips(rawInvalid)[0]).length,0,'dropped incomplete source rows still block their registration');
+});
+
+test('a queued attendee with subsequently incomplete data is never sent', async () => {
+  const s=snapshot(), table=memoryTable(), now=()=>easternInstant('2026-10-16','12:00');let sent=0;
+  s.guests=[s.guests[0]];
+  const handler=createAccommodationHandler({table,getSnapshot:async()=>s,authorize:async()=>true,now});
+  const request=body=>({text:async()=>JSON.stringify(body)});
+  const preview=(await handler(request({mode:'preview'}))).jsonBody;
+  assert.equal(preview.eligible,1);
+  await handler(request({mode:'queue',previewHash:preview.previewHash,requestId:'q'.repeat(36)}));
+  s.guests[0].roomNo='NA';
+  const worker=createHospitalityWorker({table,env:{HOSPITALITY_NOTIFICATIONS_ENABLED:'true'},getSnapshot:async()=>s,now,send:async()=>{sent++;return accepted;}});
+  await worker(); assert.equal(sent,0);
+  assert.equal([...table.rows.values()].find(r=>r.partitionKey==='hospitality-notification-outbox').status,'stale');
+  const next=(await handler(request({mode:'preview'}))).jsonBody;
+  assert.equal(next.eligible,0);assert.equal(next.skippedIncompleteData,1);
+});
+
+test('last-line sending validation blocks placeholder variables before claiming or calling Twilio', async () => {
+  const table=memoryTable(), candidate=lodgingCandidates(snapshot(),0,true)[0];let sent=0;
+  candidate.variables['3']='N/A';
+  assert.equal((await sendOnce(table,candidate,async()=>{sent++;return accepted;})).status,'skipped_incomplete_data');
+  assert.equal(sent,0);assert.equal(table.rows.size,0);
 });

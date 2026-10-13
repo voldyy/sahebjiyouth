@@ -388,9 +388,28 @@ var HOUR = 36e5;
 var easternAirports = /* @__PURE__ */ new Set(["ABE", "EWR", "JFK", "PHL"]);
 var digest = (value) => (0, import_node_crypto.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
 var oneLine = (value) => String(value ?? "").replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim();
+function hasData(value) {
+  const text2 = oneLine(value).replace(/^'/, "");
+  if (!text2 || /^n[\s./_\\-]*a[\s./_\\-]*$/i.test(text2)) return false;
+  return !/^(?:not\s+(?:available|applicable|provided|set)|unknown|pending|tbd|none|null|nil|[-–—]+)$/i.test(text2);
+}
+function completeLodgingData(g) {
+  return g.sourceWritable && [g.registrationId, g.name, g.rsvpStatus, g.lodging, g.roomNo].every(hasData) && !["Cancelled", "Departed"].includes(g.status) && !!phoneAddress(g.phone) && g.arrivalTimeKnown === true && easternInstant(g.arrivalDate, g.arrivalTime) !== null;
+}
+function completeTravelData(g, arrival) {
+  const day = arrival ? g.arrivalDate : g.departureDate;
+  const time = arrival ? g.arrivalTime : g.departureTime;
+  const known = arrival ? g.arrivalTimeKnown : g.departureTimeKnown;
+  const airport = arrival ? g.arrivalAirport : g.departureAirport;
+  const flight = arrival ? g.arrivalFlight : g.departureFlight;
+  if (![g.registrationId, g.name, g.travelMethod, g.rsvpStatus].every(hasData) || !g.sourceWritable) return false;
+  if (known !== true || easternInstant(day, time) === null) return false;
+  if (/flight|air/i.test(g.travelMethod)) return hasData(airport) && hasData(flight) && !!airlineForFlight(flight);
+  return true;
+}
 function phoneAddress(value) {
   const raw = oneLine(value).replace(/^'/, "");
-  if (!raw || !/^[+\d ().-]+$/.test(raw)) return "";
+  if (!hasData(raw) || !/^[+\d ().-]+$/.test(raw)) return "";
   let digits = raw.replace(/\D/g, "");
   if (!raw.startsWith("+") && digits.length === 10) digits = "1" + digits;
   if (!raw.startsWith("+") && !(digits.length === 11 && digits.startsWith("1"))) return "";
@@ -426,7 +445,7 @@ function driverDirectory(rows) {
   for (const row of rows.slice(1)) {
     if (row[0] !== "Driver" || row[2] !== "Yes") continue;
     const name = oneLine(row[1]), key = name.toLowerCase(), phone = phoneAddress(row[4]);
-    if (!name) continue;
+    if (!hasData(name)) continue;
     result.set(key, result.has(key) ? null : { name, phone });
   }
   return result;
@@ -443,15 +462,18 @@ function tripParties(snapshot, group) {
   const arrival = group.direction === "Arrivals";
   const times = group.guests.map((g) => arrival ? [g.arrivalTime, g.arrivalTimeKnown] : [g.departureTime, g.departureTimeKnown]);
   const at = easternAirports.has(group.airport) && times.every(([time, known]) => known && time === group.time) ? easternInstant(group.day, group.time) : null;
-  if (!driver?.phone || at === null || group.plan.status === "Completed") return [];
+  if (!driver?.phone || !hasData(driver.name) || !hasData(group.plan.driver) || !hasData(group.plan.status) || at === null || group.plan.status === "Completed") return [];
+  if (!hasData(group.airport) || group.method === "Flight" && (!hasData(group.flight) || !airlineForFlight(group.flight))) return [];
   const flight = group.method === "Flight" ? [airlineForFlight(group.flight)?.name, group.flight].filter(Boolean).join(" ") : group.method === "Bus" ? "Bus service (no flight)" : "Ground transport (no flight)";
   const registrations = [...new Set(group.guests.map((g) => g.registrationId))];
   return registrations.flatMap((registrationId) => {
+    if (!hasData(registrationId) || snapshot.incompleteTransportRegistrations?.has(registrationId)) return [];
     const family = snapshot.guests.filter((g) => g.registrationId === registrationId && !["Cancelled", "Departed"].includes(g.status));
     const primaries = family.filter((g) => g.isPrimaryContact);
     if (primaries.length !== 1 || !primaries[0].sourceWritable) return [];
+    if (family.some((g) => !completeTravelData(g, arrival))) return [];
     const primary = primaries[0], passengerPhone = phoneAddress(primary.phone);
-    if (!passengerPhone || !group.guests.some((g) => g.sourceIdentity === primary.sourceIdentity)) return [];
+    if (![primary.name, primary.primaryContact, primary.city].every(hasData) || !passengerPhone || !group.guests.some((g) => g.sourceIdentity === primary.sourceIdentity)) return [];
     const travelers = group.guests.filter((g) => g.registrationId === registrationId);
     if (travelers.some((g) => !g.sourceWritable)) return [];
     const companions = travelers.filter((g) => !g.isPrimaryContact).length;
@@ -508,7 +530,7 @@ function airborneMessage(party, flight, now) {
 }
 function lodgingCandidates(snapshot, now, manual = false) {
   return snapshot.guests.flatMap((g) => {
-    if (!g.sourceWritable || ["Cancelled", "Departed"].includes(g.status) || !g.lodging || !g.roomNo) return [];
+    if (!completeLodgingData(g)) return [];
     const recipient = phoneAddress(g.phone);
     if (!recipient) return [];
     const at = g.arrivalTimeKnown ? easternInstant(g.arrivalDate, g.arrivalTime) : null;
@@ -549,7 +571,7 @@ async function readTable(name, fetchImpl) {
   }
   if (data.status !== "ok" || !data.table?.rows || !data.table?.cols) throw Error("Hospitality sheet is unavailable");
   const columns = data.table.cols.map((c) => c.label);
-  const expected = headers[name] || { 0: "Registration ID", 2: "Is Primary Contact?", 5: "Primary Phone", 8: "Attendee Full Name", 12: "Arrival Date Time", 13: "Departure Date Time", 24: "RSVP Status", 29: "Lodging", 30: "Room No." };
+  const expected = headers[name] || { 0: "Registration ID", 2: "Is Primary Contact?", 3: "Primary Contact Name", 7: "City & State", 11: "Travel Mode", 14: "Arrival Airport", 15: "Arrival Flight Number", 16: "Departure Airport", 17: "Departure Flight Number", 5: "Primary Phone", 8: "Attendee Full Name", 12: "Arrival Date Time", 13: "Departure Date Time", 24: "RSVP Status", 29: "Lodging", 30: "Room No." };
   if (Object.entries(expected).some(([i, value]) => columns[i] !== value)) throw Error(`The ${name} columns changed; notifications paused`);
   return [columns, ...data.table.rows.map((row) => columns.map((_, i) => {
     const cell = row.c[i];
@@ -561,6 +583,7 @@ async function loadSnapshot(fetchImpl = fetch) {
   const validAssignments = assignments.slice(1).filter((r) => r[0]);
   if (new Set(validAssignments.map((r) => r[0])).size !== validAssignments.length) throw Error("Duplicate transport assignments; notifications paused");
   return {
+    incompleteTransportRegistrations: new Set(rows.slice(1).filter((r) => hasData(r[0]) && (!hasData(r[8]) || !/^(YES|NO|Y|N|TRUE|FALSE)$/i.test(String(r[2]).trim()))).map((r) => String(r[0]).trim())),
     guests: guestsFromRows(rows),
     drivers: driverDirectory(resources),
     assignments: validAssignments.map((r) => ({ id: r[0], driver: r[6], vehicle: r[7], pickup: r[8], status: r[9], notes: r[10], revision: r[11] }))
@@ -587,7 +610,7 @@ function messagingClient(env, fetchImpl = fetch) {
   const auth = "Basic " + Buffer.from(`${env.TWILIO_API_KEY}:${env.TWILIO_API_SECRET}`).toString("base64");
   return async (candidate2) => {
     const template = hospitality_templates_default[candidate2.type];
-    if (!template || Object.values(candidate2.variables).some((v) => !v || v.length > 1e3 || /[\r\n\t]/.test(v))) throw Error("Invalid notification variables");
+    if (!template || Object.values(candidate2.variables).some((v) => !hasData(v) || v.length > 1e3 || /[\r\n\t]/.test(v))) throw Error("Invalid notification variables");
     const response = await fetchImpl(`https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`, {
       method: "POST",
       signal: AbortSignal.timeout(15e3),
@@ -623,6 +646,7 @@ async function create(table, entity) {
   }
 }
 async function sendOnce(table, candidate2, send, now = Date.now) {
+  if (!phoneAddress(candidate2.recipient?.replace("whatsapp:", "")) || !Object.values(candidate2.variables || {}).length || Object.values(candidate2.variables).some((v) => !hasData(v))) return { status: "skipped_incomplete_data" };
   const claim = { partitionKey: CLAIMS, rowKey: candidate2.key, type: candidate2.type, status: "sending", createdAt: new Date(now()).toISOString() };
   if (!await create(table, claim)) return { status: "already_claimed" };
   try {
@@ -766,6 +790,7 @@ function createAccommodationHandler({ table, getSnapshot = loadSnapshot, authori
         previewHash: hash,
         attendees: rows.map(({ candidate: candidate2, status }) => ({ ...candidate2.detail, status })),
         eligible: rows.filter((r) => r.status === "ready").length,
+        skippedIncompleteData: snapshot.guests.filter((g) => !["Cancelled", "Departed"].includes(g.status) && (hasData(g.lodging) || hasData(g.roomNo)) && !completeLodgingData(g)).length,
         skippedMissingContact: snapshot.guests.filter((g) => g.lodging && g.roomNo && !["Cancelled", "Departed"].includes(g.status) && !phoneAddress(g.phone)).length
       };
       if (body.mode === "preview") return response(200, { ok: true, ...detail });

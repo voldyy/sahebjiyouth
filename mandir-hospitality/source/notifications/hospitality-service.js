@@ -1,6 +1,6 @@
 import { SPREADSHEET_ID, guestsFromRows } from "../src/lib/sheets.js";
 import templates from "./hospitality-templates.json" with { type: "json" };
-import { HOUR, digest, driverDirectory, assignedTrips, tripParties, driverAssignment, tripReminders, airborneMessage, lodgingCandidates, phoneAddress, utcInstant } from "./hospitality-model.js";
+import { HOUR, digest, driverDirectory, assignedTrips, tripParties, driverAssignment, tripReminders, airborneMessage, lodgingCandidates, phoneAddress, utcInstant, hasData, completeLodgingData } from "./hospitality-model.js";
 
 export const SCHEDULE = "0 * * * * *";
 export const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYBR2sIywbufmytSNLiQvGRy2oYg_tsMTEqdUj855z1LX8OJcDf6rTI0gR14kzdzpGog/exec";
@@ -21,7 +21,7 @@ async function readTable(name, fetchImpl) {
   try { data = JSON.parse(match[1]); } catch { throw Error("Invalid hospitality data JSON"); }
   if (data.status !== "ok" || !data.table?.rows || !data.table?.cols) throw Error("Hospitality sheet is unavailable");
   const columns = data.table.cols.map(c => c.label);
-  const expected = headers[name] || { 0: "Registration ID", 2: "Is Primary Contact?", 5: "Primary Phone", 8: "Attendee Full Name", 12: "Arrival Date Time", 13: "Departure Date Time", 24: "RSVP Status", 29: "Lodging", 30: "Room No." };
+  const expected = headers[name] || { 0: "Registration ID", 2: "Is Primary Contact?", 3: "Primary Contact Name", 7: "City & State", 11: "Travel Mode", 14: "Arrival Airport", 15: "Arrival Flight Number", 16: "Departure Airport", 17: "Departure Flight Number", 5: "Primary Phone", 8: "Attendee Full Name", 12: "Arrival Date Time", 13: "Departure Date Time", 24: "RSVP Status", 29: "Lodging", 30: "Room No." };
   if (Object.entries(expected).some(([i, value]) => columns[i] !== value)) throw Error(`The ${name} columns changed; notifications paused`);
   return [columns, ...data.table.rows.map(row => columns.map((_, i) => {
     const cell = row.c[i];
@@ -33,6 +33,8 @@ export async function loadSnapshot(fetchImpl = fetch) {
   const validAssignments = assignments.slice(1).filter(r => r[0]);
   if (new Set(validAssignments.map(r => r[0])).size !== validAssignments.length) throw Error("Duplicate transport assignments; notifications paused");
   return {
+    incompleteTransportRegistrations: new Set(rows.slice(1).filter(r => hasData(r[0]) &&
+      (!hasData(r[8]) || !/^(YES|NO|Y|N|TRUE|FALSE)$/i.test(String(r[2]).trim()))).map(r => String(r[0]).trim())),
     guests: guestsFromRows(rows), drivers: driverDirectory(resources),
     assignments: validAssignments.map(r => ({ id: r[0], driver: r[6], vehicle: r[7], pickup: r[8], status: r[9], notes: r[10], revision: r[11] })),
   };
@@ -54,7 +56,7 @@ export function messagingClient(env, fetchImpl = fetch) {
   const auth = "Basic " + Buffer.from(`${env.TWILIO_API_KEY}:${env.TWILIO_API_SECRET}`).toString("base64");
   return async candidate => {
     const template = templates[candidate.type];
-    if (!template || Object.values(candidate.variables).some(v => !v || v.length > 1000 || /[\r\n\t]/.test(v))) throw Error("Invalid notification variables");
+    if (!template || Object.values(candidate.variables).some(v => !hasData(v) || v.length > 1000 || /[\r\n\t]/.test(v))) throw Error("Invalid notification variables");
     const response = await fetchImpl(`https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`, {
       method: "POST", signal: AbortSignal.timeout(15000),
       headers: { Authorization: auth, "Content-Type": "application/x-www-form-urlencoded" },
@@ -74,6 +76,7 @@ async function create(table, entity) {
   try { await table.createEntity(entity); return true; } catch (e) { if (e.statusCode === 409) return false; throw e; }
 }
 export async function sendOnce(table, candidate, send, now = Date.now) {
+  if (!phoneAddress(candidate.recipient?.replace("whatsapp:", "")) || !Object.values(candidate.variables || {}).length || Object.values(candidate.variables).some(v => !hasData(v))) return { status: "skipped_incomplete_data" };
   const claim = { partitionKey: CLAIMS, rowKey: candidate.key, type: candidate.type, status: "sending", createdAt: new Date(now()).toISOString() };
   if (!await create(table, claim)) return { status: "already_claimed" };
   try {
@@ -207,6 +210,7 @@ export function createAccommodationHandler({ table, getSnapshot = loadSnapshot, 
       const detail = {
         previewHash: hash, attendees: rows.map(({ candidate, status }) => ({ ...candidate.detail, status })),
         eligible: rows.filter(r => r.status === "ready").length,
+        skippedIncompleteData: snapshot.guests.filter(g => !["Cancelled", "Departed"].includes(g.status) && (hasData(g.lodging) || hasData(g.roomNo)) && !completeLodgingData(g)).length,
         skippedMissingContact: snapshot.guests.filter(g => g.lodging && g.roomNo && !["Cancelled", "Departed"].includes(g.status) && !phoneAddress(g.phone)).length,
       };
       if (body.mode === "preview") return response(200, { ok: true, ...detail });
