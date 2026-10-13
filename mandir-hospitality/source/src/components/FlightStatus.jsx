@@ -1,10 +1,9 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { ExternalLink, Plane, PlaneLanding } from "lucide-react";
+import { ExternalLink, Plane, PlaneLanding, RefreshCw } from "lucide-react";
 import { flightAwareUrl } from "../lib/airlines";
 import { allentownDay } from "../lib/housekeeping";
 import { airportTimeLabel, flightPresentation } from "../lib/flightStatus";
 
-const REFRESH_MS = 5 * 60 * 1000;
 const LiveFlightContext = createContext({ flight: null, status: null, loading: false, travelDay: false });
 const rosterTime = (value) => value ? new Date(`2000-01-01T${value}`).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "Time needed";
 
@@ -16,44 +15,36 @@ export function LiveFlightProvider({ group, workspace, children }) {
   const request = useRef(workspace.flightStatus);
   request.current = workspace.flightStatus;
 
+  const pending = useRef(false);
+  const generation = useRef(0);
   useEffect(() => {
-    let disposed = false, pending = false, lastAttempt = 0;
+    generation.current++;
     setFlight(null);
     setLoading(false);
-    if (group.method !== "Flight" || !group.flight) return;
-    const check = async () => {
-      if (disposed) return;
-      const isTravelDay = group.day === allentownDay();
-      setTravelDay(isTravelDay);
-      if (!isTravelDay) { setFlight(null); return; }
-      if (document.hidden || pending || Date.now() - lastAttempt < REFRESH_MS) return;
-      pending = true;
-      lastAttempt = Date.now();
-      setLoading(true);
-      try {
-        const response = await request.current(group);
-        if (!disposed) setFlight(response.flight);
-      } catch (error) {
-        if (!disposed) setFlight({ available: false, reason: error.message });
-      } finally {
-        pending = false;
-        if (!disposed) setLoading(false);
-      }
-    };
-    check();
-    const timer = setInterval(check, 60 * 1000);
-    document.addEventListener("visibilitychange", check);
-    window.addEventListener("focus", check);
-    return () => {
-      disposed = true;
-      clearInterval(timer);
-      document.removeEventListener("visibilitychange", check);
-      window.removeEventListener("focus", check);
-    };
+    setTravelDay(group.day === allentownDay());
+    return () => { generation.current++; };
   }, [group.id, group.day, group.method, group.flight]);
+  const check = async () => {
+    if (pending.current || group.method !== "Flight" || !group.flight) return;
+    const isTravelDay = group.day === allentownDay();
+    setTravelDay(isTravelDay);
+    if (!isTravelDay) return;
+    pending.current = true;
+    const version = generation.current;
+    setLoading(true);
+    try {
+      const response = await request.current(group);
+      if (version === generation.current) setFlight(response.flight);
+    } catch (error) {
+      if (version === generation.current) setFlight({ available: false, reason: error.message });
+    } finally {
+      pending.current = false;
+      if (version === generation.current) setLoading(false);
+    }
+  };
 
   const status = travelDay ? flightPresentation(flight) : null;
-  return <LiveFlightContext.Provider value={{ flight, status, loading, travelDay }}>{children}</LiveFlightContext.Provider>;
+  return <LiveFlightContext.Provider value={{ flight, status, loading, travelDay, check }}>{children}</LiveFlightContext.Provider>;
 }
 
 export function FlightTime({ group }) {
@@ -73,14 +64,15 @@ export function FlightTime({ group }) {
 }
 
 export default function FlightStatus({ group }) {
-  const { flight, status, loading, travelDay } = useContext(LiveFlightContext);
+  const { flight, status, loading, travelDay, check } = useContext(LiveFlightContext);
   const PhaseIcon = status?.phase === "Landed" ? PlaneLanding : Plane;
   return <div className="transport-flight-status">
     <div className={`flight-glance flight-glance--${status?.tone || "unknown"}`} aria-live="polite" aria-atomic="true">
       <div className="flight-glance-heading"><span className="flight-status-dot" aria-hidden="true" /><strong>Status: {status?.label || (!travelDay ? "Not available yet" : loading ? "Checking…" : "Unavailable")}</strong></div>
       {status?.phase && <span className="flight-phase"><PhaseIcon size={14} />{status.phase}</span>}
     </div>
-    {!status && <small>{!travelDay ? "Live status is available on the travel day." : flight?.reason || "Checking the latest flight details…"}</small>}
+    {!status && <small>{!travelDay ? "Live status is available on the travel day." : flight?.reason || "Check flight status when you need an update."}</small>}
+    <button type="button" className="button secondary" onClick={check} disabled={loading}><RefreshCw size={14} />{loading ? "Checking…" : "Check flight status"}</button>
     <a href={flightAwareUrl(group.flight)} target="_blank" rel="noreferrer">Flight tracker <ExternalLink size={12} /></a>
   </div>;
 }

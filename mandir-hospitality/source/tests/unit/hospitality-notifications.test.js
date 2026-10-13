@@ -128,3 +128,29 @@ test("manual lodging batches and automatic reminders cannot send twice", async (
   const worker = createHospitalityWorker({ table, env: { HOSPITALITY_NOTIFICATIONS_ENABLED: "true" }, getSnapshot: async () => s, now, readFlight: async () => ({ available: false }), send: async c => { sent.push(c); return accepted; } });
   await worker(); await worker(); assert.equal(sent.filter(c => c.type === "accommodation").length, 2);
 });
+
+test('one schedule lookup and one departure check replace repeated flight polling', async () => {
+  const { departureFlightCheck } = await import('../../notifications/hospitality-service.js');
+  const table = memoryTable(), group = { id: 'bounded-flight' };
+  const departure = Date.parse('2026-10-20T12:00:00Z');
+  let calls = 0;
+  const read = async () => { calls++; return { available: true, rawStatus: calls === 1 ? 'S' : 'A', scheduledDepartureUtc: '2026-10-20T12:00:00Z', expectedArrivalUtc: '2026-10-20T20:30:00Z' }; };
+  for (let i = 0; i < 120; i++) await departureFlightCheck(table, group, departure - 2 * HOUR + i * 60000, read);
+  assert.equal(calls, 1);
+  assert.equal(await departureFlightCheck(table, group, departure + 14 * 60000, read), null);
+  assert.equal((await departureFlightCheck(table, group, departure + 15 * 60000, read)).rawStatus, 'A');
+  for (let i = 16; i < 400; i++) await departureFlightCheck(table, group, departure + i * 60000, read);
+  assert.equal(calls, 2);
+});
+
+test('delays, missing departure times and failures never start repeated paid checks', async () => {
+  const { departureFlightCheck } = await import('../../notifications/hospitality-service.js');
+  for (const mode of ['delayed', 'missing', 'failure']) {
+    const table = memoryTable(), group = { id: mode }; let calls = 0;
+    const read = async () => { calls++; if (mode === 'failure') throw Error('network'); return { available: true, rawStatus: 'S', scheduledDepartureUtc: mode === 'missing' ? '' : '2026-10-20T12:00:00Z' }; };
+    for (let i = 0; i < 100; i++) {
+      try { await departureFlightCheck(table, group, Date.parse('2026-10-20T13:00:00Z') + i * 60000, read); } catch {}
+    }
+    assert.equal(calls, mode === 'delayed' ? 2 : 1);
+  }
+});

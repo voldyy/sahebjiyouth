@@ -495,3 +495,23 @@ test('trip collapse defaults for past dates and synchronizes between admin and v
   await page.screenshot({path:test.info().outputPath('transport-shared-mobile.png'),fullPage:true});
   await context.close();
 });
+
+test('flight status only calls the paid service on explicit request', async ({page}) => {
+  await page.clock.install({time:new Date('2026-10-18T16:00:00Z')});
+  const row=plannerGuest('MANUAL-FLIGHT','Test Flyer','10/18/2026 2:30 PM','10/20/2026 3:00 PM');
+  Object.assign(row,{11:'Flight',14:'PHL',15:'AA123',16:'EWR',17:'UA456',18:'YES'});
+  await setup(page,'ok',[row]);
+  let calls=0;
+  await page.context().route('https://script.google.com/test-rpc',route=>{
+    const req=route.request().postDataJSON(); if(req.action!=='flight')return route.fallback();
+    calls++; return route.fulfill({json:{ok:true,flight:{available:false,reason:'Synthetic result'}}});
+  });
+  await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Transport',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Check flight status'}).first()).toBeVisible();
+  await page.clock.fastForward(20*60*1000);
+  expect(calls).toBe(0);
+  await page.getByRole('button',{name:'Check flight status'}).first().click();
+  await expect.poll(()=>calls).toBe(1);
+  await page.clock.fastForward(20*60*1000);
+  expect(calls).toBe(1);
+});

@@ -9,7 +9,7 @@ All six English templates were created and submitted under Utility on October 13
 | Template | Trigger | Recipient |
 | --- | --- | --- |
 | `mandir_driver_assignment` | Driver assignment changes, checked each minute | Assigned driver |
-| `mandir_driver_pickup_airborne` | FlightStats confirms airborne/actual takeoff and supplies a future arrival estimate | Pickup driver |
+| `mandir_driver_pickup_airborne` | One check near departure confirms takeoff and supplies a future arrival estimate | Pickup driver |
 | `mandir_driver_dropoff_reminder` | 8 hours before scheduled departure | Dropoff driver |
 | `mandir_passenger_arrival_driver` | 18 hours before scheduled arrival | Registration's primary contact |
 | `mandir_passenger_departure_driver` | 18 hours before scheduled departure | Registration's primary contact |
@@ -26,7 +26,7 @@ Lodging messages are **one per attendee**, including family members sharing a ph
 - Explicit international numbers must include `+` and country code. Ten-digit North American numbers use `+1`; malformed or missing phone numbers are skipped.
 - Current supported airports ABE, EWR, JFK and PHL use America/New_York. Scheduling handles EST/EDT. Unknown/missing flight times, conflicting group times, unsupported airports and ambiguous DST wall times are skipped rather than guessed.
 - Timed reminders become eligible at their threshold and may catch up while the event is still in the future, such as when a driver or room is assigned late. No timed reminder is sent after its scheduled event time.
-- Pickup checks query the existing FlightStats account through the Apps Script read endpoint. Results are cached for five minutes. Adjacent-day requests handle flights that take off the day before arrival. Scheduled departure passing is not evidence of takeoff. Canceled, diverted, landed or missing-ETA flights do not generate airborne alerts. Later ETA changes do not repeat a takeoff alert.
+- There is no automatic flight-status polling. Per pickup flight, one schedule lookup (within 24 hours before arrival) obtains the origin departure time, followed by one status check 15 minutes after scheduled departure. If the first lookup already confirms takeoff, no second lookup is needed. Durable claims cap this at two automated lookup attempts, including failures, across restarts and driver changes. A delay or missing departure time does not start retries; consequently a delayed takeoff may have no automatic takeoff alert. Adjacent-day requests support departures the day before arrival. Dashboard checks are manual through **Check flight status**; older open clients cannot request automatic paid updates. Manual checks may incur their own API charges, with the existing short cache shared across viewers.
 - On first activation, existing driver assignments are recorded as a baseline rather than replayed as new assignments. Subsequent driver changes and clear/reassign cycles trigger notices; vehicle-only changes do not. Bus/ground assignments can identify their service explicitly, but flight reminders and airborne alerts apply only to flights.
 
 ## Admin button and authorization
@@ -42,7 +42,7 @@ Bulk requests only queue messages, avoiding browser timeout/resend ambiguity. Th
 Private partitions in the existing `RegRegistrations` table:
 
 - `hospitality-notifications`: atomic claims, Twilio acceptance/SID and review state.
-- `hospitality-notification-state`: assignment baseline/epochs and five-minute flight cache.
+- `hospitality-notification-state`: assignment baseline/epochs and durable one-shot flight checks.
 - `hospitality-notification-outbox`: queued batch and assignment messages.
 
 Each recipient/event is claimed before calling Twilio. Both SM and MM message identifiers are accepted. Network uncertainty or failed persistence leaves `sending`/`review` and blocks automatic resend. Review the original Twilio message before repairing a claim. `accepted` means Twilio accepted the request, not verified delivery. Manual and timed lodging sends share the same claim, so they cannot duplicate identical room details.

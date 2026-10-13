@@ -24,6 +24,7 @@ __export(hospitality_service_exports, {
   SCRIPT_URL: () => SCRIPT_URL,
   createAccommodationHandler: () => createAccommodationHandler,
   createHospitalityWorker: () => createHospitalityWorker,
+  departureFlightCheck: () => departureFlightCheck,
   loadSnapshot: () => loadSnapshot,
   messagingClient: () => messagingClient,
   sendOnce: () => sendOnce,
@@ -636,12 +637,32 @@ async function sendOnce(table, candidate2, send, now = Date.now) {
     throw Error(`Notification ${candidate2.key} requires review; automatic resend blocked`);
   }
 }
-async function cachedFlight(table, group, now, readFlight) {
-  const rowKey = "flight-" + digest(group.id), previous = await get(table, STATE, rowKey);
-  if (previous && now - Number(previous.checkedAt) < 3e5) return JSON.parse(previous.flightJson);
-  const flight = await readFlight(group);
-  await table.upsertEntity({ partitionKey: STATE, rowKey, checkedAt: now, flightJson: JSON.stringify(flight) }, "Replace");
-  return flight;
+async function departureFlightCheck(table, group, now, readFlight) {
+  const id = digest(group.id);
+  async function stage(name) {
+    const rowKey = `flight-once-${name}-${id}`;
+    const existing = await get(table, STATE, rowKey);
+    if (existing) return existing.flightJson ? JSON.parse(existing.flightJson) : null;
+    if (!await create(table, { partitionKey: STATE, rowKey, checkedAt: now, status: "checking" })) return null;
+    try {
+      const flight = await readFlight(group);
+      await table.updateEntity({ partitionKey: STATE, rowKey, status: "complete", flightJson: JSON.stringify(flight) }, "Merge");
+      return flight;
+    } catch (error) {
+      try {
+        await table.updateEntity({ partitionKey: STATE, rowKey, status: "failed" }, "Merge");
+      } catch {
+      }
+      throw error;
+    }
+  }
+  const schedule = await stage("schedule");
+  if (!schedule?.available) return null;
+  if (schedule.landed || ["C", "D"].includes(schedule.rawStatus)) return null;
+  if (schedule.rawStatus === "A" || utcInstant(schedule.actualRunwayDepartureUtc) !== null) return schedule;
+  const departure = utcInstant(schedule.scheduledDepartureUtc);
+  if (departure === null || now < departure + 15 * 6e4) return null;
+  return stage("departure");
 }
 function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now = Date.now, send, readFlight = async (group) => (await scriptRequest({ action: "notification-flight", tripId: group.id })).flight }) {
   return async (_timer, context) => {
@@ -675,7 +696,7 @@ function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now =
       }
       if (group.method === "Flight" && parties.some((p) => p.arrival && started >= p.at - 24 * HOUR && started <= p.at + 6 * HOUR)) {
         try {
-          const flight = await cachedFlight(table, group, started, readFlight);
+          const flight = await departureFlightCheck(table, group, started, readFlight);
           for (const party of parties) {
             const message = airborneMessage(party, flight, started);
             if (message) candidates.push(message);
@@ -766,6 +787,7 @@ function createAccommodationHandler({ table, getSnapshot = loadSnapshot, authori
   SCRIPT_URL,
   createAccommodationHandler,
   createHospitalityWorker,
+  departureFlightCheck,
   loadSnapshot,
   messagingClient,
   sendOnce,

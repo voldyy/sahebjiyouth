@@ -143,6 +143,7 @@ export function useSheetWorkspace(enabled) {
     flightStatus: (group) =>
       sheetRequest({
         action: "flight",
+        manual: true,
         flight: group.flight,
         day: group.day,
         airport: group.airport,

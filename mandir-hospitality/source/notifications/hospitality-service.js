@@ -1,6 +1,6 @@
 import { SPREADSHEET_ID, guestsFromRows } from "../src/lib/sheets.js";
 import templates from "./hospitality-templates.json" with { type: "json" };
-import { HOUR, digest, driverDirectory, assignedTrips, tripParties, driverAssignment, tripReminders, airborneMessage, lodgingCandidates, phoneAddress } from "./hospitality-model.js";
+import { HOUR, digest, driverDirectory, assignedTrips, tripParties, driverAssignment, tripReminders, airborneMessage, lodgingCandidates, phoneAddress, utcInstant } from "./hospitality-model.js";
 
 export const SCHEDULE = "0 * * * * *";
 export const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYBR2sIywbufmytSNLiQvGRy2oYg_tsMTEqdUj855z1LX8OJcDf6rTI0gR14kzdzpGog/exec";
@@ -85,13 +85,33 @@ export async function sendOnce(table, candidate, send, now = Date.now) {
     throw Error(`Notification ${candidate.key} requires review; automatic resend blocked`);
   }
 }
-async function cachedFlight(table, group, now, readFlight) {
-  const rowKey = "flight-" + digest(group.id), previous = await get(table, STATE, rowKey);
-  if (previous && now - Number(previous.checkedAt) < 300000) return JSON.parse(previous.flightJson);
-  const flight = await readFlight(group);
-  await table.upsertEntity({ partitionKey: STATE, rowKey, checkedAt: now, flightJson: JSON.stringify(flight) }, "Replace");
-  return flight;
+// Two durable, one-shot stages per flight. Failures are not polled or retried.
+export async function departureFlightCheck(table, group, now, readFlight) {
+  const id = digest(group.id);
+  async function stage(name) {
+    const rowKey = `flight-once-${name}-${id}`;
+    const existing = await get(table, STATE, rowKey);
+    if (existing) return existing.flightJson ? JSON.parse(existing.flightJson) : null;
+    if (!await create(table, { partitionKey: STATE, rowKey, checkedAt: now, status: "checking" })) return null;
+    try {
+      const flight = await readFlight(group);
+      await table.updateEntity({ partitionKey: STATE, rowKey, status: "complete", flightJson: JSON.stringify(flight) }, "Merge");
+      return flight;
+    } catch (error) {
+      try { await table.updateEntity({ partitionKey: STATE, rowKey, status: "failed" }, "Merge"); } catch {}
+      throw error;
+    }
+  }
+  const schedule = await stage("schedule");
+  if (!schedule?.available) return null;
+  if (schedule.landed || ["C", "D"].includes(schedule.rawStatus)) return null;
+  if (schedule.rawStatus === "A" || utcInstant(schedule.actualRunwayDepartureUtc) !== null) return schedule;
+  const departure = utcInstant(schedule.scheduledDepartureUtc);
+  // Missing schedule data never falls back to periodic polling.
+  if (departure === null || now < departure + 15 * 60000) return null;
+  return stage("departure");
 }
+
 export function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now = Date.now, send, readFlight = async group => (await scriptRequest({ action: "notification-flight", tripId: group.id })).flight }) {
   return async (_timer, context) => {
     if (env.HOSPITALITY_NOTIFICATIONS_ENABLED !== "true") return { status: "disabled" };
@@ -127,7 +147,7 @@ export function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot
       }
       if (group.method === "Flight" && parties.some(p => p.arrival && started >= p.at - 24 * HOUR && started <= p.at + 6 * HOUR)) {
         try {
-          const flight = await cachedFlight(table, group, started, readFlight);
+          const flight = await departureFlightCheck(table, group, started, readFlight);
           for (const party of parties) { const message = airborneMessage(party, flight, started); if (message) candidates.push(message); }
         } catch { issues.push("flight lookup unavailable"); }
       }

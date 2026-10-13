@@ -794,7 +794,7 @@ reply({ ready: true });
       }
       if (!["snapshot", "flight", "trip-display", "trip-display-read"].includes(req.action) && role !== "admin") throw new Error("Admin access is required to change this view-only dashboard. Open your private admin link.");
       if (req.action === "accommodation-notifications") return accommodationNotifications(req);
-      if (req.action === "flight") return { ok: true, flight: flightStatus(req) };
+      if (req.action === "flight") return { ok: true, flight: req.manual === true ? flightStatus(req) : { available: false, reason: "Automatic flight checks are disabled. Reload and choose Check flight status." } };
       if (!lock.tryLock(2e4))
         throw new Error("Another save is in progress. Please retry shortly.");
       const book = spreadsheet();
@@ -854,7 +854,7 @@ reply({ ready: true });
       };
     const cache = CacheService.getScriptCache();
     const cacheKey = [
-      "flight-v3",
+      "flight-v4",
       number,
       day,
       req.direction,
@@ -900,6 +900,7 @@ reply({ ready: true });
       estimatedUtc: latest.dateUtc || "",
       flightId: String(leg.flightId || ""),
       actualRunwayDepartureUtc: times.actualRunwayDeparture?.dateUtc || "",
+      scheduledDepartureUtc: (times.scheduledGateDeparture || times.scheduledRunwayDeparture || {}).dateUtc || "",
       expectedArrivalUtc: (times.estimatedRunwayArrival || times.estimatedGateArrival || times.scheduledGateArrival || {}).dateUtc || "",
       delayMinutes: typeof providerDelay === "number" && Number.isFinite(providerDelay) ? providerDelay : null,
       checkedAt: (/* @__PURE__ */ new Date()).toISOString()
