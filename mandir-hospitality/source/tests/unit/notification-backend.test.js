@@ -37,3 +37,9 @@ test('pickup status supports the previous day, rejects arbitrary flights, and us
   assert.equal(h.post({action:'notification-flight',tripId:'unregistered flight'}).ok,false);
   assert.equal(calls,1);
 });
+
+test('legacy automatic dashboard checks do not call FlightStats',()=>{
+ const h=fixture();let calls=0;h.setFetch(()=>{calls++;throw Error('Unexpected paid lookup');});
+ const result=h.request({action:'flight',day:'2026-10-14',flight:'UA308',airport:'EWR',direction:'Arrivals'});
+ assert.equal(result.ok,true);assert.equal(result.flight.available,false);assert.match(result.flight.reason,/Automatic flight checks are disabled/);assert.equal(calls,0);
+});
