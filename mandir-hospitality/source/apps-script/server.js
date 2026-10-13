@@ -70,7 +70,10 @@ function table(book, name, readOnly = false) {
     sheet.setColumnWidths(1, expected.length, 160);
   }
   const rows = sheet.getDataRange().getDisplayValues();
-  if (!equal(rows[0], expected))
+  const resourceHeaders = name === "Transport Resources" &&
+    equal(rows[0].slice(0, 4), expected) &&
+    (rows[0].length === 4 || (rows[0].length === 5 && rows[0][4] === "Phone number"));
+  if (!resourceHeaders && !equal(rows[0], expected))
     throw new Error(
       `The ${name} headers changed. Restore its columns before saving.`,
     );
@@ -491,20 +494,51 @@ export function doGet(e) {
     bridge.replace("__CONFIG__", JSON.stringify({ origin, channel })),
   ).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
+export function doPost(e) {
+  let result;
+  try {
+    const raw = e?.postData?.contents || "";
+    if (raw.length > 16000) throw new Error("Oversized request.");
+    const req = JSON.parse(raw);
+    // Server-to-server reads only. Shared writes retain their existing RPC path.
+    if (!["notification-authorize", "notification-flight"].includes(req.action)) throw new Error("Unsupported server request.");
+    result = hospitalityRequest(req);
+  } catch (_) { result = { ok: false, error: "Invalid notification request." }; }
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+function accommodationNotifications(req) {
+  if (!["preview", "queue"].includes(req.mode)) throw new Error("Choose preview or queue.");
+  if (req.mode === "queue" && !/^[a-zA-Z0-9-]{20,80}$/.test(req.requestId || "")) throw new Error("Missing request identifier.");
+  const response = UrlFetchApp.fetch("https://sahebjiyouth-reg-api.azurewebsites.net/api/hospitality-notifications", {
+    method: "post", contentType: "application/json", muteHttpExceptions: true,
+    payload: JSON.stringify({ mode: req.mode, requestId: req.requestId, previewHash: req.previewHash, accessKey: req.accessKey }),
+  });
+  const result = JSON.parse(response.getContentText());
+  if (response.getResponseCode() !== 200 || !result.ok) throw new Error(result.error || "Notification service is unavailable. No new batch was confirmed.");
+  return result;
+}
 export function hospitalityRequest(req) {
   const lock = LockService.getScriptLock();
   try {
     if (!req || JSON.stringify(req).length > 16000)
       throw new Error("Invalid or oversized request.");
     if (
-      !["snapshot", "lodging", "transport", "resource", "flight", "linen", "offsite", "guest", "trip-display", "trip-display-read"].includes(
+      !["snapshot", "lodging", "transport", "resource", "flight", "linen", "offsite", "guest", "trip-display", "trip-display-read", "notification-authorize", "notification-flight", "accommodation-notifications"].includes(
         req.action,
       )
     )
       throw new Error("Unknown action.");
     const key = PropertiesService.getScriptProperties().getProperty("ADMIN_ACCESS_KEY");
     const role = key && typeof req.accessKey === "string" && req.accessKey === key ? "admin" : "viewer";
+    if (req.action === "notification-authorize") return { ok: true, authorized: role === "admin" };
+    if (req.action === "notification-flight") {
+      const current = roster(spreadsheet());
+      const group = transportGroups(current.guests, "Arrivals").find(g => g.id === req.tripId && g.method === "Flight");
+      if (!group) throw new Error("This pickup flight is no longer in the roster.");
+      return { ok: true, flight: flightStatus({ day: group.day, flight: group.flight, airport: group.airport, direction: "Arrivals" }, true) };
+    }
     if (!["snapshot", "flight", "trip-display", "trip-display-read"].includes(req.action) && role !== "admin") throw new Error("Admin access is required to change this view-only dashboard. Open your private admin link.");
+    if (req.action === "accommodation-notifications") return accommodationNotifications(req);
     if (req.action === "flight") return { ok: true, flight: flightStatus(req) };
     if (!lock.tryLock(20000))
       throw new Error("Another save is in progress. Please retry shortly.");
@@ -542,13 +576,15 @@ export function hospitalityRequest(req) {
     if (lock.hasLock()) lock.releaseLock();
   }
 }
-function flightStatus(req) {
-  const day = Utilities.formatDate(
+function flightStatus(req, adjacentDay = false) {
+  const today = Utilities.formatDate(
     new Date(),
     "America/New_York",
     "yyyy-MM-dd",
   );
-  if (req.day !== day)
+  const day = req.day;
+  const difference = (Date.parse(day + "T12:00:00Z") - Date.parse(today + "T12:00:00Z")) / 86400000;
+  if (day !== today && !(adjacentDay && Number.isFinite(difference) && Math.abs(difference) <= 1))
     return {
       available: false,
       reason: "Flight status is checked on the travel day.",
@@ -568,7 +604,7 @@ function flightStatus(req) {
     };
   const cache = CacheService.getScriptCache();
   const cacheKey = [
-    "flight-v2",
+    "flight-v3",
     number,
     day,
     req.direction,
@@ -616,6 +652,9 @@ function flightStatus(req) {
     estimated: latest.dateLocal || "",
     scheduledUtc: scheduled.dateUtc || "",
     estimatedUtc: latest.dateUtc || "",
+    flightId: String(leg.flightId || ""),
+    actualRunwayDepartureUtc: times.actualRunwayDeparture?.dateUtc || "",
+    expectedArrivalUtc: (times.estimatedRunwayArrival || times.estimatedGateArrival || times.scheduledGateArrival || {}).dateUtc || "",
     delayMinutes: typeof providerDelay === "number" && Number.isFinite(providerDelay) ? providerDelay : null,
     checkedAt: new Date().toISOString(),
   };

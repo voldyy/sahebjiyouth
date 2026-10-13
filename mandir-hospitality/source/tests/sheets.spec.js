@@ -2,6 +2,34 @@ import { test, expect } from "@playwright/test";
 
 import { createHarness, TEST_ADMIN_KEY } from './helpers/apps-script-harness.js';
 
+test('accommodation WhatsApp preview and send use one message per attendee', async ({ page }) => {
+  await setup(page);
+  const notifications=[];
+  await page.context().route('https://script.google.com/test-rpc',route=>{
+    const req=route.request().postDataJSON();
+    if(req.action!=='accommodation-notifications')return route.fallback();
+    notifications.push(req);
+    return route.fulfill({json:req.mode==='queue'?{ok:true,queued:2}:{ok:true,eligible:2,previewHash:'synthetic-preview',skippedMissingContact:0,attendees:[{name:'Test Parent',lodging:'Samarpan',roomNo:'203',phoneEnding:'0123',status:'ready'},{name:'Test Child',lodging:'Samarpan',roomNo:'203',phoneEnding:'0123',status:'ready'}]}});
+  });
+  await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Accommodations',exact:true}).click();
+  await page.getByRole('button',{name:'Send room details',exact:true}).click();
+  await expect(page.getByRole('dialog')).toContainText('Test Parent');
+  await expect(page.getByRole('dialog')).toContainText('Test Child');
+  await expect(page.getByRole('dialog')).toContainText('2 ready to send');
+  await page.getByRole('button',{name:'Send 2 messages',exact:true}).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(notifications.map(r=>r.mode)).toEqual(['preview','queue']);
+  expect(notifications[1].previewHash).toBe('synthetic-preview');
+  expect(notifications[1].accessKey).toBe(TEST_ADMIN_KEY);
+});
+
+test('view-only accommodation page does not offer WhatsApp sending', async ({page})=>{
+  await setup(page);
+  await page.goto('/#rooms?team=yogi-prasad');
+  await expect(page.getByRole('heading',{name:'Accommodations',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Send room details',exact:true})).toHaveCount(0);
+});
+
 async function setup(page, mode = "ok", attendeeRows = null) {
   const headers = Array(32).fill("");
   Object.assign(headers, { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" });

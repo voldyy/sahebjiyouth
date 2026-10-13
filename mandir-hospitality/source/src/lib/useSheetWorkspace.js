@@ -110,6 +110,10 @@ export function useSheetWorkspace(enabled) {
     role,
     ...state,
     refresh,
+    accommodationNotifications: async (request) => {
+      if (role !== "admin" || isTeamView()) throw new Error("Admin access is required to send accommodation messages.");
+      return sheetRequest({ action: "accommodation-notifications", ...request });
+    },
     addGuest: (guest, requestId) => save({ action: "guest", guest, requestId }),
     addWalkIn: (guest, assignment, requestId) => save({ action: "guest", guest, assignment, requestId }),
     refreshTripDisplay,

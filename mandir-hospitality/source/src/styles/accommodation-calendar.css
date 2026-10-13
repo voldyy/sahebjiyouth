@@ -174,3 +174,7 @@
 .stay-drop-error { background: #fff1e6; border: 1px solid #d38350; border-radius: 9px; }
 .stay-read-details { display: grid; gap: 12px; color: #326681; font-size: 14px; line-height: 1.6; }
 .stay-read-details strong { color: #193a50; }
+
+.notification-attendees { list-style: none; margin: 0; padding: 0; display: grid; gap: .7rem; max-height: 40vh; overflow: auto; }
+.notification-attendees li { display: grid; gap: .2rem; padding: .7rem .8rem; border: 1px solid var(--border, #dce5e8); border-radius: 10px; }
+.notification-attendees small { color: var(--text-muted, #637780); }

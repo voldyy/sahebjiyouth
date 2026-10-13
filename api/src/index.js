@@ -41,3 +41,13 @@ app.timer('yogiPrasadDaily', {
   useMonitor: true,
   handler: createYogiPrasadHandler({ table: registrationTable, env: process.env }),
 });
+
+const { createHospitalityWorker, createAccommodationHandler, SCHEDULE } = require('./hospitality-notifications');
+app.timer('hospitalityNotifications', {
+  schedule: SCHEDULE, runOnStartup: false, useMonitor: true,
+  handler: createHospitalityWorker({ table: registrationTable, env: process.env }),
+});
+app.http('hospitalityNotificationActions', {
+  route: 'hospitality-notifications', methods: ['POST'], authLevel: 'anonymous',
+  handler: createAccommodationHandler({ table: registrationTable }),
+});

@@ -65,7 +65,7 @@ export function guestsFromRows(rows) {
       id: counts.get(identity) === 1 ? identity : `${identity}:${index}`, sourceIdentity: identity, registrationId: text(row[0]),
       sourceWritable: counts.get(identity) === 1, sourceLodging: lodging,
       name, initials: name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase(),
-      group: "Individual", primaryContact: text(row[3]), relationship: text(row[9]),
+      group: "Individual", isPrimaryContact: /^(YES|Y|TRUE)$/i.test(text(row[2])), primaryContact: text(row[3]), relationship: text(row[9]),
       city: text(row[7]), phone: text(row[5]), count: 1,
       arrivalDate: arrival.date, arrivalTime: arrival.time,
       arrivalTimeKnown: typeof row[12] === "number" ? row[12] % 1 !== 0 : /(?:[T ]\d{1,2}:\d{2}|^Date\(\d+,\d+,\d+,\d+,\d+)/.test(text(row[12])),

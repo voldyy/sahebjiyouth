@@ -1,0 +1,84 @@
+{
+  "driver_assignment": {
+    "name": "mandir_driver_assignment",
+    "sid": "HXaeb57dd889b9dd2b91e815042ff1c4c6",
+    "language": "en",
+    "body": "Jai Swaminarayan {{1}}. You have been assigned this Mandir airport trip.\n\nPassenger: {{2}}\nPassenger phone: {{3}}\nTrip: {{4}}\nFlight: {{5}}\nScheduled time: {{6}}\nAirport: {{7}}\n\nPlease check the portal for complete trip details: https://www.sahebjiyouth.org/mandir-hospitality/#transport",
+    "samples": {
+      "1": "Raj Patel",
+      "2": "Alex Patel (Edison, NJ), with 2 accompanying passengers",
+      "3": "+12025550123",
+      "4": "Arrival / airport pickup",
+      "5": "United UA308",
+      "6": "Oct 20, 2026 at 4:30 PM EDT",
+      "7": "EWR"
+    }
+  },
+  "driver_airborne": {
+    "name": "mandir_driver_pickup_airborne",
+    "sid": "HX84e94639b75a238f779fc2931489cc9d",
+    "language": "en",
+    "body": "Jai Swaminarayan {{1}}. Your airport pickup passenger, {{2}}, has taken off on {{3}}.\n\nFlightStats now expects arrival at {{4}} at {{5}}. Passenger phone: {{6}}.\n\nPlease check the portal for current flight and pickup details: https://www.sahebjiyouth.org/mandir-hospitality/#transport",
+    "samples": {
+      "1": "Raj Patel",
+      "2": "Alex Patel (Edison, NJ)",
+      "3": "United UA308",
+      "4": "EWR",
+      "5": "Oct 20, 2026 at 4:30 PM EDT",
+      "6": "+12025550123"
+    }
+  },
+  "driver_dropoff": {
+    "name": "mandir_driver_dropoff_reminder",
+    "sid": "HX2d25c767dfb5b04b5aff2ece9287e5b4",
+    "language": "en",
+    "body": "Jai Swaminarayan {{1}}. This is a reminder for your assigned airport dropoff.\n\nPassenger: {{2}}\nPassenger phone: {{3}}\nFlight: {{4}}\nScheduled departure: {{5}}\nAirport: {{6}}\n\nPlease contact the passenger to agree on a reasonable time to leave for the airport. Check the portal for more details: https://www.sahebjiyouth.org/mandir-hospitality/#transport",
+    "samples": {
+      "1": "Raj Patel",
+      "2": "Alex Patel (Edison, NJ)",
+      "3": "+12025550123",
+      "4": "United UA308",
+      "5": "Oct 20, 2026 at 4:30 PM EDT",
+      "6": "EWR"
+    }
+  },
+  "passenger_arrival": {
+    "name": "mandir_passenger_arrival_driver",
+    "sid": "HXbc586dd1bd8f2c5cf80722d3c386ce63",
+    "language": "en",
+    "body": "Jai Swaminarayan {{1}}. Your Mandir airport pickup has been arranged for {{2}}, arriving at {{3}} on {{4}}.\n\nYour assigned driver is {{5}}. Driver phone: {{6}}.\n\nPlease contact your driver once you land to coordinate your pickup. We look forward to welcoming you to the Mandir.",
+    "samples": {
+      "1": "Alex Patel",
+      "2": "United UA308",
+      "3": "EWR",
+      "4": "Oct 20, 2026 at 4:30 PM EDT",
+      "5": "Raj Patel",
+      "6": "+12025550124"
+    }
+  },
+  "passenger_departure": {
+    "name": "mandir_passenger_departure_driver",
+    "sid": "HX586829a67477a62747bfc1beacc1179b",
+    "language": "en",
+    "body": "Jai Swaminarayan {{1}}. Your Mandir airport dropoff has been arranged for {{2}}, departing from {{3}} on {{4}}.\n\nYour assigned driver is {{5}}. Driver phone: {{6}}.\n\nPlease contact your driver to arrange a suitable time to leave for the airport.",
+    "samples": {
+      "1": "Alex Patel",
+      "2": "United UA308",
+      "3": "EWR",
+      "4": "Oct 20, 2026 at 4:30 PM EDT",
+      "5": "Raj Patel",
+      "6": "+12025550124"
+    }
+  },
+  "accommodation": {
+    "name": "mandir_accommodation_assignment",
+    "sid": "HX5e2aa1c79476223befbfa7b599c66454",
+    "language": "en",
+    "body": "Jai Swaminarayan {{1}}. We are eager to welcome you to the Mandir for your registered visit.\n\nYour lodging assignment is confirmed at {{2}}. Your room number is {{3}}.\n\nPlease contact Monica Matalia for further accommodation details.",
+    "samples": {
+      "1": "Alex Patel",
+      "2": "Samarpan",
+      "3": "203"
+    }
+  }
+}

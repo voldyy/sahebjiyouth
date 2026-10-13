@@ -3,5 +3,5 @@
   "functionTimeout": "00:02:00",
   "extensionBundle": { "id": "Microsoft.Azure.Functions.ExtensionBundle", "version": "[4.*, 5.0.0)" },
   "extensions": { "http": { "routePrefix": "api", "maxOutstandingRequests": 100, "maxConcurrentRequests": 30 } },
-  "logging": { "logLevel": { "default": "Warning", "Function": "Warning", "Function.yogiPrasadDaily": "Information", "Host.Results": "Warning" } }
+  "logging": { "logLevel": { "default": "Warning", "Function": "Warning", "Function.yogiPrasadDaily": "Information", "Function.hospitalityNotifications": "Information", "Host.Results": "Warning" } }
 }

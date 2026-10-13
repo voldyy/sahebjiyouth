@@ -1,5 +1,7 @@
 # Mandir Hospitality
 
+Transport and lodging WhatsApp notifications run in the existing Azure backend. Accommodations includes an admin-only **Send room details** preview/send action, with one message per attendee. See [notification setup and operations](notifications/HOSPITALITY.md).
+
 A responsive Google Sheets dashboard for Allentown Shri Swaminarayan Mandirji. Admins have Main, Transport, Accommodations, and Yogi Prasad. The Yogi Prasad team link opens an overall view-only version of all four tabs. The interface uses the supplied Anoopam Mission logo, sky blue, and soft orange.
 
 ## Development and release
