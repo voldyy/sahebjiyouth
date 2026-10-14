@@ -257,7 +257,7 @@ test('transport drivers, vehicles and assignments persist across independent bro
   await driverSelect(second).selectOption('');
   await expect(second.locator('.transport-plan').first().getByRole('alert')).toContainText('Another admin');
   await expect(driverSelect(second)).toHaveValue('Test Sevak');
-  await second.getByRole('button',{name:'Refresh',exact:true}).click();
+  await second.getByRole('button',{name:'Retry',exact:true}).click();
   await expect(vehicleSelect(second)).toHaveValue('Backup Van');
   await expect(second.locator('.transport-plan').getByRole('alert')).toHaveCount(0);
   await second.screenshot({path:test.info().outputPath('shared-transport-desktop.png'),fullPage:true,scale:'css'});
@@ -371,8 +371,7 @@ test('offsite rooms start provisional and retain guests when real numbers arrive
 test('housekeeping autoloads checkout beds and saves refreshed linens across reloads', async ({page}) => {
   const h = await openPlanner(page);
   h.setToday('2026-10-14');
-  await page.getByRole('button',{name:'Refresh',exact:true}).click();
-  await expect(page.getByRole('button',{name:'Refresh',exact:true})).toBeEnabled();
+  await page.reload();
   await page.getByRole('button',{name:'Housekeeping',exact:true}).click();
   await expect(page.locator('.stay-linen-card')).toHaveCount(2);
   const card=page.locator('.stay-linen-card').filter({hasText:'S204B1'});
@@ -382,7 +381,8 @@ test('housekeeping autoloads checkout beds and saves refreshed linens across rel
   await page.getByRole('button',{name:'Housekeeping',exact:true}).click();
   await expect(page.locator('.stay-linen-card')).toHaveCount(1);
   h.setToday('2026-10-17');
-  await page.getByRole('button',{name:'Refresh',exact:true}).click();
+  await page.reload();
+  await page.getByRole('button',{name:'Housekeeping',exact:true}).click();
   await expect(page.locator('.stay-linen-card').filter({hasText:'Bela Shah'})).toBeVisible();
   await page.screenshot({path:test.info().outputPath('housekeeping-mobile.png'),fullPage:true,scale:'css'});
 });

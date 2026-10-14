@@ -70,6 +70,8 @@ export default function App() {
   const sheetWorkspace = useSheetWorkspace(!demoMode);
   const [requestedRoute, setRoute] = useState(currentRoute);
   const isAdmin = demoMode || (sheetWorkspace.role === "admin" && !isTeamView());
+  const connectionIssue = sheetWorkspace.error || sheetWorkspace.sync?.error;
+  const connectionStatus = connectionIssue ? "Connection needs attention" : sheetWorkspace.saving ? "Saving changes" : sheetWorkspace.sync?.pending ? "Saved; syncing to Google Sheets" : `Connected · ${isAdmin ? "Admin access" : "View-only access"}`;
   const route = requestedRoute;
   const visibleNavigation = navigation;
   const routeLink = (id) => `#${id}${isTeamView() ? "?team=yogi-prasad" : ""}`;
@@ -286,11 +288,11 @@ export default function App() {
             <strong>{navigation.find((n) => n.id === route).label}</strong>
           </div>
           <div className="topbar-actions">
-            <span className="local-status">
-              <span className="status-dot" />
-              {!demoMode ? "Shared workspace" : storageError ? "Session only" : "Saved on this device"}
-            </span>
-            <span className="demo-label">{demoMode ? "DEMO" : "SHEET"}</span>
+            {demoMode ? <><span className="local-status"><span className="status-dot" />{storageError ? "Session only" : "Saved on this device"}</span><span className="demo-label">DEMO</span></> :
+              <span className={`local-status connection-indicator${connectionIssue ? " has-error" : sheetWorkspace.sync?.pending ? " is-syncing" : ""}`} role="status" aria-label={connectionStatus} title={`${connectionStatus}. Updates automatically.`}>
+                <span className="status-dot" aria-hidden="true" />
+                <span className="connection-label">{connectionIssue ? "Connection issue" : sheetWorkspace.saving ? "Saving…" : sheetWorkspace.sync?.pending ? "Syncing…" : isAdmin ? "Admin access" : "View-only access"}</span>
+              </span>}
             <span className="topbar-divider" />
             <button
               className="icon-button notification-button"
@@ -309,13 +311,10 @@ export default function App() {
             </button>
           </div>
         </header>
-        {!demoMode && <section className="sheet-connection" aria-label="Google Sheets connection">
-          <div><strong>Hospitality workspace</strong><p>{sheetWorkspace.loading ? "Refreshing attendee data…" : sheetWorkspace.refreshedAt ? `Last refreshed ${sheetWorkspace.refreshedAt.toLocaleTimeString()}` : "Waiting for source data"} · {sheetWorkspace.connected ? (isAdmin ? "Admin access" : "View-only access") : "Connecting…"}</p>
-            {sheetWorkspace.sync && <p role="status">{sheetWorkspace.sync.error || (sheetWorkspace.sync.pending ? `${sheetWorkspace.sync.pending} saved change${sheetWorkspace.sync.pending === 1 ? "" : "s"} syncing to Google Sheets…` : "Changes synced to Google Sheets")}</p>}
-          </div>
-          <button className="button secondary small" disabled={sheetWorkspace.loading || sheetWorkspace.saving} onClick={sheetWorkspace.refresh}>Refresh</button>
-          {sheetWorkspace.error && <p className="sheet-connection-error" role="alert">{sheetWorkspace.error}</p>}
-        </section>}
+        {!demoMode && connectionIssue && <div className="connection-alert" role="alert">
+          <CloudOff size={16} aria-hidden="true" /><span>{connectionIssue}</span>
+          {sheetWorkspace.error && <button className="button secondary small" disabled={sheetWorkspace.loading || sheetWorkspace.saving} onClick={sheetWorkspace.refresh}>Retry</button>}
+        </div>}
         {storageError && (
           <div className="storage-banner">
             <CloudOff size={16} /> Browser storage is unavailable. Changes will

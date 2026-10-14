@@ -99,6 +99,25 @@ export class HospitalityWorkspace extends DurableObject {
     const snapshot = engine.snapshot(book, "viewer");
     return { ok: true, ...snapshot, role, ...(role === "admin" ? { rows: book.data.Attendees } : {}), revision: this.meta("revision", "0"), sync: this.syncState() };
   }
+  async persistHousekeeping() {
+    const prepare = () => {
+      const before = this.load();
+      const book = tabularWorkspace(before);
+      engine.housekeeping(book, engine.roster(book).guests);
+      return { book, changes: changesBetween(before, book.data) };
+    };
+    if (!prepare().changes.length) return;
+    await this.schedule();
+    // Scheduling yields: re-read the current state before the atomic commit.
+    const { book, changes } = prepare();
+    if (!changes.length) return;
+    this.ctx.storage.transactionSync(() => {
+      this.persist(book.data);
+      this.ctx.storage.sql.exec("INSERT INTO outbox(changes,created_at) VALUES (?,?)", JSON.stringify(changes), new Date().toISOString());
+      this.putMeta("revision", Number(this.meta("revision", "0")) + 1);
+    });
+    this.tables = noHistory(book.data);
+  }
   async schedule(delay = 1000) {
     const due = Date.now() + delay;
     const existing = await this.ctx.storage.getAlarm();
@@ -124,7 +143,13 @@ export class HospitalityWorkspace extends DurableObject {
         if (!this.meta("initialized")) throw new Error("The database is being connected to the roster. Please retry shortly.");
       }
       const role = await matchesDigest(req.accessKey, this.meta("adminDigest")) ? "admin" : "viewer";
-      if (req.action === "snapshot") return this.result(role);
+      if (req.action === "snapshot") {
+        // Preserve the original admin-snapshot behavior: due linen tasks become
+        // durable before a subsequent assignment clear or direct source edit.
+        // Viewer snapshots continue to derive them without writing anything.
+        if (role === "admin") await this.persistHousekeeping();
+        return this.result(role);
+      }
       if (req.action === "trip-display-read") return { ok: true, tripDisplay: this.result(role).tripDisplay };
       if (req.action === "notification-authorize") return { ok: true, authorized: role === "admin" };
       if (["flight", "accommodation-notifications"].includes(req.action)) {

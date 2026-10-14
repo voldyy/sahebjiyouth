@@ -28,7 +28,9 @@ test("opens without a Google frame and confirms room saves with background Sheet
   await page.getByLabel('Bed number').selectOption('1');
   await page.getByRole('button', { name: 'Save assignment', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByText('1 saved change syncing to Google Sheets…')).toBeVisible();
+  await expect(page.getByRole('status', {name:'Saved; syncing to Google Sheets',exact:true})).toBeVisible();
+  await expect(page.locator('.sheet-connection')).toHaveCount(0);
+  await expect(page.getByRole('button', {name:'Refresh',exact:true})).toHaveCount(0);
   expect(requests.filter(r => r.action === 'lodging')).toHaveLength(1);
 });
 test("viewer links stay view-only through the database client", async ({ page }) => {
@@ -36,7 +38,7 @@ test("viewer links stay view-only through the database client", async ({ page })
   await page.getByRole('navigation', { name: 'Mobile navigation' }).getByRole('link', { name: 'Accommodations', exact: true }).click();
   await page.getByRole('button', { name: 'Guest list', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Assign lodging', exact: true })).toHaveCount(0);
-  await expect(page.getByText('View-only access', { exact: false })).toBeVisible();
+  await expect(page.getByRole('status', {name:'Connected · View-only access',exact:true})).toBeVisible();
 });
 test("lost save responses retry the same request once", async ({ page }) => {
   const { h } = await setup(page);

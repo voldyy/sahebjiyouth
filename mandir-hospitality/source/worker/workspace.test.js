@@ -120,3 +120,24 @@ test("HTTP API uses CORS, never caches guest records and does not expose admin s
   expect(denied.status).toBe(403);
   expect(await runInDurableObject(stub(), instance => instance.meta("initialized"))).toBe("yes");
 });
+
+test("admin snapshots retain due linen tasks through direct Sheet assignment removal; viewers do not write", async () => {
+  sheet.Attendees[1][12] = "2020-10-18";
+  sheet.Attendees[1][13] = "2020-10-20";
+  sheet.Attendees[1].splice(29, 3, "Samarpan", "204", "S204B1");
+  const viewer = await request({ action: "snapshot", accessKey: "" });
+  expect(viewer.housekeeping).toHaveLength(1);
+  expect(viewer.sync.pending).toBe(0);
+  const adminSnapshot = await request({ action: "snapshot" });
+  expect(adminSnapshot.housekeeping).toHaveLength(1);
+  expect(adminSnapshot.sync.pending).toBe(1);
+  expect((await request({ action: "snapshot" })).sync.pending).toBe(1);
+  sheet.Attendees[1].splice(29, 3, "", "", "");
+  await runDurableObjectAlarm(stub());
+  const imported = await request({ action: "snapshot" });
+  expect(imported.guests[0].roomCode).toBe("");
+  expect(imported.housekeeping).toHaveLength(1);
+  expect(imported.housekeeping[0].roomCode).toBe("S204B1");
+  expect(sheet.Housekeeping).toHaveLength(2);
+  expect(imported.sync.pending).toBe(0);
+});
