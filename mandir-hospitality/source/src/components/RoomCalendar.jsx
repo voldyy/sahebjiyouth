@@ -13,7 +13,7 @@ export function RoomStrip({ selected, onSelect, rooms = samarpanRooms, lodging =
   </section>;
 }
 
-export function RoomOverview({ guests, day, rooms, onAssign, onEdit, onWalkIn, saving, readOnly }) {
+export function RoomOverview({ guests, day, rooms, onAssign, onEdit, saving, readOnly }) {
   return <section className="stay-overview" aria-label="All rooms and daily assignments">{rooms.map(room => {
     const beds = Array.from({ length: room.beds }, (_, i) => ({ number: i + 1, state: bedState(guests, room.number, i + 1, { start: day, end: moveDay(day, 1) }, null, room.lodging || "Samarpan", rooms) }));
     const free = beds.filter(b => b.state.free).length;
@@ -26,7 +26,7 @@ export function RoomOverview({ guests, day, rooms, onAssign, onEdit, onWalkIn, s
           {state.occupants.length > 1 && <small>Double booking</small>}
           {state.free && (readOnly ? <span>Empty</span> : <button disabled={saving} onClick={() => onAssign(room.number, number, day)} aria-label={`Assign existing guest to room ${room.number} bed ${number}`}>Empty</button>)}
         </div>
-        {state.free && !readOnly && <button className="stay-overview-walkin" disabled={saving} onClick={() => onWalkIn(room.number, number, day)} aria-label={`Add walk-in to room ${room.number} bed ${number}`}><Plus size={15} /></button>}
+        {state.free && !readOnly && <button className="stay-overview-assign" disabled={saving} onClick={() => onAssign(room.number, number, day)} aria-label={`Assign guest to room ${room.number} bed ${number}`}><Plus size={15} /></button>}
       </div>)}</div>
     </article>;
   })}</section>;

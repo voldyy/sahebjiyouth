@@ -10,7 +10,7 @@
 .stay-overview-number { flex: 0 0 19px; color: #326681; font-weight: 700; }
 .stay-overview-bed > div { flex: 1; min-width: 0; }
 .stay-overview-bed > div > button { display: block; text-align: left; color: inherit; padding: 5px 0; line-height: 1.4; overflow-wrap: anywhere; }
-.stay-overview-walkin { display: flex; align-items: center; justify-content: center; min-width: 30px; min-height: 30px; border-radius: 6px; color: #743d22; background: #ffe5ce; }
+.stay-overview-assign { display: flex; align-items: center; justify-content: center; min-width: 30px; min-height: 30px; border-radius: 6px; color: #743d22; background: #ffe5ce; }
 .stay-overview-note { font-size: 12px; color: #326681; }
 .stay-overview-beds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .stay-overview-bed { grid-column: 1 / -1; }
@@ -116,6 +116,15 @@
 .stay-assignment-dates strong, .stay-assignment-dates span { display: block; }
 .stay-assignment-dates strong { font-size: 14px; }
 .stay-assignment-dates span { font-size: 11px; margin-top: 5px; line-height: 1.5; }
+.stay-chosen-bed { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #cce5f5; border-radius: 10px; background: #edf7fe; color: #244d65; }
+.stay-chosen-bed > svg { flex-shrink: 0; }
+.stay-chosen-bed > div { flex: 1; min-width: 0; }
+.stay-chosen-bed small, .stay-chosen-bed strong { display: block; overflow-wrap: anywhere; }
+.stay-chosen-bed small { font-size: 11px; margin-bottom: 4px; }
+.stay-chosen-bed strong { font-size: 14px; line-height: 1.4; }
+.stay-chosen-bed button { min-height: 44px; padding: 8px 4px; color: #326681; font-size: 12px; font-weight: 600; }
+.stay-walkin-link { display: flex; align-items: center; gap: 6px; align-self: flex-start; min-height: 44px; margin-top: -8px; color: #326681; font-size: 13px; font-weight: 600; }
+.stay-chosen-bed button:hover, .stay-walkin-link:hover { text-decoration: underline; }
 @media (min-width: 701px) and (max-width: 1200px) { .stay-daily-rooms { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) {
   .stay-workspace { gap: 18px; }

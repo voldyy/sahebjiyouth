@@ -179,6 +179,9 @@ test("daily view shows all 74 beds, date-filtered unassigned guests, and saves f
   await expect(page.getByText("1 unassigned guests need stay dates")).toBeVisible();
   await slot(page, "204", "2", "2026-10-11").getByRole("button").click();
   await page.getByLabel("Guest to assign").selectOption({ label: "Chirag Mehta · Oct 11 – Oct 17" });
+  await expect(page.locator('.stay-chosen-bed')).toContainText('Room 204 · Bed 2');
+  await expect(page.getByLabel("Room number (AE)")).toHaveCount(0);
+  await page.getByRole('button', { name: 'Change room or bed' }).click();
   await expect(page.getByLabel("Room number (AE)")).toHaveValue("204");
   await expect(page.getByLabel("Custom room code (AF)")).toHaveValue("S204B2");
   await expect(page.getByLabel("Bed number").locator('option[value="1"]')).toHaveJSProperty("disabled", true);
@@ -447,9 +450,12 @@ test('day overview adds a walk-in to the chosen bed and Main displays both dates
   await expect(page.locator('.stay-overview-bed')).toHaveCount(74);
   await expect(page.locator('.stay-overview')).toContainText('Bela Shah');
   await expect(page.locator('.stay-overview')).not.toContainText('Amal Patel');
-  await page.getByRole('button',{name:'Add walk-in to room 203 bed 2',exact:true}).click();
-  await expect(page.getByLabel('Walk-in room')).toHaveValue('203');
-  await expect(page.getByLabel('Walk-in bed')).toHaveValue('2');
+  await page.getByRole('button',{name:'Assign guest to room 203 bed 2',exact:true}).click();
+  await expect(page.getByLabel('Guest to assign')).toBeVisible();
+  await page.getByRole('button',{name:'New walk-in guest',exact:true}).click();
+  await expect(page.locator('.stay-chosen-bed')).toContainText('Room 203 · Bed 2');
+  await expect(page.getByLabel('Walk-in room')).toHaveCount(0);
+  await expect(page.getByLabel('Walk-in bed')).toHaveCount(0);
   await page.getByLabel('Guest name',{exact:true}).fill('Synthetic Walk In');
   await page.getByLabel('Checkout',{exact:true}).fill('2026-10-17');
   await page.getByLabel('Checkout',{exact:true}).press('Tab');
@@ -494,7 +500,7 @@ test('trip collapse defaults for past dates and synchronizes between admin and v
   await viewer.goto('http://localhost:5175/#rooms');
   await viewer.getByRole('button',{name:'Day at a glance',exact:true}).click();
   await expect(viewer.getByRole('button',{name:'Add walk-in',exact:true})).toHaveCount(0);
-  await expect(viewer.getByRole('button',{name:/Add walk-in to room/})).toHaveCount(0);
+  await expect(viewer.getByRole('button',{name:/Assign guest to room/})).toHaveCount(0);
   expect(h.rows.length).toBe(2);expect(h.writes).toHaveLength(0);
   await page.screenshot({path:test.info().outputPath('transport-shared-mobile.png'),fullPage:true});
   await context.close();
