@@ -15,7 +15,7 @@ import Sheet from "../components/Sheet";
 import AirlineLabel from "../components/AirlineLabel";
 import FlightStatus, { FlightTime, LiveFlightProvider } from "../components/FlightStatus";
 import { transportGroups, transportWithPlans, tripCollapsed } from "../lib/transport";
-import { allentownDay } from "../lib/housekeeping";
+import { dayCollapsed, dayCollapseAt, dayDisplayId } from "../lib/transportDisplay";
 import { driverFromUrl, driverUrl } from "../lib/driverLinks";
 import { fullDay } from "../lib/occupancy";
 import "../styles/operations.css";
@@ -32,12 +32,18 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
   const [newDriver, setNewDriver] = useState(""),
     [newVehicle, setNewVehicle] = useState("");
   const [displaySaving, setDisplaySaving] = useState("");
-  const [today, setToday] = useState(() => allentownDay());
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const tick = () => { if (!document.hidden) setNow(Date.now()); };
+    const timer = setInterval(tick, 1000);
+    document.addEventListener("visibilitychange", tick);
+    window.addEventListener("focus", tick);
+    return () => { clearInterval(timer); document.removeEventListener("visibilitychange", tick); window.removeEventListener("focus", tick); };
+  }, []);
   useEffect(() => {
     let active = true, refreshing = false;
     const sync = async () => {
       if (!active || document.hidden || refreshing) return;
-      setToday(allentownDay());
       refreshing = true;
       try { await workspace.refreshTripDisplay(); } catch { /* Keep the last confirmed display and retry. */ }
       finally { refreshing = false; }
@@ -269,16 +275,21 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
         </div>
       )}
       {error && !resources && <p role="alert" className="transport-save-error">{error}</p>}
-      {days.map((day) => (
-        <section key={day} className="transport-day">
-          <h2>
-            <CalendarDays size={18} />
-            {day ? fullDay(day) : "Date needed"}
+      {days.map((day) => {
+        const trips = filtered.filter(g => g.day === day);
+        const minimized = dayCollapsed(day, workspace.tripDisplay || [], now);
+        const past = dayCollapseAt(day, now) !== null;
+        return (
+        <section key={day} className={`transport-day${minimized ? " is-minimized" : ""}${past ? " is-past" : ""}`}>
+          <h2 className="transport-day-heading">
+            <button className="transport-day-toggle" aria-expanded={!minimized} aria-label={`${minimized ? "Expand" : "Collapse"} trips for ${day || "date needed"}`} disabled={!day || !workspace.connected || !!displaySaving} onClick={() => toggleTrip({ id: dayDisplayId(day) }, minimized)}>
+              <CalendarDays size={18} /><span>{day ? fullDay(day) : "Date needed"}</span>
+              <small>{displaySaving === dayDisplayId(day) ? "Saving…" : `${trips.length} ${trips.length === 1 ? "trip" : "trips"}`}</small><ChevronDown size={17} />
+            </button>
           </h2>
-          {filtered
-            .filter((g) => g.day === day)
+          {!minimized && trips
             .map((group) => {
-              const collapsed = tripCollapsed(group, workspace.tripDisplay || [], today);
+              const collapsed = tripCollapsed(group, workspace.tripDisplay || [], now);
               return (
               <LiveFlightProvider key={group.id} group={group} workspace={workspace}>
               <article className={`card transport-journey${group.method === "Flight" ? " transport-journey--flight" : ""}`}>
@@ -305,6 +316,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                       : "Unassigned"}
                   </span>
                 </div>
+                <div className="transport-journey-content">
                 <button className="transport-collapse" aria-expanded={!collapsed} aria-label={`${collapsed ? "Expand" : "Collapse"} ${group.flight || group.method} ${group.direction} ${group.day || "date needed"}`} disabled={!workspace.connected || !!displaySaving} onClick={() => toggleTrip(group, collapsed)}>
                   <span>{collapsed ? group.guests.map(guest => guest.name).join(", ") : "Trip details"}</span><ChevronDown size={18} /><small>{displaySaving === group.id ? "Saving…" : collapsed ? "Expand" : "Collapse"}</small>
                 </button>
@@ -398,11 +410,12 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                     )}
                   </div>
                 </div>}
+                </div>
               </article>
               </LiveFlightProvider>
             ); })}
         </section>
-      ))}
+      ); })}
       {resources && !readOnly && (
         <Sheet
           title="Drivers & vehicles"

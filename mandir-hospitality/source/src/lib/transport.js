@@ -1,9 +1,6 @@
 // One attendee per roster row. Group flight/bus services by day and direction.
 export const EMPTY_TRANSPORT = { assignments: [], drivers: [], vehicles: [] };
-export function tripCollapsed(group, display, today) {
-  const saved = display.find(entry => entry.id === group.id);
-  return saved ? saved.collapsed : group.plan?.status === "Completed" || (!!group.day && group.day < today);
-}
+export { tripCollapsed } from "./transportDisplay.js";
 export function transportGroups(guests, direction) {
   const groups = new Map();
   for (const guest of guests) {
@@ -59,6 +56,8 @@ export function transportGroups(guests, direction) {
   return [...groups.values()]
     .map((group) => ({
       ...group,
+      timeKnown: group.guests.every(g => (direction === "Arrivals" ? g.arrivalTimeKnown : g.departureTimeKnown) !== false),
+      latestTime: group.guests.map(g => direction === "Arrivals" ? g.arrivalTime : g.departureTime).filter(Boolean).sort().at(-1) || "",
       signature: JSON.stringify(
         group.guests
           .map((g) => [

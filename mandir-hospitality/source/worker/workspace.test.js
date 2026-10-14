@@ -5,6 +5,7 @@ import { TABLES } from "../shared/workspace-engine.js";
 import { overlayChanges } from "../shared/workspace-sync.js";
 import { guestsFromRows } from "../src/lib/sheets.js";
 import { transportGroups } from "../src/lib/transport.js";
+import { dayDisplayId } from "../src/lib/transportDisplay.js";
 
 const admin = "synthetic-admin-key";
 let sheet, ack, unavailable, calls, holdSync, syncingStarted;
@@ -119,6 +120,26 @@ test("HTTP API uses CORS, never caches guest records and does not expose admin s
   const denied = await exports.default.fetch(new Request("https://api.test/api", { headers: { Origin: "https://unrelated.test" } }));
   expect(denied.status).toBe(403);
   expect(await runInDurableObject(stub(), instance => instance.meta("initialized"))).toBe("yes");
+});
+
+test("shared day display timestamps survive SQLite reload and mirror without touching operational fields", async () => {
+  await request({action:'snapshot'});
+  const original=structuredClone(sheet.Attendees);
+  const id=dayDisplayId('2026-10-18');
+  const data={action:'trip-display',id,collapsed:false,accessKey:'',requestId:crypto.randomUUID()};
+  const saved=await request(data);
+  expect(saved.ok).toBe(true);
+  expect(saved.tripDisplay[0]).toMatchObject({id,collapsed:false});
+  expect(saved.tripDisplay[0].updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  expect((await request(data)).tripDisplay).toEqual(saved.tripDisplay);
+  await runInDurableObject(stub(), instance => { instance.tables=null; });
+  expect((await request({action:'trip-display-read',accessKey:''})).tripDisplay).toEqual(saved.tripDisplay);
+  await runDurableObjectAlarm(stub());
+  expect(sheet['Transport Display'][1][2]).toBe(saved.tripDisplay[0].revision);
+  expect(sheet.Attendees).toEqual(original);
+  expect(sheet['Transport Assignments']).toHaveLength(1);
+  expect((await request({...data,id:dayDisplayId('2030-01-01'),requestId:crypto.randomUUID()})).ok).toBe(false);
+  expect((await request({action:'trip-display',id,collapsed:true,requestId:crypto.randomUUID()})).tripDisplay[0].collapsed).toBe(true);
 });
 
 test("admin snapshots retain due linen tasks through direct Sheet assignment removal; viewers do not write", async () => {

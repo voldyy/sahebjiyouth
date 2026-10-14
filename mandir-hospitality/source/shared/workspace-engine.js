@@ -12,6 +12,7 @@ import {
   stayRange,
 } from "../src/lib/occupancy.js";
 import { transportGroups } from "../src/lib/transport.js";
+import { dayDisplayId, displayChangedAt } from "../src/lib/transportDisplay.js";
 import { OFFSITE_HOTELS, offsiteRoomFor } from "../src/lib/offsite.js";
 import { checkoutEvents } from "../src/lib/housekeeping.js";
 export const TABLES = {
@@ -111,17 +112,19 @@ function hotelRooms(book, readOnly = false) {
   return table(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
 }
 function tripDisplay(book) {
-  return table(book, "Transport Display", true).rows.slice(1).filter(r => r[0]).map(r => ({ id: r[0], collapsed: r[1] === "Yes", revision: r[2] }));
+  return table(book, "Transport Display", true).rows.slice(1).filter(r => r[0]).map(r => ({ id: r[0], collapsed: r[1] === "Yes", revision: r[2], updatedAt: displayChangedAt(r[2]) }));
 }
 function setTripDisplay(book, req) {
   // Viewers can change presentation only. Resolve the journey against the
   // roster and never accept assignment fields through this action.
-  if (typeof req.collapsed !== "boolean" || !["Arrivals", "Departures"].some(direction => transportGroups(roster(book).guests, direction).some(g => g.id === req.id))) throw new Error("This trip changed. Refresh before changing its display.");
+  const guests = roster(book).guests;
+  const valid = ["Arrivals", "Departures"].some(direction => transportGroups(guests, direction).some(g => g.id === req.id || (g.day && dayDisplayId(g.day) === req.id)));
+  if (typeof req.collapsed !== "boolean" || !valid) throw new Error("This trip changed. Refresh before changing its display.");
   const current = table(book, "Transport Display");
   const matches = current.rows.map((row, index) => ({ row, index })).filter(x => x.index > 0 && x.row[0] === req.id);
   if (matches.length > 1) throw new Error("Duplicate trip display records. Review the sheet.");
   if (matches[0]?.row[3] === req.requestId) return;
-  const values = [req.id, req.collapsed ? "Yes" : "No", runtime.uuid(), req.requestId];
+  const values = [req.id, req.collapsed ? "Yes" : "No", `${new Date().toISOString()}|${runtime.uuid()}`, req.requestId];
   writeRow(current.sheet, matches[0] ? matches[0].index + 1 : current.sheet.getLastRow() + 1, values);
   runtime.flush();
   if (!equal(table(book, "Transport Display").rows.find(r => r[0] === req.id), values)) throw new Error("Trip display could not be confirmed. Refresh before retrying.");

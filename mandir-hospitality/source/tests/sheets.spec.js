@@ -475,6 +475,7 @@ test('trip collapse defaults for past dates and synchronizes between admin and v
   Object.assign(row,{11:'BUS',14:'ABE',16:'ABE'});
   const h=await setup(page,'ok',[row]);
   await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Transport',exact:true}).click();
+  await page.getByRole('button',{name:'Expand trips for 2000-10-11',exact:true}).click();
   const past=page.getByRole('button',{name:'Expand Bus Arrivals 2000-10-11',exact:true});
   await expect(past).toHaveAttribute('aria-expanded','false');
   await expect(page.getByRole('button',{name:'Collapse Bus Departures 2099-10-15',exact:true})).toHaveAttribute('aria-expanded','true');
@@ -487,6 +488,9 @@ test('trip collapse defaults for past dates and synchronizes between admin and v
   await expect(viewer.getByRole('button',{name:'Collapse Bus Arrivals 2000-10-11',exact:true})).toHaveAttribute('aria-expanded','true',{timeout:15000});
   await viewer.getByRole('button',{name:'Collapse Bus Arrivals 2000-10-11',exact:true}).click();
   await expect(page.getByRole('button',{name:'Expand Bus Arrivals 2000-10-11',exact:true})).toHaveAttribute('aria-expanded','false',{timeout:15000});
+  await viewer.getByRole('button',{name:'Collapse trips for 2000-10-11',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Expand trips for 2000-10-11',exact:true})).toHaveAttribute('aria-expanded','false',{timeout:15000});
+  await expect(page.getByRole('button',{name:'Expand Bus Arrivals 2000-10-11',exact:true})).toHaveCount(0);
   await viewer.goto('http://localhost:5175/#rooms');
   await viewer.getByRole('button',{name:'Day at a glance',exact:true}).click();
   await expect(viewer.getByRole('button',{name:'Add walk-in',exact:true})).toHaveCount(0);

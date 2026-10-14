@@ -235,6 +235,15 @@ var Hospitality = (() => {
     return values;
   }
 
+  // src/lib/transportDisplay.js
+  var HOUR = 60 * 60 * 1e3;
+  var formatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  var dayDisplayId = (day) => JSON.stringify(["Day", day]);
+  function displayChangedAt(revision) {
+    const stamp = String(revision || "").split("|")[0];
+    return /^\d{4}-\d{2}-\d{2}T/.test(stamp) && Number.isFinite(Date.parse(stamp)) ? stamp : "";
+  }
+
   // src/lib/transport.js
   function transportGroups(guests, direction) {
     const groups = /* @__PURE__ */ new Map();
@@ -274,6 +283,8 @@ var Hospitality = (() => {
     }
     return [...groups.values()].map((group) => ({
       ...group,
+      timeKnown: group.guests.every((g) => (direction === "Arrivals" ? g.arrivalTimeKnown : g.departureTimeKnown) !== false),
+      latestTime: group.guests.map((g) => direction === "Arrivals" ? g.arrivalTime : g.departureTime).filter(Boolean).sort().at(-1) || "",
       signature: JSON.stringify(
         group.guests.map((g) => [
           g.sourceIdentity,
@@ -400,15 +411,17 @@ reply({ ready: true });
       return table2(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
     }
     function tripDisplay2(book) {
-      return table2(book, "Transport Display", true).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], collapsed: r[1] === "Yes", revision: r[2] }));
+      return table2(book, "Transport Display", true).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], collapsed: r[1] === "Yes", revision: r[2], updatedAt: displayChangedAt(r[2]) }));
     }
     function setTripDisplay(book, req) {
-      if (typeof req.collapsed !== "boolean" || !["Arrivals", "Departures"].some((direction) => transportGroups(roster2(book).guests, direction).some((g) => g.id === req.id))) throw new Error("This trip changed. Refresh before changing its display.");
+      const guests = roster2(book).guests;
+      const valid = ["Arrivals", "Departures"].some((direction) => transportGroups(guests, direction).some((g) => g.id === req.id || g.day && dayDisplayId(g.day) === req.id));
+      if (typeof req.collapsed !== "boolean" || !valid) throw new Error("This trip changed. Refresh before changing its display.");
       const current = table2(book, "Transport Display");
       const matches = current.rows.map((row, index) => ({ row, index })).filter((x) => x.index > 0 && x.row[0] === req.id);
       if (matches.length > 1) throw new Error("Duplicate trip display records. Review the sheet.");
       if (matches[0]?.row[3] === req.requestId) return;
-      const values = [req.id, req.collapsed ? "Yes" : "No", runtime.uuid(), req.requestId];
+      const values = [req.id, req.collapsed ? "Yes" : "No", `${(/* @__PURE__ */ new Date()).toISOString()}|${runtime.uuid()}`, req.requestId];
       writeRow(current.sheet, matches[0] ? matches[0].index + 1 : current.sheet.getLastRow() + 1, values);
       runtime.flush();
       if (!equal(table2(book, "Transport Display").rows.find((r) => r[0] === req.id), values)) throw new Error("Trip display could not be confirmed. Refresh before retrying.");
