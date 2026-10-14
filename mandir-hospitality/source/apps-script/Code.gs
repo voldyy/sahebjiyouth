@@ -51,8 +51,8 @@ var Hospitality = (() => {
   // src/lib/offsite.js
   var OFFSITE_HOTELS = ["Comfort Inn", "Hilton Garden Inn"];
   var offsiteBedCode = (room, bed) => `O${room.id}B${bed}`;
-  function offsiteRoomFor(guest2, rooms) {
-    return rooms.find((room) => room.lodging === guest2.lodging && new RegExp(`^O${room.id}B[1-9]\\d*$`).test(guest2.roomCode || ""));
+  function offsiteRoomFor(guest, rooms) {
+    return rooms.find((room) => room.lodging === guest.lodging && new RegExp(`^O${room.id}B[1-9]\\d*$`).test(guest.roomCode || ""));
   }
 
   // src/lib/occupancy.js
@@ -64,59 +64,59 @@ var Hospitality = (() => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   }
   var WEEK_STARTS = Array.from({ length: 6 }, (_, i) => moveDay(FIRST_STAY_DAY, i * 7));
-  function needsLodging(guest2) {
-    return guest2.stay !== "Day visitor" && !["Cancelled", "Departed"].includes(guest2.status);
+  function needsLodging(guest) {
+    return guest.stay !== "Day visitor" && !["Cancelled", "Departed"].includes(guest.status);
   }
-  function stayRange(guest2) {
-    const start = guest2.accommodationIn || guest2.arrivalDate || "";
-    const end = guest2.accommodationOut || guest2.departureDate || "";
+  function stayRange(guest) {
+    const start = guest.accommodationIn || guest.arrivalDate || "";
+    const end = guest.accommodationOut || guest.departureDate || "";
     const valid = (day) => /^\d{4}-\d{2}-\d{2}$/.test(day) && !Number.isNaN(localDay(day).getTime()) && moveDay(day, 0) === day;
     return valid(start) && valid(end) && end > start ? { start, end } : null;
   }
   function overlaps(a, b) {
     return !!a && !!b && a.start < b.end && b.start < a.end;
   }
-  function bedForGuest(guest2, rooms = []) {
-    if (guest2.lodging !== "Samarpan") {
-      const room = offsiteRoomFor(guest2, rooms);
-      const bed2 = Number(String(guest2.roomCode || "").match(/B([1-9]\d*)$/)?.[1]);
+  function bedForGuest(guest, rooms = []) {
+    if (guest.lodging !== "Samarpan") {
+      const room = offsiteRoomFor(guest, rooms);
+      const bed2 = Number(String(guest.roomCode || "").match(/B([1-9]\d*)$/)?.[1]);
       return room && bed2 >= 1 && bed2 <= room.beds ? bed2 : null;
     }
-    const bed = String(guest2.roomCode || "").match(/^S\d+B([1-9]\d*)$/)?.[1];
-    return bed && samarpanRoomCode(guest2.roomNo, bed) === guest2.roomCode ? Number(bed) : null;
+    const bed = String(guest.roomCode || "").match(/^S\d+B([1-9]\d*)$/)?.[1];
+    return bed && samarpanRoomCode(guest.roomNo, bed) === guest.roomCode ? Number(bed) : null;
   }
   var sameGuest = (a, b) => (a.sourceIdentity || a.id) === (b.sourceIdentity || b.id);
-  function bedState(guests, roomNo, bedNo, range, exceptGuest = null, lodging2 = "Samarpan", rooms = []) {
+  function bedState(guests, roomNo, bedNo, range, exceptGuest = null, lodging = "Samarpan", rooms = []) {
     const occupants = [];
     const uncertain = [];
-    for (const guest2 of guests) {
-      if (!needsLodging(guest2) || guest2.lodging !== lodging2 || exceptGuest && sameGuest(guest2, exceptGuest)) continue;
-      if (lodging2 === "Samarpan") {
-        if (String(guest2.roomNo) !== String(roomNo)) continue;
+    for (const guest of guests) {
+      if (!needsLodging(guest) || guest.lodging !== lodging || exceptGuest && sameGuest(guest, exceptGuest)) continue;
+      if (lodging === "Samarpan") {
+        if (String(guest.roomNo) !== String(roomNo)) continue;
       } else {
-        const target = rooms.find((r) => r.id === roomNo && r.lodging === lodging2);
-        const assigned = offsiteRoomFor(guest2, rooms);
-        if (!target || (assigned ? assigned.id !== target.id : !target.roomNo || guest2.roomNo !== target.roomNo)) continue;
+        const target = rooms.find((r) => r.id === roomNo && r.lodging === lodging);
+        const assigned = offsiteRoomFor(guest, rooms);
+        if (!target || (assigned ? assigned.id !== target.id : !target.roomNo || guest.roomNo !== target.roomNo)) continue;
       }
-      const stay = stayRange(guest2);
+      const stay = stayRange(guest);
       if (stay && !overlaps(stay, range)) continue;
-      const bed = bedForGuest(guest2, rooms);
+      const bed = bedForGuest(guest, rooms);
       if (bed !== null && bed !== Number(bedNo)) continue;
-      if (!stay || bed === null) uncertain.push(guest2);
-      else occupants.push(guest2);
+      if (!stay || bed === null) uncertain.push(guest);
+      else occupants.push(guest);
     }
     return { occupants, uncertain, free: occupants.length === 0 && uncertain.length === 0 };
   }
-  function assignmentIssue(guests, guest2, assignment, rooms = []) {
+  function assignmentIssue(guests, guest, assignment, rooms = []) {
     if (assignment.lodging !== "Samarpan" && !OFFSITE_HOTELS.includes(assignment.lodging)) return "";
     const hotelRoom = offsiteRoomFor(assignment, rooms);
     if (assignment.lodging !== "Samarpan" && !hotelRoom) return "Choose a hotel room and bed from the Offsite inventory.";
-    const range = stayRange(guest2);
+    const range = stayRange(guest);
     if (!range) return "Add valid accommodation or arrival/departure dates in the source sheet before assigning a bed.";
     const bed = bedForGuest(assignment, rooms);
     if (!bed) return "Choose a valid room and bed.";
     if (hotelRoom && (assignment.roomNo !== hotelRoom.roomNo || assignment.roomCode !== offsiteBedCode(hotelRoom, bed))) return "The hotel room changed. Refresh before assigning.";
-    const state = bedState(guests, hotelRoom?.id || assignment.roomNo, bed, range, guest2, assignment.lodging, rooms);
+    const state = bedState(guests, hotelRoom?.id || assignment.roomNo, bed, range, guest, assignment.lodging, rooms);
     if (state.uncertain.length) return `Room ${assignment.roomNo} has an assignment with missing dates or an unrecognized bed code. Review it before assigning this bed.`;
     if (state.occupants.length) return `${assignment.roomCode} is occupied during this guest\u2019s stay. Choose another bed.`;
     return "";
@@ -170,7 +170,7 @@ var Hospitality = (() => {
     attendees.forEach((row) => counts.set(attendeeKey(row), (counts.get(attendeeKey(row)) || 0) + 1));
     return attendees.map((row, index) => {
       const identity = attendeeKey(row);
-      const lodging2 = lodgingValues(row);
+      const lodging = lodgingValues(row);
       const arrival = sheetDate(row[12]);
       const departure = sheetDate(row[13]);
       const lodgingIn = sheetDate(row[21]);
@@ -183,7 +183,7 @@ var Hospitality = (() => {
         sourceIdentity: identity,
         registrationId: text(row[0]),
         sourceWritable: counts.get(identity) === 1,
-        sourceLodging: lodging2,
+        sourceLodging: lodging,
         name,
         initials: name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase(),
         group: "Individual",
@@ -208,11 +208,11 @@ var Hospitality = (() => {
         accommodationOut: lodgingOut.date,
         status: /^cancel/i.test(rsvp) ? "Cancelled" : /^(departed|checked out)$/i.test(rsvp) ? "Departed" : "Registered",
         rsvpStatus: rsvp,
-        stay: lodging2[0] || (/^(NO|N|FALSE)$/.test(overnight) ? "Day visitor" : "Pending lodging"),
-        lodging: lodging2[0],
-        roomNo: lodging2[1],
-        roomCode: lodging2[2],
-        room: lodging2[2] || lodging2[1],
+        stay: lodging[0] || (/^(NO|N|FALSE)$/.test(overnight) ? "Day visitor" : "Pending lodging"),
+        lodging: lodging[0],
+        roomNo: lodging[1],
+        roomCode: lodging[2],
+        room: lodging[2] || lodging[1],
         transport: /^(YES|Y|TRUE)$/i.test(text(row[18])) ? "Needed" : "Not needed",
         travel: [text(row[11]), text(row[14]), text(row[15])].filter(Boolean).join(" \xB7 "),
         diet: text(row[23]),
@@ -238,24 +238,24 @@ var Hospitality = (() => {
   // src/lib/transport.js
   function transportGroups(guests, direction) {
     const groups = /* @__PURE__ */ new Map();
-    for (const guest2 of guests) {
-      if (guest2.status === "Cancelled") continue;
+    for (const guest of guests) {
+      if (guest.status === "Cancelled") continue;
       const arrival = direction === "Arrivals";
-      const method = !arrival && /bus\s*\(arrival\)/i.test(guest2.travelMethod || "") ? "" : guest2.travelMethod || "";
+      const method = !arrival && /bus\s*\(arrival\)/i.test(guest.travelMethod || "") ? "" : guest.travelMethod || "";
       const isBus = /bus/i.test(method);
-      const flight = isBus ? "" : (arrival ? guest2.arrivalFlight : guest2.departureFlight)?.trim().toUpperCase().replace(/\s+/g, "") || "";
-      const airport = (arrival ? guest2.arrivalAirport : guest2.departureAirport)?.trim().toUpperCase() || "";
-      if (!/flight|air|bus/i.test(method) && !flight && guest2.transport !== "Needed")
+      const flight = isBus ? "" : (arrival ? guest.arrivalFlight : guest.departureFlight)?.trim().toUpperCase().replace(/\s+/g, "") || "";
+      const airport = (arrival ? guest.arrivalAirport : guest.departureAirport)?.trim().toUpperCase() || "";
+      if (!/flight|air|bus/i.test(method) && !flight && guest.transport !== "Needed")
         continue;
-      const day = (arrival ? guest2.arrivalDate : guest2.departureDate) || "";
-      const time = (arrival ? guest2.arrivalTime : guest2.departureTime) || "";
+      const day = (arrival ? guest.arrivalDate : guest.departureDate) || "";
+      const time = (arrival ? guest.arrivalTime : guest.departureTime) || "";
       const mode = isBus ? "Bus" : flight || /flight|air/i.test(method) ? "Flight" : "Pickup";
       const id = JSON.stringify([
         direction,
         day,
         mode,
         airport,
-        flight || guest2.registrationId
+        flight || guest.registrationId
       ]);
       if (!groups.has(id))
         groups.set(id, {
@@ -270,7 +270,7 @@ var Hospitality = (() => {
         });
       const group = groups.get(id);
       if (time && (!group.time || time < group.time)) group.time = time;
-      group.guests.push(guest2);
+      group.guests.push(guest);
     }
     return [...groups.values()].map((group) => ({
       ...group,
@@ -296,10 +296,10 @@ var Hospitality = (() => {
 
   // src/lib/housekeeping.js
   function checkoutEvents(guests, today) {
-    return guests.flatMap((guest2) => {
-      const stay = stayRange(guest2), bed = bedForGuest(guest2);
-      if (guest2.lodging !== "Samarpan" || !bed || !stay || guest2.status === "Cancelled" || stay.end > today) return [];
-      return [{ id: JSON.stringify([guest2.sourceIdentity || guest2.id, guest2.roomCode, stay.start, stay.end]), roomNo: guest2.roomNo, bed, roomCode: guest2.roomCode, name: guest2.name, checkout: stay.end, refreshedAt: "" }];
+    return guests.flatMap((guest) => {
+      const stay = stayRange(guest), bed = bedForGuest(guest);
+      if (guest.lodging !== "Samarpan" || !bed || !stay || guest.status === "Cancelled" || stay.end > today) return [];
+      return [{ id: JSON.stringify([guest.sourceIdentity || guest.id, guest.roomCode, stay.start, stay.end]), roomNo: guest.roomNo, bed, roomCode: guest.roomCode, name: guest.name, checkout: stay.end, refreshedAt: "" }];
     });
   }
 
@@ -317,7 +317,7 @@ reply({ ready: true });
 <\/script></body></html>
 `;
 
-  // apps-script/server.js
+  // shared/workspace-engine.js
   var TABLES = {
     "Transport Display": ["Journey ID", "Collapsed", "Revision", "Request ID"],
     "Offsite Rooms": ["ID", "Hotel", "Room number", "Beds", "Planning label", "Revision"],
@@ -348,375 +348,479 @@ reply({ ready: true });
       "After"
     ]
   };
-  var text2 = (value) => String(value ?? "").trim();
-  var equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-  var literal = (value) => {
-    const s = String(value ?? "");
-    return /^[=+\-@']/.test(s) ? "'" + s : s;
-  };
+  function createWorkspaceEngine(runtime) {
+    const text2 = (value) => String(value ?? "").trim();
+    const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    const literal2 = (value) => {
+      const s = String(value ?? "");
+      return /^[=+\-@']/.test(s) ? "'" + s : s;
+    };
+    function table2(book, name, readOnly = false) {
+      const expected = TABLES[name];
+      let sheet = book.getSheetByName(name);
+      if (!sheet && readOnly) return { sheet: null, rows: [expected] };
+      if (!sheet) {
+        sheet = book.insertSheet(name);
+        sheet.getRange(1, 1, 1, expected.length).setValues([expected]).setBackground("#335b4b").setFontColor("#ffffff").setFontWeight("bold");
+        sheet.setFrozenRows(1);
+        sheet.setColumnWidths(1, expected.length, 160);
+      }
+      const rows = sheet.getDataRange().getDisplayValues();
+      const resourceHeaders = name === "Transport Resources" && equal(rows[0].slice(0, 4), expected) && (rows[0].length === 4 || rows[0].length === 5 && rows[0][4] === "Phone number");
+      if (!resourceHeaders && !equal(rows[0], expected))
+        throw new Error(
+          `The ${name} headers changed. Restore its columns before saving.`
+        );
+      return { sheet, rows };
+    }
+    function roster2(book) {
+      const sheet = book.getSheets().find((s) => s.getSheetId() === 0);
+      if (!sheet) throw new Error("The attendee tab (gid 0) is missing.");
+      const rows = sheet.getRange(1, 1, Math.max(1, sheet.getLastRow()), 32).getDisplayValues();
+      return { sheet, rows, guests: guestsFromRows(rows) };
+    }
+    function plans2(book, readOnly = false) {
+      const rows = table2(book, "Transport Assignments", readOnly).rows.slice(1).filter((r) => r[0]);
+      const resources = table2(book, "Transport Resources", readOnly).rows.slice(1).filter((r) => r[2] === "Yes");
+      return {
+        assignments: rows.map((r) => ({
+          id: r[0],
+          driver: r[6],
+          vehicle: r[7],
+          pickup: r[8],
+          status: r[9],
+          notes: r[10],
+          revision: r[11]
+        })),
+        drivers: resources.filter((r) => r[0] === "Driver").map((r) => r[1]),
+        vehicles: resources.filter((r) => r[0] === "Vehicle").map((r) => r[1])
+      };
+    }
+    function hotelRooms2(book, readOnly = false) {
+      return table2(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
+    }
+    function tripDisplay2(book) {
+      return table2(book, "Transport Display", true).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], collapsed: r[1] === "Yes", revision: r[2] }));
+    }
+    function setTripDisplay(book, req) {
+      if (typeof req.collapsed !== "boolean" || !["Arrivals", "Departures"].some((direction) => transportGroups(roster2(book).guests, direction).some((g) => g.id === req.id))) throw new Error("This trip changed. Refresh before changing its display.");
+      const current = table2(book, "Transport Display");
+      const matches = current.rows.map((row, index) => ({ row, index })).filter((x) => x.index > 0 && x.row[0] === req.id);
+      if (matches.length > 1) throw new Error("Duplicate trip display records. Review the sheet.");
+      if (matches[0]?.row[3] === req.requestId) return;
+      const values = [req.id, req.collapsed ? "Yes" : "No", runtime.uuid(), req.requestId];
+      writeRow(current.sheet, matches[0] ? matches[0].index + 1 : current.sheet.getLastRow() + 1, values);
+      runtime.flush();
+      if (!equal(table2(book, "Transport Display").rows.find((r) => r[0] === req.id), values)) throw new Error("Trip display could not be confirmed. Refresh before retrying.");
+    }
+    function housekeeping2(book, guests, readOnly = false) {
+      const current = table2(book, "Housekeeping", readOnly);
+      const today = runtime.today();
+      const due = checkoutEvents(guests, today);
+      const dueIds = new Set(due.map((e) => e.id));
+      const known = new Set(current.rows.slice(1).map((r) => r[0]));
+      current.rows.forEach((r, i) => {
+        if (!i || !r[0] || r[6]) return;
+        let identity;
+        try {
+          identity = JSON.parse(r[0])[0];
+        } catch {
+          return;
+        }
+        const guest2 = guests.find((g) => g.sourceIdentity === identity && g.roomCode === r[3]);
+        const state = dueIds.has(r[0]) ? "Pending" : guest2 && stayRange(guest2) ? "Superseded" : r[8];
+        if (state !== r[8]) {
+          if (readOnly) current.rows[i] = [...r.slice(0, 8), state];
+          else writeRow(current.sheet, i + 1, [...r.slice(0, 8), state]);
+        }
+      });
+      for (const event of due) {
+        if (known.has(event.id)) continue;
+        const values = [event.id, event.roomNo, String(event.bed), event.roomCode, event.name, event.checkout, "", "", "Pending"];
+        if (readOnly) current.rows.push(values);
+        else writeRow(current.sheet, current.sheet.getLastRow() + 1, values);
+        known.add(event.id);
+      }
+      return (readOnly ? current.rows : table2(book, "Housekeeping").rows).slice(1).filter((r) => r[0] && r[8] !== "Superseded").map((r) => ({ id: r[0], roomNo: r[1], bed: Number(r[2]), roomCode: r[3], name: r[4], checkout: r[5], refreshedAt: r[6] }));
+    }
+    function snapshot2(book, role) {
+      const current = roster2(book);
+      if (role !== "admin") return {
+        role: "viewer",
+        tripDisplay: tripDisplay2(book),
+        // All dashboard views use normalized display data, never the raw source rows.
+        guests: current.guests,
+        transport: plans2(book, true),
+        offsiteRooms: hotelRooms2(book, true),
+        housekeeping: housekeeping2(book, current.guests, true),
+        // Retain the meal projection for already-open versions of the team page.
+        kitchenGuests: current.guests.map((g, index) => ({ sourceIdentity: `meal-${index}`, name: g.name, city: g.city, count: g.count, arrivalDate: g.arrivalDate, arrivalTime: g.arrivalTime, departureDate: g.departureDate, status: g.status, stay: g.stay === "Day visitor" ? "Day visitor" : "Overnight" })),
+        refreshedAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      return {
+        role,
+        tripDisplay: tripDisplay2(book),
+        rows: current.rows,
+        transport: plans2(book),
+        offsiteRooms: hotelRooms2(book),
+        housekeeping: housekeeping2(book, current.guests),
+        refreshedAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
+    }
+    function writeRow(sheet, row, values) {
+      sheet.getRange(row, 1, 1, values.length).setNumberFormat("@").setValues([values.map(literal2)]);
+    }
+    function history(book, req, record, before, after) {
+      const { sheet } = table2(book, "Assignment History");
+      writeRow(sheet, sheet.getLastRow() + 1, [
+        req.requestId,
+        (/* @__PURE__ */ new Date()).toISOString(),
+        req.action,
+        record,
+        JSON.stringify(before),
+        JSON.stringify(after)
+      ]);
+    }
+    function lodging(book, req) {
+      const values = validateAssignment(req.assignment);
+      const current = roster2(book);
+      housekeeping2(book, current.guests);
+      const matches = current.rows.map((row, index) => ({ row, index })).filter((x) => x.index > 0 && attendeeKey(x.row) === req.identity);
+      if (matches.length !== 1)
+        throw new Error(
+          "The attendee was removed, changed, or duplicated. Refresh before assigning."
+        );
+      const match = matches[0];
+      const before = lodgingValues(match.row);
+      if (equal(before, values)) return;
+      if (!equal(before, req.expected))
+        throw new Error(
+          "Someone changed this attendee\u2019s lodging. Refresh and review their assignment first."
+        );
+      const guest2 = current.guests.find((g) => g.sourceIdentity === req.identity);
+      if (values[0]) {
+        if (!needsLodging(guest2))
+          throw new Error("This guest no longer needs overnight accommodation.");
+        const currentStay = stayRange(guest2);
+        if (currentStay?.start !== req.stay?.start || currentStay?.end !== req.stay?.end)
+          throw new Error(
+            "This guest\u2019s stay dates changed. Refresh before assigning."
+          );
+        const problem = assignmentIssue(current.guests, guest2, {
+          lodging: values[0],
+          roomNo: values[1],
+          roomCode: values[2]
+        }, hotelRooms2(book));
+        if (problem) throw new Error(problem);
+      }
+      current.sheet.getRange(match.index + 1, 30, 1, 3).setNumberFormat("@").setValues([values.map(literal2)]);
+      runtime.flush();
+      const confirmed = roster2(book).rows.slice(1).filter((r) => attendeeKey(r) === req.identity);
+      if (confirmed.length !== 1 || !equal(lodgingValues(confirmed[0]), values))
+        throw new Error("Save could not be confirmed. Refresh before retrying.");
+      history(book, req, req.identity, before, values);
+    }
+    function guest(book, req) {
+      const form = req.guest || {};
+      const field = (key, max = 200) => {
+        const value = text2(form[key]);
+        if (value.length > max || /[\x00\r\n]/.test(value)) throw new Error("Guest details must be single-line text within the field limits.");
+        return value;
+      };
+      const name = field("name");
+      if (!name) throw new Error("Enter the attendee's full name.");
+      const date = (key) => {
+        const value = field(key);
+        if (value && (!/^\d{4}-\d{2}-\d{2}$/.test(value) || sheetDate(value).date !== value)) throw new Error("Enter valid stay dates.");
+        return value;
+      };
+      const start = date("arrivalDate"), end = date("departureDate");
+      if (start && end && end < start) throw new Error("Checkout cannot be before check-in.");
+      const time = (key, day) => {
+        const value = field(key);
+        if (value && (!day || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value))) throw new Error("Enter a valid time and its date, or leave the time blank.");
+        return value ? `${day} ${value}` : day;
+      };
+      const overnight = field("overnight"), transport2 = field("airportTransport"), mode = field("travelMethod");
+      if (!["", "YES", "NO"].includes(overnight) || !["", "YES", "NO"].includes(transport2) || !["", "CAR", "FLIGHT", "BUS", "Bus (arrival)"].includes(mode)) throw new Error("Choose valid accommodation and transport options.");
+      if (overnight === "YES" && start && end && start === end) throw new Error("An overnight stay needs a checkout date after check-in.");
+      const notes = text2(form.notes);
+      if (notes.length > 1e3 || /\x00/.test(notes)) throw new Error("Notes must be up to 1,000 characters.");
+      const id = `MAN-2026-${req.requestId}`;
+      const current = roster2(book);
+      const existing = current.rows.slice(1).filter((r) => text2(r[0]) === id);
+      if (existing.length > 1) throw new Error("Duplicate guest entry found. Refresh and review the sheet.");
+      if (existing.length === 1) return;
+      const primary = field("primaryContact") || name;
+      const row = Array(32).fill("");
+      Object.assign(row, { 0: id, 1: (/* @__PURE__ */ new Date()).toISOString(), 2: primary === name ? "YES" : "NO", 3: primary, 5: field("phone"), 7: field("city"), 8: name, 9: field("relationship") || (primary === name ? "Self (Primary)" : ""), 11: mode, 12: time("arrivalTime", start), 13: time("departureTime", end), 18: transport2, 20: overnight, 21: start, 22: end, 23: notes });
+      if (req.assignment) {
+        const values = validateAssignment(req.assignment);
+        const proposed = guestsFromRows([current.rows[0], row])[0];
+        if (!values[0] || overnight !== "YES" || !stayRange(proposed)) throw new Error("Enter valid check-in and checkout dates for the walk-in stay.");
+        const problem = assignmentIssue(current.guests, proposed, { lodging: values[0], roomNo: values[1], roomCode: values[2] }, hotelRooms2(book, true));
+        if (problem) throw new Error(problem);
+        row.splice(29, 3, ...values);
+      }
+      const target = current.sheet.getLastRow() + 1;
+      writeRow(current.sheet, target, row);
+      runtime.flush();
+      const confirmed = roster2(book).rows.slice(1).filter((r) => text2(r[0]) === id);
+      if (confirmed.length !== 1 || !equal(confirmed[0], row)) throw new Error("Guest save could not be confirmed. Retry this form before adding another entry.");
+      history(book, req, attendeeKey(row), {}, row);
+    }
+    function linen(book, req) {
+      const events = housekeeping2(book, roster2(book).guests).filter((e) => e.roomCode === req.roomCode && !e.refreshedAt);
+      if (!Array.isArray(req.expected) || !events.length || !equal(events.map((e) => e.id).sort(), [...req.expected].sort())) throw new Error("The checkout list changed. Refresh before marking this bed clean.");
+      const { sheet, rows } = table2(book, "Housekeeping");
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const ids = new Set(events.map((e) => e.id));
+      rows.forEach((r, i) => {
+        if (i > 0 && ids.has(r[0])) writeRow(sheet, i + 1, [...r.slice(0, 6), now, req.requestId, "Refreshed"]);
+      });
+      runtime.flush();
+      const confirmed = table2(book, "Housekeeping").rows.filter((r) => ids.has(r[0]));
+      if (confirmed.length !== ids.size || confirmed.some((r) => r[6] !== now)) throw new Error("The linen update could not be confirmed. Refresh before retrying.");
+      history(book, req, req.roomCode, events, { refreshedAt: now });
+    }
+    function offsite(book, req) {
+      const rooms = hotelRooms2(book);
+      const old = req.id ? rooms.find((r) => r.id === req.id) : null;
+      if (req.id && (!old || old.revision !== req.expectedRevision)) throw new Error("This hotel room changed. Refresh before saving.");
+      const hotel = clean2(req.lodging), roomNo = clean2(req.roomNo), beds = Number(req.beds);
+      if (!OFFSITE_HOTELS.includes(hotel) || !Number.isInteger(beds) || beds < 1 || beds > 20) throw new Error("Choose a hotel and between 1 and 20 beds.");
+      if (old && old.lodging !== hotel) throw new Error("An existing planning room cannot be moved to another hotel.");
+      if (roomNo && rooms.some((r) => r.id !== old?.id && r.lodging === hotel && r.roomNo.toLowerCase() === roomNo.toLowerCase())) throw new Error("This hotel room number is already in the inventory.");
+      const current = roster2(book);
+      const assigned = old ? current.guests.filter((g) => offsiteRoomFor(g, rooms)?.id === old.id) : [];
+      if (assigned.some((g) => Number(g.roomCode.match(/B(\d+)$/)?.[1]) > beds)) throw new Error("A guest is assigned to a bed you are removing. Reassign them first.");
+      if (assigned.some((g) => !g.sourceWritable)) throw new Error("Resolve duplicate attendee identities before changing this room.");
+      const id = old?.id || runtime.uuid();
+      const label = old?.label || `Provisional room ${rooms.filter((r) => r.lodging === hotel).length + 1}`;
+      const values = [id, hotel, roomNo, String(beds), label, runtime.uuid()];
+      const { sheet, rows } = table2(book, "Offsite Rooms");
+      const index = rows.findIndex((r) => r[0] === id);
+      writeRow(sheet, index < 0 ? sheet.getLastRow() + 1 : index + 1, values);
+      if (old && assigned.some((g) => g.roomNo !== roomNo)) {
+        const identities = new Set(assigned.map((g) => g.sourceIdentity));
+        current.rows.forEach((r, i) => {
+          if (i > 0 && identities.has(attendeeKey(r))) current.sheet.getRange(i + 1, 31, 1, 1).setNumberFormat("@").setValues([[literal2(roomNo)]]);
+        });
+      }
+      runtime.flush();
+      const confirmed = hotelRooms2(book).find((r) => r.id === id);
+      if (!confirmed || confirmed.roomNo !== roomNo || confirmed.beds !== beds || roster2(book).guests.some((g) => assigned.some((a) => a.sourceIdentity === g.sourceIdentity) && g.roomNo !== roomNo)) throw new Error("Room changes could not be confirmed. Refresh before retrying.");
+      history(book, req, id, old || {}, confirmed);
+    }
+    function clean2(value, max = 100) {
+      if (typeof value !== "string" || value.length > max || /[\r\n\x00]/.test(value))
+        throw new Error(
+          "Assignment fields must be single-line text within their length limit."
+        );
+      return value.trim();
+    }
+    function transport(book, req) {
+      const group = transportGroups(roster2(book).guests, req.direction).find(
+        (g) => g.id === req.id
+      );
+      if (!group || !group.day || group.signature !== req.signature || group.guests.some((g) => !g.sourceWritable))
+        throw new Error(
+          "The travel details or attendee list changed, or dates are missing. Refresh and review this journey."
+        );
+      const { sheet, rows } = table2(book, "Transport Assignments");
+      const matches = rows.map((row, index) => ({ row, index })).filter((x) => x.index > 0 && x.row[0] === group.id);
+      if (matches.length > 1)
+        throw new Error(
+          "Duplicate journey records in Transport Assignments. Resolve them in the sheet."
+        );
+      const match = matches[0];
+      if ((match?.row[11] || "") !== req.expectedRevision)
+        throw new Error(
+          "Another admin changed this journey. Refresh before saving."
+        );
+      if (match && req.expectedPlan && !equal(
+        [match.row[6], match.row[7], match.row[8], match.row[9], match.row[10]],
+        [req.expectedPlan.driver, req.expectedPlan.vehicle, req.expectedPlan.pickup, req.expectedPlan.status, req.expectedPlan.notes]
+      )) throw new Error("Someone edited this journey in the sheet. Refresh before saving.");
+      const data = plans2(book);
+      const driver = clean2(req.plan.driver), vehicle = clean2(req.plan.vehicle), pickup = clean2(req.plan.pickup), notes = clean2(req.plan.notes, 500), status = clean2(req.plan.status);
+      if (driver && !data.drivers.includes(driver))
+        throw new Error("Choose an active driver.");
+      if (vehicle && !data.vehicles.includes(vehicle))
+        throw new Error("Choose an active vehicle.");
+      if (!["Planned", "Dispatched", "Completed"].includes(status))
+        throw new Error("Choose a valid journey status.");
+      if (status !== "Planned" && (!driver || !vehicle))
+        throw new Error("Assign both a driver and vehicle before dispatching.");
+      if (pickup && (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(pickup) || Number.isNaN(Date.parse(pickup))))
+        throw new Error("Enter a valid pickup date and time.");
+      const values = [
+        group.id,
+        group.direction,
+        group.day,
+        group.flight || group.method,
+        group.airport,
+        group.guests.map((g) => g.name).join(", "),
+        driver,
+        vehicle,
+        pickup,
+        status,
+        notes,
+        runtime.uuid(),
+        (/* @__PURE__ */ new Date()).toISOString(),
+        req.requestId
+      ];
+      writeRow(sheet, match ? match.index + 1 : sheet.getLastRow() + 1, values);
+      runtime.flush();
+      const confirmed = table2(book, "Transport Assignments").rows.find(
+        (r) => r[0] === group.id
+      );
+      if (!confirmed || !equal(confirmed, values))
+        throw new Error(
+          "Journey save could not be confirmed. Refresh before retrying."
+        );
+      history(book, req, group.id, match?.row || [], values);
+    }
+    function resource(book, req) {
+      if (!["Driver", "Vehicle"].includes(req.type))
+        throw new Error("Invalid resource type.");
+      const name = clean2(req.name);
+      if (!name) throw new Error("Enter a name.");
+      const active = req.active === true;
+      if (!active) {
+        const data = plans2(book);
+        if (data.assignments.some(
+          (p) => (req.type === "Driver" ? p.driver : p.vehicle) === name && p.status !== "Completed"
+        ))
+          throw new Error(
+            "This resource is assigned to an active journey. Clear those assignments before removing it."
+          );
+      }
+      const { sheet, rows } = table2(book, "Transport Resources");
+      const match = rows.findIndex(
+        (r, i) => i > 0 && r[0] === req.type && r[1].toLowerCase() === name.toLowerCase()
+      );
+      const values = [
+        req.type,
+        match > 0 ? rows[match][1] : name,
+        active ? "Yes" : "No",
+        (/* @__PURE__ */ new Date()).toISOString()
+      ];
+      writeRow(sheet, match > 0 ? match + 1 : sheet.getLastRow() + 1, values);
+      runtime.flush();
+      history(
+        book,
+        req,
+        req.type + ": " + name,
+        match > 0 ? rows[match] : [],
+        values
+      );
+    }
+    return { table: table2, roster: roster2, plans: plans2, hotelRooms: hotelRooms2, tripDisplay: tripDisplay2, housekeeping: housekeeping2, snapshot: snapshot2, clean: clean2, mutate: (book, req) => ({ lodging, guest, linen, offsite, transport, resource, "trip-display": setTripDisplay })[req.action](book, req) };
+  }
+
+  // shared/workspace-sync.js
+  var same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  var rowKey = (table2, row) => table2 === "Attendees" ? attendeeKey(row) : table2 === "Transport Resources" ? JSON.stringify([row[0], row[1]?.toLowerCase()]) : row[0];
+  function overlayChanges(tables, changes, checkConflicts = false) {
+    const next = JSON.parse(JSON.stringify(tables));
+    for (const change of changes) {
+      const { table: table2, key, before, after, columns } = change;
+      const rows = next[table2] || (next[table2] = [TABLES[table2]]);
+      const matches = rows.map((r, i) => ({ r, i })).filter((x) => x.i && rowKey(table2, x.r) === key);
+      if (matches.length > 1) throw new Error(`Duplicate records in ${table2}.`);
+      if (!matches.length) {
+        if (before) throw new Error(`A record awaiting synchronization was removed from ${table2}.`);
+        rows.push([...after]);
+        continue;
+      }
+      const current = matches[0].r;
+      if (!before && checkConflicts && !same(current.slice(0, after.length), after)) throw new Error(`A new record conflicts with an existing ${table2} record.`);
+      for (const col of columns) {
+        if (checkConflicts && current[col] !== (before?.[col] ?? "") && current[col] !== after[col]) throw new Error(`A direct edit in ${table2} conflicts with a saved dashboard change. Review synchronization.`);
+        current[col] = after[col];
+      }
+    }
+    return next;
+  }
+
+  // apps-script/database-sync.js
+  function assertSyncKey(req) {
+    const key = PropertiesService.getScriptProperties().getProperty("DATABASE_SYNC_KEY");
+    if (!key || typeof req.syncKey !== "string" || req.syncKey !== key) throw new Error("Invalid synchronization authorization.");
+  }
+  var literal = (value) => /^[=+\-@']/.test(String(value)) ? "'" + value : String(value);
+  function databaseExchange(req, engine2) {
+    assertSyncKey(req);
+    if (!Array.isArray(req.jobs) || req.jobs.length > 20 || !/^[a-zA-Z0-9-]{20,80}$/.test(req.stream || "")) throw new Error("Invalid synchronization batch.");
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(2e4)) throw new Error("The source sheet is busy.");
+    try {
+      const props = PropertiesService.getScriptProperties();
+      const stream = props.getProperty("DATABASE_SYNC_STREAM");
+      if (stream && stream !== req.stream) throw new Error("The database synchronization stream changed. Review before reconnecting.");
+      if (!stream) props.setProperty("DATABASE_SYNC_STREAM", req.stream);
+      let ack = Number(props.getProperty("DATABASE_SYNC_ACK") || 0);
+      const book = SpreadsheetApp.openById(SPREADSHEET_ID);
+      const exportTables = () => {
+        const tables2 = { Attendees: engine2.roster(book).rows };
+        for (const name of Object.keys(TABLES)) tables2[name] = engine2.table(book, name, true).rows;
+        return tables2;
+      };
+      let tables = exportTables();
+      for (const job of req.jobs) {
+        if (!Number.isSafeInteger(job.seq) || job.seq < 1 || !Array.isArray(job.changes)) throw new Error("Invalid synchronization sequence.");
+        if (job.seq <= ack) continue;
+        if (job.seq !== ack + 1) throw new Error("A synchronization batch is missing. Retry in order.");
+        for (const c of job.changes) {
+          if (!(c.table === "Attendees" || TABLES[c.table]) || !Array.isArray(c.after) || !Array.isArray(c.columns) || c.columns.some((col) => !Number.isInteger(col) || col < 0 || col >= c.after.length)) throw new Error("Invalid field patch.");
+          if (c.table === "Attendees" && c.before && c.columns.some((col) => col < 29 || col > 31)) throw new Error("Registration fields are read-only.");
+        }
+        overlayChanges(tables, job.changes, true);
+        for (const change of job.changes) {
+          const { table: table2, key, after, columns } = change;
+          const sheet = table2 === "Attendees" ? engine2.roster(book).sheet : engine2.table(book, table2).sheet;
+          const currentRows = table2 === "Attendees" ? engine2.roster(book).rows : engine2.table(book, table2).rows;
+          const index = currentRows.findIndex((row, i) => i > 0 && rowKey(table2, row) === key);
+          if (index < 0) sheet.getRange(sheet.getLastRow() + 1, 1, 1, after.length).setNumberFormat("@").setValues([after.map(literal)]);
+          else {
+            const pending = columns.filter((col) => currentRows[index][col] !== after[col]);
+            while (pending.length) {
+              const start = pending.shift();
+              let end = start;
+              while (pending[0] === end + 1) end = pending.shift();
+              sheet.getRange(index + 1, start + 1, 1, end - start + 1).setNumberFormat("@").setValues([after.slice(start, end + 1).map(literal)]);
+            }
+          }
+        }
+        SpreadsheetApp.flush();
+        tables = exportTables();
+        for (const c of job.changes) {
+          const rows = tables[c.table].slice(1).filter((row) => rowKey(c.table, row) === c.key);
+          if (rows.length !== 1 || c.columns.some((col) => rows[0][col] !== c.after[col]) || !c.before && !same(rows[0].slice(0, c.after.length), c.after)) throw new Error("Sheet synchronization could not be confirmed. The batch will retry safely.");
+        }
+        ack = job.seq;
+        props.setProperty("DATABASE_SYNC_ACK", String(ack));
+      }
+      tables["Assignment History"] = [TABLES["Assignment History"]];
+      const adminKey = props.getProperty("ADMIN_ACCESS_KEY");
+      if (!adminKey) throw new Error("Admin access is not configured.");
+      const adminDigest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, adminKey, Utilities.Charset.UTF_8).map((b) => (b < 0 ? b + 256 : b).toString(16).padStart(2, "0")).join("");
+      return { ok: true, tables, ack, adminDigest };
+    } finally {
+      lock.releaseLock();
+    }
+  }
+
+  // apps-script/server.js
+  var engine = createWorkspaceEngine({
+    uuid: () => Utilities.getUuid(),
+    today: () => Utilities.formatDate(/* @__PURE__ */ new Date(), "America/New_York", "yyyy-MM-dd"),
+    flush: () => SpreadsheetApp.flush()
+  });
+  var { table, roster, plans, hotelRooms, tripDisplay, housekeeping, snapshot, clean } = engine;
   function spreadsheet() {
     return SpreadsheetApp.openById(SPREADSHEET_ID);
-  }
-  function table(book, name, readOnly = false) {
-    const expected = TABLES[name];
-    let sheet = book.getSheetByName(name);
-    if (!sheet && readOnly) return { sheet: null, rows: [expected] };
-    if (!sheet) {
-      sheet = book.insertSheet(name);
-      sheet.getRange(1, 1, 1, expected.length).setValues([expected]).setBackground("#335b4b").setFontColor("#ffffff").setFontWeight("bold");
-      sheet.setFrozenRows(1);
-      sheet.setColumnWidths(1, expected.length, 160);
-    }
-    const rows = sheet.getDataRange().getDisplayValues();
-    const resourceHeaders = name === "Transport Resources" && equal(rows[0].slice(0, 4), expected) && (rows[0].length === 4 || rows[0].length === 5 && rows[0][4] === "Phone number");
-    if (!resourceHeaders && !equal(rows[0], expected))
-      throw new Error(
-        `The ${name} headers changed. Restore its columns before saving.`
-      );
-    return { sheet, rows };
-  }
-  function roster(book) {
-    const sheet = book.getSheets().find((s) => s.getSheetId() === 0);
-    if (!sheet) throw new Error("The attendee tab (gid 0) is missing.");
-    const rows = sheet.getRange(1, 1, Math.max(1, sheet.getLastRow()), 32).getDisplayValues();
-    return { sheet, rows, guests: guestsFromRows(rows) };
-  }
-  function plans(book, readOnly = false) {
-    const rows = table(book, "Transport Assignments", readOnly).rows.slice(1).filter((r) => r[0]);
-    const resources = table(book, "Transport Resources", readOnly).rows.slice(1).filter((r) => r[2] === "Yes");
-    return {
-      assignments: rows.map((r) => ({
-        id: r[0],
-        driver: r[6],
-        vehicle: r[7],
-        pickup: r[8],
-        status: r[9],
-        notes: r[10],
-        revision: r[11]
-      })),
-      drivers: resources.filter((r) => r[0] === "Driver").map((r) => r[1]),
-      vehicles: resources.filter((r) => r[0] === "Vehicle").map((r) => r[1])
-    };
-  }
-  function hotelRooms(book, readOnly = false) {
-    return table(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
-  }
-  function tripDisplay(book) {
-    return table(book, "Transport Display", true).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], collapsed: r[1] === "Yes", revision: r[2] }));
-  }
-  function setTripDisplay(book, req) {
-    if (typeof req.collapsed !== "boolean" || !["Arrivals", "Departures"].some((direction) => transportGroups(roster(book).guests, direction).some((g) => g.id === req.id))) throw new Error("This trip changed. Refresh before changing its display.");
-    const current = table(book, "Transport Display");
-    const matches = current.rows.map((row, index) => ({ row, index })).filter((x) => x.index > 0 && x.row[0] === req.id);
-    if (matches.length > 1) throw new Error("Duplicate trip display records. Review the sheet.");
-    if (matches[0]?.row[3] === req.requestId) return;
-    const values = [req.id, req.collapsed ? "Yes" : "No", Utilities.getUuid(), req.requestId];
-    writeRow(current.sheet, matches[0] ? matches[0].index + 1 : current.sheet.getLastRow() + 1, values);
-    SpreadsheetApp.flush();
-    if (!equal(table(book, "Transport Display").rows.find((r) => r[0] === req.id), values)) throw new Error("Trip display could not be confirmed. Refresh before retrying.");
-  }
-  function housekeeping(book, guests, readOnly = false) {
-    const current = table(book, "Housekeeping", readOnly);
-    const today = Utilities.formatDate(/* @__PURE__ */ new Date(), "America/New_York", "yyyy-MM-dd");
-    const due = checkoutEvents(guests, today);
-    const dueIds = new Set(due.map((e) => e.id));
-    const known = new Set(current.rows.slice(1).map((r) => r[0]));
-    current.rows.forEach((r, i) => {
-      if (!i || !r[0] || r[6]) return;
-      let identity;
-      try {
-        identity = JSON.parse(r[0])[0];
-      } catch {
-        return;
-      }
-      const guest2 = guests.find((g) => g.sourceIdentity === identity && g.roomCode === r[3]);
-      const state = dueIds.has(r[0]) ? "Pending" : guest2 && stayRange(guest2) ? "Superseded" : r[8];
-      if (state !== r[8]) {
-        if (readOnly) current.rows[i] = [...r.slice(0, 8), state];
-        else writeRow(current.sheet, i + 1, [...r.slice(0, 8), state]);
-      }
-    });
-    for (const event of due) {
-      if (known.has(event.id)) continue;
-      const values = [event.id, event.roomNo, String(event.bed), event.roomCode, event.name, event.checkout, "", "", "Pending"];
-      if (readOnly) current.rows.push(values);
-      else writeRow(current.sheet, current.sheet.getLastRow() + 1, values);
-      known.add(event.id);
-    }
-    return (readOnly ? current.rows : table(book, "Housekeeping").rows).slice(1).filter((r) => r[0] && r[8] !== "Superseded").map((r) => ({ id: r[0], roomNo: r[1], bed: Number(r[2]), roomCode: r[3], name: r[4], checkout: r[5], refreshedAt: r[6] }));
-  }
-  function snapshot(book, role) {
-    const current = roster(book);
-    if (role !== "admin") return {
-      role: "viewer",
-      tripDisplay: tripDisplay(book),
-      // All dashboard views use normalized display data, never the raw source rows.
-      guests: current.guests,
-      transport: plans(book, true),
-      offsiteRooms: hotelRooms(book, true),
-      housekeeping: housekeeping(book, current.guests, true),
-      // Retain the meal projection for already-open versions of the team page.
-      kitchenGuests: current.guests.map((g, index) => ({ sourceIdentity: `meal-${index}`, name: g.name, city: g.city, count: g.count, arrivalDate: g.arrivalDate, arrivalTime: g.arrivalTime, departureDate: g.departureDate, status: g.status, stay: g.stay === "Day visitor" ? "Day visitor" : "Overnight" })),
-      refreshedAt: (/* @__PURE__ */ new Date()).toISOString()
-    };
-    return {
-      role,
-      tripDisplay: tripDisplay(book),
-      rows: current.rows,
-      transport: plans(book),
-      offsiteRooms: hotelRooms(book),
-      housekeeping: housekeeping(book, current.guests),
-      refreshedAt: (/* @__PURE__ */ new Date()).toISOString()
-    };
-  }
-  function writeRow(sheet, row, values) {
-    sheet.getRange(row, 1, 1, values.length).setNumberFormat("@").setValues([values.map(literal)]);
-  }
-  function history(book, req, record, before, after) {
-    const { sheet } = table(book, "Assignment History");
-    writeRow(sheet, sheet.getLastRow() + 1, [
-      req.requestId,
-      (/* @__PURE__ */ new Date()).toISOString(),
-      req.action,
-      record,
-      JSON.stringify(before),
-      JSON.stringify(after)
-    ]);
-  }
-  function lodging(book, req) {
-    const values = validateAssignment(req.assignment);
-    const current = roster(book);
-    housekeeping(book, current.guests);
-    const matches = current.rows.map((row, index) => ({ row, index })).filter((x) => x.index > 0 && attendeeKey(x.row) === req.identity);
-    if (matches.length !== 1)
-      throw new Error(
-        "The attendee was removed, changed, or duplicated. Refresh before assigning."
-      );
-    const match = matches[0];
-    const before = lodgingValues(match.row);
-    if (equal(before, values)) return;
-    if (!equal(before, req.expected))
-      throw new Error(
-        "Someone changed this attendee\u2019s lodging. Refresh and review their assignment first."
-      );
-    const guest2 = current.guests.find((g) => g.sourceIdentity === req.identity);
-    if (values[0]) {
-      if (!needsLodging(guest2))
-        throw new Error("This guest no longer needs overnight accommodation.");
-      const currentStay = stayRange(guest2);
-      if (currentStay?.start !== req.stay?.start || currentStay?.end !== req.stay?.end)
-        throw new Error(
-          "This guest\u2019s stay dates changed. Refresh before assigning."
-        );
-      const problem = assignmentIssue(current.guests, guest2, {
-        lodging: values[0],
-        roomNo: values[1],
-        roomCode: values[2]
-      }, hotelRooms(book));
-      if (problem) throw new Error(problem);
-    }
-    current.sheet.getRange(match.index + 1, 30, 1, 3).setNumberFormat("@").setValues([values.map(literal)]);
-    SpreadsheetApp.flush();
-    const confirmed = roster(book).rows.slice(1).filter((r) => attendeeKey(r) === req.identity);
-    if (confirmed.length !== 1 || !equal(lodgingValues(confirmed[0]), values))
-      throw new Error("Save could not be confirmed. Refresh before retrying.");
-    history(book, req, req.identity, before, values);
-  }
-  function guest(book, req) {
-    const form = req.guest || {};
-    const field = (key, max = 200) => {
-      const value = text2(form[key]);
-      if (value.length > max || /[\x00\r\n]/.test(value)) throw new Error("Guest details must be single-line text within the field limits.");
-      return value;
-    };
-    const name = field("name");
-    if (!name) throw new Error("Enter the attendee's full name.");
-    const date = (key) => {
-      const value = field(key);
-      if (value && (!/^\d{4}-\d{2}-\d{2}$/.test(value) || sheetDate(value).date !== value)) throw new Error("Enter valid stay dates.");
-      return value;
-    };
-    const start = date("arrivalDate"), end = date("departureDate");
-    if (start && end && end < start) throw new Error("Checkout cannot be before check-in.");
-    const time = (key, day) => {
-      const value = field(key);
-      if (value && (!day || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value))) throw new Error("Enter a valid time and its date, or leave the time blank.");
-      return value ? `${day} ${value}` : day;
-    };
-    const overnight = field("overnight"), transport2 = field("airportTransport"), mode = field("travelMethod");
-    if (!["", "YES", "NO"].includes(overnight) || !["", "YES", "NO"].includes(transport2) || !["", "CAR", "FLIGHT", "BUS", "Bus (arrival)"].includes(mode)) throw new Error("Choose valid accommodation and transport options.");
-    if (overnight === "YES" && start && end && start === end) throw new Error("An overnight stay needs a checkout date after check-in.");
-    const notes = text2(form.notes);
-    if (notes.length > 1e3 || /\x00/.test(notes)) throw new Error("Notes must be up to 1,000 characters.");
-    const id = `MAN-2026-${req.requestId}`;
-    const current = roster(book);
-    const existing = current.rows.slice(1).filter((r) => text2(r[0]) === id);
-    if (existing.length > 1) throw new Error("Duplicate guest entry found. Refresh and review the sheet.");
-    if (existing.length === 1) return;
-    const primary = field("primaryContact") || name;
-    const row = Array(32).fill("");
-    Object.assign(row, { 0: id, 1: (/* @__PURE__ */ new Date()).toISOString(), 2: primary === name ? "YES" : "NO", 3: primary, 5: field("phone"), 7: field("city"), 8: name, 9: field("relationship") || (primary === name ? "Self (Primary)" : ""), 11: mode, 12: time("arrivalTime", start), 13: time("departureTime", end), 18: transport2, 20: overnight, 21: start, 22: end, 23: notes });
-    if (req.assignment) {
-      const values = validateAssignment(req.assignment);
-      const proposed = guestsFromRows([current.rows[0], row])[0];
-      if (!values[0] || overnight !== "YES" || !stayRange(proposed)) throw new Error("Enter valid check-in and checkout dates for the walk-in stay.");
-      const problem = assignmentIssue(current.guests, proposed, { lodging: values[0], roomNo: values[1], roomCode: values[2] }, hotelRooms(book, true));
-      if (problem) throw new Error(problem);
-      row.splice(29, 3, ...values);
-    }
-    const target = current.sheet.getLastRow() + 1;
-    writeRow(current.sheet, target, row);
-    SpreadsheetApp.flush();
-    const confirmed = roster(book).rows.slice(1).filter((r) => text2(r[0]) === id);
-    if (confirmed.length !== 1 || !equal(confirmed[0], row)) throw new Error("Guest save could not be confirmed. Retry this form before adding another entry.");
-    history(book, req, attendeeKey(row), {}, row);
-  }
-  function linen(book, req) {
-    const events = housekeeping(book, roster(book).guests).filter((e) => e.roomCode === req.roomCode && !e.refreshedAt);
-    if (!Array.isArray(req.expected) || !events.length || !equal(events.map((e) => e.id).sort(), [...req.expected].sort())) throw new Error("The checkout list changed. Refresh before marking this bed clean.");
-    const { sheet, rows } = table(book, "Housekeeping");
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    const ids = new Set(events.map((e) => e.id));
-    rows.forEach((r, i) => {
-      if (i > 0 && ids.has(r[0])) writeRow(sheet, i + 1, [...r.slice(0, 6), now, req.requestId, "Refreshed"]);
-    });
-    SpreadsheetApp.flush();
-    const confirmed = table(book, "Housekeeping").rows.filter((r) => ids.has(r[0]));
-    if (confirmed.length !== ids.size || confirmed.some((r) => r[6] !== now)) throw new Error("The linen update could not be confirmed. Refresh before retrying.");
-    history(book, req, req.roomCode, events, { refreshedAt: now });
-  }
-  function offsite(book, req) {
-    const rooms = hotelRooms(book);
-    const old = req.id ? rooms.find((r) => r.id === req.id) : null;
-    if (req.id && (!old || old.revision !== req.expectedRevision)) throw new Error("This hotel room changed. Refresh before saving.");
-    const hotel = clean(req.lodging), roomNo = clean(req.roomNo), beds = Number(req.beds);
-    if (!OFFSITE_HOTELS.includes(hotel) || !Number.isInteger(beds) || beds < 1 || beds > 20) throw new Error("Choose a hotel and between 1 and 20 beds.");
-    if (old && old.lodging !== hotel) throw new Error("An existing planning room cannot be moved to another hotel.");
-    if (roomNo && rooms.some((r) => r.id !== old?.id && r.lodging === hotel && r.roomNo.toLowerCase() === roomNo.toLowerCase())) throw new Error("This hotel room number is already in the inventory.");
-    const current = roster(book);
-    const assigned = old ? current.guests.filter((g) => offsiteRoomFor(g, rooms)?.id === old.id) : [];
-    if (assigned.some((g) => Number(g.roomCode.match(/B(\d+)$/)?.[1]) > beds)) throw new Error("A guest is assigned to a bed you are removing. Reassign them first.");
-    if (assigned.some((g) => !g.sourceWritable)) throw new Error("Resolve duplicate attendee identities before changing this room.");
-    const id = old?.id || Utilities.getUuid();
-    const label = old?.label || `Provisional room ${rooms.filter((r) => r.lodging === hotel).length + 1}`;
-    const values = [id, hotel, roomNo, String(beds), label, Utilities.getUuid()];
-    const { sheet, rows } = table(book, "Offsite Rooms");
-    const index = rows.findIndex((r) => r[0] === id);
-    writeRow(sheet, index < 0 ? sheet.getLastRow() + 1 : index + 1, values);
-    if (old && assigned.some((g) => g.roomNo !== roomNo)) {
-      const identities = new Set(assigned.map((g) => g.sourceIdentity));
-      current.rows.forEach((r, i) => {
-        if (i > 0 && identities.has(attendeeKey(r))) current.sheet.getRange(i + 1, 31, 1, 1).setNumberFormat("@").setValues([[literal(roomNo)]]);
-      });
-    }
-    SpreadsheetApp.flush();
-    const confirmed = hotelRooms(book).find((r) => r.id === id);
-    if (!confirmed || confirmed.roomNo !== roomNo || confirmed.beds !== beds || roster(book).guests.some((g) => assigned.some((a) => a.sourceIdentity === g.sourceIdentity) && g.roomNo !== roomNo)) throw new Error("Room changes could not be confirmed. Refresh before retrying.");
-    history(book, req, id, old || {}, confirmed);
-  }
-  function clean(value, max = 100) {
-    if (typeof value !== "string" || value.length > max || /[\r\n\x00]/.test(value))
-      throw new Error(
-        "Assignment fields must be single-line text within their length limit."
-      );
-    return value.trim();
-  }
-  function transport(book, req) {
-    const group = transportGroups(roster(book).guests, req.direction).find(
-      (g) => g.id === req.id
-    );
-    if (!group || !group.day || group.signature !== req.signature || group.guests.some((g) => !g.sourceWritable))
-      throw new Error(
-        "The travel details or attendee list changed, or dates are missing. Refresh and review this journey."
-      );
-    const { sheet, rows } = table(book, "Transport Assignments");
-    const matches = rows.map((row, index) => ({ row, index })).filter((x) => x.index > 0 && x.row[0] === group.id);
-    if (matches.length > 1)
-      throw new Error(
-        "Duplicate journey records in Transport Assignments. Resolve them in the sheet."
-      );
-    const match = matches[0];
-    if ((match?.row[11] || "") !== req.expectedRevision)
-      throw new Error(
-        "Another admin changed this journey. Refresh before saving."
-      );
-    if (match && req.expectedPlan && !equal(
-      [match.row[6], match.row[7], match.row[8], match.row[9], match.row[10]],
-      [req.expectedPlan.driver, req.expectedPlan.vehicle, req.expectedPlan.pickup, req.expectedPlan.status, req.expectedPlan.notes]
-    )) throw new Error("Someone edited this journey in the sheet. Refresh before saving.");
-    const data = plans(book);
-    const driver = clean(req.plan.driver), vehicle = clean(req.plan.vehicle), pickup = clean(req.plan.pickup), notes = clean(req.plan.notes, 500), status = clean(req.plan.status);
-    if (driver && !data.drivers.includes(driver))
-      throw new Error("Choose an active driver.");
-    if (vehicle && !data.vehicles.includes(vehicle))
-      throw new Error("Choose an active vehicle.");
-    if (!["Planned", "Dispatched", "Completed"].includes(status))
-      throw new Error("Choose a valid journey status.");
-    if (status !== "Planned" && (!driver || !vehicle))
-      throw new Error("Assign both a driver and vehicle before dispatching.");
-    if (pickup && (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(pickup) || Number.isNaN(Date.parse(pickup))))
-      throw new Error("Enter a valid pickup date and time.");
-    const values = [
-      group.id,
-      group.direction,
-      group.day,
-      group.flight || group.method,
-      group.airport,
-      group.guests.map((g) => g.name).join(", "),
-      driver,
-      vehicle,
-      pickup,
-      status,
-      notes,
-      Utilities.getUuid(),
-      (/* @__PURE__ */ new Date()).toISOString(),
-      req.requestId
-    ];
-    writeRow(sheet, match ? match.index + 1 : sheet.getLastRow() + 1, values);
-    SpreadsheetApp.flush();
-    const confirmed = table(book, "Transport Assignments").rows.find(
-      (r) => r[0] === group.id
-    );
-    if (!confirmed || !equal(confirmed, values))
-      throw new Error(
-        "Journey save could not be confirmed. Refresh before retrying."
-      );
-    history(book, req, group.id, match?.row || [], values);
-  }
-  function resource(book, req) {
-    if (!["Driver", "Vehicle"].includes(req.type))
-      throw new Error("Invalid resource type.");
-    const name = clean(req.name);
-    if (!name) throw new Error("Enter a name.");
-    const active = req.active === true;
-    if (!active) {
-      const data = plans(book);
-      if (data.assignments.some(
-        (p) => (req.type === "Driver" ? p.driver : p.vehicle) === name && p.status !== "Completed"
-      ))
-        throw new Error(
-          "This resource is assigned to an active journey. Clear those assignments before removing it."
-        );
-    }
-    const { sheet, rows } = table(book, "Transport Resources");
-    const match = rows.findIndex(
-      (r, i) => i > 0 && r[0] === req.type && r[1].toLowerCase() === name.toLowerCase()
-    );
-    const values = [
-      req.type,
-      match > 0 ? rows[match][1] : name,
-      active ? "Yes" : "No",
-      (/* @__PURE__ */ new Date()).toISOString()
-    ];
-    writeRow(sheet, match > 0 ? match + 1 : sheet.getLastRow() + 1, values);
-    SpreadsheetApp.flush();
-    history(
-      book,
-      req,
-      req.type + ": " + name,
-      match > 0 ? rows[match] : [],
-      values
-    );
   }
   function setupHospitality() {
     const book = spreadsheet();
@@ -752,12 +856,19 @@ reply({ ready: true });
     let result;
     try {
       const raw = e?.postData?.contents || "";
-      if (raw.length > 16e3) throw new Error("Oversized request.");
+      if (raw.length > 512e3) throw new Error("Oversized request.");
       const req = JSON.parse(raw);
-      if (!["notification-authorize", "notification-flight"].includes(req.action)) throw new Error("Unsupported server request.");
-      result = hospitalityRequest(req);
-    } catch (_) {
-      result = { ok: false, error: "Invalid notification request." };
+      if (req.action === "database-sync") result = databaseExchange(req, engine);
+      else if (req.action === "database-service") {
+        assertSyncKey(req);
+        if (!["flight", "accommodation-notifications"].includes(req.request?.action)) throw new Error("Unsupported database service.");
+        result = hospitalityRequest(req.request, true);
+      } else {
+        if (!["notification-authorize", "notification-flight"].includes(req.action)) throw new Error("Unsupported server request.");
+        result = hospitalityRequest(req);
+      }
+    } catch (error) {
+      result = { ok: false, error: error.message || "Invalid server request." };
     }
     return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
   }
@@ -774,11 +885,17 @@ reply({ ready: true });
     if (response.getResponseCode() !== 200 || !result.ok) throw new Error(result.error || "Notification service is unavailable. No new batch was confirmed.");
     return result;
   }
-  function hospitalityRequest(req) {
+  function hospitalityRequest(req, local = false) {
     const lock = LockService.getScriptLock();
     try {
       if (!req || JSON.stringify(req).length > 16e3)
         throw new Error("Invalid or oversized request.");
+      const databaseUrl = PropertiesService.getScriptProperties().getProperty("DATABASE_API_URL");
+      if (!local && databaseUrl && !["notification-authorize", "notification-flight"].includes(req.action)) {
+        if (!/^https:\/\/[a-z0-9-]+\.usayouth\.workers\.dev\/api$/.test(databaseUrl)) throw new Error("Invalid database endpoint.");
+        const response = UrlFetchApp.fetch(databaseUrl, { method: "post", contentType: "application/json", muteHttpExceptions: true, payload: JSON.stringify(req) });
+        return JSON.parse(response.getContentText());
+      }
       if (!["snapshot", "lodging", "transport", "resource", "flight", "linen", "offsite", "guest", "trip-display", "trip-display-read", "notification-authorize", "notification-flight", "accommodation-notifications"].includes(
         req.action
       ))
@@ -801,7 +918,7 @@ reply({ ready: true });
       if (["trip-display", "trip-display-read"].includes(req.action)) {
         if (req.action === "trip-display") {
           if (!/^[a-zA-Z0-9-]{20,80}$/.test(req.requestId || "")) throw new Error("Missing request identifier.");
-          setTripDisplay(book, req);
+          engine.mutate(book, req);
         }
         return { ok: true, tripDisplay: tripDisplay(book) };
       }
@@ -816,7 +933,7 @@ reply({ ready: true });
         );
         const linenCommitted = req.action === "linen" && table(book, "Housekeeping").rows.some((r, i) => i > 0 && r[7] === req.requestId);
         if (!past && !committed && !linenCommitted)
-          ({ lodging, transport, resource, linen, offsite, guest })[req.action](book, req);
+          engine.mutate(book, req);
       }
       return { ok: true, ...snapshot(book, role) };
     } catch (error) {

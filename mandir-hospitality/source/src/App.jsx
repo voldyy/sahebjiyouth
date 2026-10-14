@@ -288,7 +288,7 @@ export default function App() {
           <div className="topbar-actions">
             <span className="local-status">
               <span className="status-dot" />
-              {!demoMode ? "Google Sheets source" : storageError ? "Session only" : "Saved on this device"}
+              {!demoMode ? "Shared workspace" : storageError ? "Session only" : "Saved on this device"}
             </span>
             <span className="demo-label">{demoMode ? "DEMO" : "SHEET"}</span>
             <span className="topbar-divider" />
@@ -310,8 +310,10 @@ export default function App() {
           </div>
         </header>
         {!demoMode && <section className="sheet-connection" aria-label="Google Sheets connection">
-          <div><strong>Google Sheets guest roster</strong><p>{sheetWorkspace.loading ? "Refreshing attendee data…" : sheetWorkspace.refreshedAt ? `Last refreshed ${sheetWorkspace.refreshedAt.toLocaleTimeString()}` : "Waiting for source data"} · {sheetWorkspace.connected ? (isAdmin ? "Admin access" : "View-only access") : "Connecting…"}</p></div>
-          <button className="button secondary small" disabled={sheetWorkspace.loading || sheetWorkspace.saving} onClick={sheetWorkspace.refresh}>Refresh sheet</button>
+          <div><strong>Hospitality workspace</strong><p>{sheetWorkspace.loading ? "Refreshing attendee data…" : sheetWorkspace.refreshedAt ? `Last refreshed ${sheetWorkspace.refreshedAt.toLocaleTimeString()}` : "Waiting for source data"} · {sheetWorkspace.connected ? (isAdmin ? "Admin access" : "View-only access") : "Connecting…"}</p>
+            {sheetWorkspace.sync && <p role="status">{sheetWorkspace.sync.error || (sheetWorkspace.sync.pending ? `${sheetWorkspace.sync.pending} saved change${sheetWorkspace.sync.pending === 1 ? "" : "s"} syncing to Google Sheets…` : "Changes synced to Google Sheets")}</p>}
+          </div>
+          <button className="button secondary small" disabled={sheetWorkspace.loading || sheetWorkspace.saving} onClick={sheetWorkspace.refresh}>Refresh</button>
           {sheetWorkspace.error && <p className="sheet-connection-error" role="alert">{sheetWorkspace.error}</p>}
         </section>}
         {storageError && (
@@ -412,7 +414,7 @@ export default function App() {
           {demoMode ? <GuestForm onSave={addGuest} onCancel={() => setModal(null)} /> : <SheetGuestForm saving={sheetWorkspace.saving} onCancel={() => { if (!sheetWorkspace.saving) setModal(null); }} onSave={async (guest, requestId) => {
             await sheetWorkspace.addGuest(guest, requestId);
             setModal(null);
-            toast(`${guest.name} added to Google Sheets.`);
+            toast(`${guest.name} added to the roster.`);
           }} />}
         </Sheet>
       )}
@@ -547,8 +549,8 @@ export default function App() {
           <div className="settings-section">
             <h3>About this workspace</h3>
             {demoMode ? <p>This demo uses sample guests, saved in this browser.</p> : <>
-              <p>Guest data comes from the source sheet. Lodging changes write only AD (location), AE (room number), and AF (custom code). Other fields are read-only. Guest records are not saved to browser storage.</p>
-              <p>Room and transport assignments are shared through Google Sheets. Editing rooms, transport and housekeeping requires a private admin link. The Yogi Prasad team link opens all four tabs in view-only mode. Only admins can change headcounts or assignments. Kitchen headcount adjustments remain device-local.</p>
+              <p>Assignments are saved to the shared workspace and synchronized to Google Sheets in the background. Registration changes made in the sheet are imported automatically. Lodging updates affect only AD (location), AE (room number), and AF (custom code). Guest records are not saved to browser storage.</p>
+              <p>Editing rooms, transport and housekeeping requires a private admin link. The Yogi Prasad team link opens all four tabs in view-only mode. Only admins can change headcounts or assignments. Kitchen headcount adjustments remain device-local.</p>
               <button className="button secondary" onClick={async () => { try { await navigator.clipboard.writeText(yogiPrasadLink()); toast("Yogi Prasad team link copied."); } catch { toast(`Team link: ${yogiPrasadLink()}`); } }}>Copy Yogi Prasad team link</button>
               <a className="button secondary" href={SHEET_URL} target="_blank" rel="noreferrer">Open source sheet</a>
 

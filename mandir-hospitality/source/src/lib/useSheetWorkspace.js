@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { guestsFromRows } from "./sheets";
-import { sheetRequest } from "./appsScript";
+import { workspaceRequest as sheetRequest, usesDatabase } from "./workspaceApi";
 import { stayRange } from "./occupancy";
 import { EMPTY_TRANSPORT } from "./transport";
 import { isTeamView } from "./access";
@@ -17,6 +17,7 @@ export function useSheetWorkspace(enabled) {
     connected: false,
     error: "",
     refreshedAt: null,
+    sync: null,
   });
   const generation = useRef(0),
     busy = useRef(false);
@@ -34,7 +35,7 @@ export function useSheetWorkspace(enabled) {
   const apply = useCallback((result) => {
     setRole(result.role || "viewer");
     setTripDisplay(result.tripDisplay || []);
-    setGuests(result.role === "admin" ? guestsFromRows(result.rows) : result.guests || result.kitchenGuests || []);
+    setGuests(result.guests || (result.role === "admin" ? guestsFromRows(result.rows) : result.kitchenGuests || []));
     setTransport(result.transport || EMPTY_TRANSPORT);
     setOffsiteRooms(result.offsiteRooms || []);
     setHousekeeping(result.housekeeping || []);
@@ -44,6 +45,7 @@ export function useSheetWorkspace(enabled) {
       loading: false,
       error: "",
       refreshedAt: new Date(result.refreshedAt),
+      sync: result.sync || null,
     }));
   }, []);
   const refresh = useCallback(async () => {
@@ -63,7 +65,7 @@ export function useSheetWorkspace(enabled) {
     refresh();
     const timer = setInterval(() => {
       if (!document.hidden) refresh();
-    }, 60000);
+    }, usesDatabase ? 10000 : 60000);
     const focus = () => {
       if (!document.hidden) refresh();
     };

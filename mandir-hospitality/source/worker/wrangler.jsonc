@@ -1,0 +1,15 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "mandir-hospitality-api",
+  "main": "index.js",
+  "account_id": "25da008a14c0699c6f7e5d39e98fe24e",
+  "compatibility_date": "2026-10-13",
+  "workers_dev": true,
+  "durable_objects": { "bindings": [{ "name": "WORKSPACES", "class_name": "HospitalityWorkspace" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["HospitalityWorkspace"] }],
+  "observability": { "enabled": true, "head_sampling_rate": 0.1, "traces": { "enabled": true, "head_sampling_rate": 0.1 } },
+  "vars": {
+    "WORKSPACE_ID": "allentown-2026",
+    "APPS_SCRIPT_URL": "https://script.google.com/macros/s/AKfycbxYBR2sIywbufmytSNLiQvGRy2oYg_tsMTEqdUj855z1LX8OJcDf6rTI0gR14kzdzpGog/exec"
+  }
+}

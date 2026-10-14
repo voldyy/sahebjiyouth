@@ -127,7 +127,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
       await workspace.saveResource(type, name, active);
       if (type === "Driver") setNewDriver("");
       else setNewVehicle("");
-      toast(`${type} list saved to Google Sheets.`);
+      toast(`${type} list saved.`);
     } catch (error) {
       setError(error.message);
     }
@@ -140,7 +140,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
     setSaveState({ id: group.id, message: "Saving…" });
     try {
       await workspace.saveTransport(group, plan);
-      setSaveState({ id: group.id, message: "Saved to sheet" });
+      setSaveState({ id: group.id, message: "Saved" });
     } catch (error) {
       setSaveState({ id: group.id, error: error.message });
     } finally {

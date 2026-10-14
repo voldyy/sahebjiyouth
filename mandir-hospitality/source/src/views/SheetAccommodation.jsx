@@ -147,7 +147,7 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
         <label className="field">Custom room code (AF)<input value={draft.roomCode} readOnly disabled={workspace.saving} required placeholder="Generated from room and bed" /></label>
         {selected && !stayRange(selected) && <a className="button secondary" href={SHEET_URL} target="_blank" rel="noreferrer">Open source sheet to add dates</a>}
         {(error || issue) && <p role="alert" className="op-form-error">{error || issue}</p>}
-        <button className="button primary" disabled={!selected || !workspace.connected || workspace.saving || !selected?.sourceWritable || !!issue || !selectedRoom || !bedNo} type="submit">{workspace.saving ? "Saving…" : "Save assignment to sheet"}</button>
+        <button className="button primary" disabled={!selected || !workspace.connected || workspace.saving || !selected?.sourceWritable || !!issue || !selectedRoom || !bedNo} type="submit">{workspace.saving ? "Saving…" : "Save assignment"}</button>
         {(selected?.lodging || selected?.room) && <button type="button" className="button secondary" disabled={!workspace.connected || workspace.saving} onClick={(e) => save(e, true)}>Clear lodging assignment (AD–AF)</button>}
       </form>}
     </Sheet>}

@@ -72,7 +72,7 @@ test("admin shared assignment persists AD–AF only", async ({ page }) => {
   await expect(page.getByText("Girishbhai & Taraben Patel", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Add guest", exact: true })).toBeEnabled();
   await openAssignment(page);
-  await page.getByRole("button", { name: "Save assignment to sheet" }).click();
+  await page.getByRole("button", { name: "Save assignment" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(writes).toEqual([{ range: "'Attendees'!AD2:AF2", majorDimension: "ROWS", values: [["Samarpan", "204", "S204B1"]] }]);
   expect(rows[1][8]).toBe("Synthetic Guest");
@@ -91,14 +91,14 @@ test("admin shared assignment persists AD–AF only", async ({ page }) => {
 test("private admin access enables edits without Google sign-in", async ({ page }) => {
   const { writes } = await setup(page);
   await openAssignment(page);
-  await expect(page.getByRole("button", { name: "Save assignment to sheet" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Save assignment" })).toBeEnabled();
   await page.screenshot({ path: test.info().outputPath("lodging-assignment.png"), fullPage: true });
   expect(writes).toHaveLength(0);
 });
 test("Backend write failure leaves the form open and does not report success", async ({ page }) => {
   const { rows, writes } = await setup(page, "denied");
   await openAssignment(page);
-  await page.getByRole("button", { name: "Save assignment to sheet" }).click();
+  await page.getByRole("button", { name: "Save assignment" }).click();
   await expect(page.getByRole("dialog").getByRole("alert")).toContainText("cannot edit");
   await expect(page.getByRole("dialog")).toBeVisible();
   expect(writes).toHaveLength(1);
@@ -114,7 +114,7 @@ test("Samarpan offers only confirmed rooms with bed capacities", async ({ page }
   await expect(room).toHaveJSProperty("tagName", "SELECT");
   await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "203 · 4 beds", "204 · 3 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds", "100 · 7 beds", "101 · 12 beds", "102 · 12 beds", "103 · 12 beds", "104 · 12 beds"]);
   await room.selectOption("204");
-  await expect(page.getByLabel("Bed number").locator("option")).toHaveCount(5);
+  await expect(page.getByLabel("Bed number").locator("option")).toHaveCount(4);
   await page.getByLabel("Bed number").selectOption("1");
   await expect(page.getByLabel("Custom room code (AF)")).toHaveValue("S204B1");
   await expect(page.getByLabel("Custom room code (AF)")).toHaveAttribute("readonly", "");
@@ -125,7 +125,7 @@ test("Samarpan offers only confirmed rooms with bed capacities", async ({ page }
   await expect(page.getByLabel("Custom room code (AF)")).toHaveValue("S101B12");
   await page.getByLabel("Lodging location (AD)").selectOption("Hilton Garden Inn");
   await expect(page.getByLabel("Hotel planning room")).toHaveValue("");
-  await expect(page.getByRole("button", { name: "Save assignment to sheet" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Save assignment" })).toBeDisabled();
 });
 
 function plannerGuest(id, name, start, end, room = "", bed = "") {
@@ -182,7 +182,7 @@ test("daily view shows all 74 beds, date-filtered unassigned guests, and saves f
   await expect(page.getByLabel("Room number (AE)")).toHaveValue("204");
   await expect(page.getByLabel("Custom room code (AF)")).toHaveValue("S204B2");
   await expect(page.getByLabel("Bed number").locator('option[value="1"]')).toHaveJSProperty("disabled", true);
-  await page.getByRole("button", { name: "Save assignment to sheet" }).click();
+  await page.getByRole("button", { name: "Save assignment" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(writes[0].values).toEqual([["Samarpan", "204", "S204B2"]]);
   await expect(slot(page, "204", "2", "2026-10-11")).toContainText("Chirag Mehta");
@@ -257,7 +257,7 @@ test('transport drivers, vehicles and assignments persist across independent bro
   await driverSelect(second).selectOption('');
   await expect(second.locator('.transport-plan').first().getByRole('alert')).toContainText('Another admin');
   await expect(driverSelect(second)).toHaveValue('Test Sevak');
-  await second.getByRole('button',{name:'Refresh sheet',exact:true}).click();
+  await second.getByRole('button',{name:'Refresh',exact:true}).click();
   await expect(vehicleSelect(second)).toHaveValue('Backup Van');
   await expect(second.locator('.transport-plan').getByRole('alert')).toHaveCount(0);
   await second.screenshot({path:test.info().outputPath('shared-transport-desktop.png'),fullPage:true,scale:'css'});
@@ -342,7 +342,7 @@ test('offsite rooms start provisional and retain guests when real numbers arrive
   const hotelRoom = h.request({action:'snapshot'}).offsiteRooms[0];
   await page.getByLabel('Hotel planning room').selectOption(hotelRoom.id);
   await page.getByLabel('Bed number').selectOption('2');
-  await page.getByRole('button',{name:'Save assignment to sheet'}).click();
+  await page.getByRole('button',{name:'Save assignment'}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(h.rows.find(r=>r[0]==='C')[30]).toBe('');
   await expect(slot(page,hotelRoom.id,'2','2026-10-11')).toContainText('Chirag Mehta');
@@ -371,8 +371,8 @@ test('offsite rooms start provisional and retain guests when real numbers arrive
 test('housekeeping autoloads checkout beds and saves refreshed linens across reloads', async ({page}) => {
   const h = await openPlanner(page);
   h.setToday('2026-10-14');
-  await page.getByRole('button',{name:'Refresh sheet',exact:true}).click();
-  await expect(page.getByRole('button',{name:'Refresh sheet',exact:true})).toBeEnabled();
+  await page.getByRole('button',{name:'Refresh',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Refresh',exact:true})).toBeEnabled();
   await page.getByRole('button',{name:'Housekeeping',exact:true}).click();
   await expect(page.locator('.stay-linen-card')).toHaveCount(2);
   const card=page.locator('.stay-linen-card').filter({hasText:'S204B1'});
@@ -382,7 +382,7 @@ test('housekeeping autoloads checkout beds and saves refreshed linens across rel
   await page.getByRole('button',{name:'Housekeeping',exact:true}).click();
   await expect(page.locator('.stay-linen-card')).toHaveCount(1);
   h.setToday('2026-10-17');
-  await page.getByRole('button',{name:'Refresh sheet',exact:true}).click();
+  await page.getByRole('button',{name:'Refresh',exact:true}).click();
   await expect(page.locator('.stay-linen-card').filter({hasText:'Bela Shah'})).toBeVisible();
   await page.screenshot({path:test.info().outputPath('housekeeping-mobile.png'),fullPage:true,scale:'css'});
 });
@@ -400,7 +400,7 @@ test('team links show all four tabs without edits and preserve view-only access 
   await expect(page.getByRole('button',{name:'View Chirag Mehta',exact:true})).toHaveAttribute('draggable','false');
   await page.getByRole('button',{name:'View Chirag Mehta',exact:true}).click();
   await expect(page.getByRole('dialog')).toContainText('Oct 11 – Oct 17');
-  await expect(page.getByRole('button',{name:'Save assignment to sheet'})).toHaveCount(0);
+  await expect(page.getByRole('button',{name:'Save assignment'})).toHaveCount(0);
   await page.getByRole('button',{name:'Close dialog',exact:true}).click();
   await page.getByRole('button',{name:'Offsite',exact:true}).click();
   await expect(page.getByRole('button',{name:'Add planning room',exact:true})).toHaveCount(0);

@@ -1,6 +1,6 @@
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 export const TEST_ADMIN_KEY = "test-admin-private-key";
 export function createHarness(initialRows, denied = false) {
   const properties = new Map([["ADMIN_ACCESS_KEY", TEST_ADMIN_KEY]]);
@@ -32,7 +32,7 @@ export function createHarness(initialRows, denied = false) {
   }
   sheets.set('Attendees',new Sheet('Attendees',structuredClone(initialRows),0));
   const book={getSheets:()=>[...sheets.values()],getSheetByName:name=>sheets.get(name),insertSheet:name=>{const s=new Sheet(name);sheets.set(name,s);return s;}};
-  const context=vm.createContext({console,Date,JSON,Map,Set,URL,SpreadsheetApp:{openById:()=>book,flush:()=>{}},Utilities:{getUuid:randomUUID,formatDate:()=>today},LockService:{getScriptLock:()=>({tryLock(){if(locked)return false;locked=true;return true;},hasLock:()=>locked,releaseLock(){locked=false;}})},PropertiesService:{getScriptProperties:()=>({getProperty:key=>properties.get(key),setProperty:(key,value)=>properties.set(key,value)})}});
+  const context=vm.createContext({console,Date,JSON,Map,Set,URL,structuredClone,SpreadsheetApp:{openById:()=>book,flush:()=>{}},Utilities:{getUuid:randomUUID,formatDate:()=>today,DigestAlgorithm:{SHA_256:'sha256'},Charset:{UTF_8:'utf8'},computeDigest:(_,value)=>[...createHash('sha256').update(value).digest()]},LockService:{getScriptLock:()=>({tryLock(){if(locked)return false;locked=true;return true;},hasLock:()=>locked,releaseLock(){locked=false;}})},PropertiesService:{getScriptProperties:()=>({getProperty:key=>properties.get(key),setProperty:(key,value)=>properties.set(key,value)})}});
   vm.runInContext(readFileSync(new URL('../../apps-script/Code.gs',import.meta.url),'utf8'),context);
   const cache = new Map();
   context.CacheService = { getScriptCache: () => ({ get: key => cache.get(key), put: (key, value) => cache.set(key, value) }) };
