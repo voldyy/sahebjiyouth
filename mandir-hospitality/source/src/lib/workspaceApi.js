@@ -1,8 +1,8 @@
 import { requestAccessKey } from "./access";
 import { sheetRequest } from "./appsScript";
 
-// Set at cutover after the database is imported and synchronization is verified.
-const API = import.meta.env.VITE_WORKSPACE_API_URL || "";
+// An explicit empty override is reserved for migration rollback and legacy tests.
+const API = import.meta.env.VITE_WORKSPACE_API_URL ?? "https://mandir-hospitality-api.usayouth.workers.dev/api";
 export const usesDatabase = Boolean(API);
 
 export async function workspaceRequest(request) {

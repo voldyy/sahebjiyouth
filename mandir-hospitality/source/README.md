@@ -2,7 +2,7 @@
 
 Transport and lodging WhatsApp notifications run in the existing Azure backend. Accommodations includes an admin-only **Send room details** preview/send action, with one message per attendee. See [notification setup and operations](notifications/HOSPITALITY.md).
 
-A responsive Google Sheets dashboard for Allentown Shri Swaminarayan Mandirji. Admins have Main, Transport, Accommodations, and Yogi Prasad. The Yogi Prasad team link opens an overall view-only version of all four tabs. The interface uses the supplied Anoopam Mission logo, sky blue, and soft orange.
+A responsive hospitality dashboard for Allentown Shri Swaminarayan Mandirji, backed by SQLite with background Google Sheets synchronization. Admins have Main, Transport, Accommodations, and Yogi Prasad. The Yogi Prasad team link opens an overall view-only version of all four tabs. The interface uses the supplied Anoopam Mission logo, sky blue, and soft orange.
 
 ## Development and release
 
@@ -11,6 +11,8 @@ npm install
 npm run dev -- --port 5174
 npm run build:backend
 npm run test:unit
+npm run test:database
+npm run test:database-ui
 npm run test:sheets
 npm run build
 ```
@@ -23,7 +25,7 @@ Publish editable source to `voldyy/sahebjiyouth`, `mandir-hospitality/source/`, 
 
 The shareable team link is `https://www.sahebjiyouth.org/mandir-hospitality/#kitchen?team=yogi-prasad`. An admin can copy it from Workspace settings. It starts on Yogi Prasad and shows Main, Transport, Accommodations, and Yogi Prasad in view-only mode, including when opened in an existing admin tab. The team flag persists across navigation and driver filters. Search, filters, dates, guest/stay details, and flight lookups remain available. Editing controls and headcount adjustments are unavailable; a forged role or hash cannot authorize writes.
 
-Full access uses a private link with an `admin` parameter in the URL fragment. The key is generated on the backend and stored in the Apps Script property `ADMIN_ACCESS_KEY`. The frontend consumes it into this tab's session storage and removes it from the address bar. It is never bundled in source or production assets. Possession grants admin access, so share this link only with admins. Rotating the script property invalidates old links. No Google sign-in is required for dashboard users.
+Full access uses a private link with an `admin` parameter in the URL fragment. The key is generated on the backend and stored in the Apps Script property `ADMIN_ACCESS_KEY`; its digest is synchronized to SQLite for authorization. The frontend consumes it into this tab's session storage and removes it from the address bar. It is never bundled in source or production assets. Possession grants admin access, so share this link only with admins. Rotating the script property invalidates old links after the next synchronization. No Google sign-in is required for dashboard users.
 
 The backend checks the key on every lodging, transport, resource, offsite, and linen write. Viewer snapshots return the normalized guest display records, transport assignments, room inventory, and housekeeping needed by all four tabs, without the raw source rows. Viewer snapshots do not create or update sheet records; due linen tasks can be derived in memory. Snapshot and flight lookup are permitted read actions. Source-sheet link sharing must remain **Viewer**, with named editors retained. Anonymous source-sheet editing would bypass dashboard restrictions.
 
@@ -31,9 +33,9 @@ Yogi Prasad headcount adjustments remain device-local and are now available only
 
 ## Source data
 
-The roster is Google Sheets document `1YvVz4DyPZYTYtKC9qiDlEXsPd7Xz4DPNJIoe3NBkYMA`, attendee tab `gid=0`. Each row is one attendee. Registration ID + attendee name + relationship identifies a row independently of sorting. Removed or duplicate identities and stale edits are rejected. Direct sheet edits bypass the app's lock, so avoid rearranging rows while saving.
+Registrations come from Google Sheets document `1YvVz4DyPZYTYtKC9qiDlEXsPd7Xz4DPNJIoe3NBkYMA`, attendee tab `gid=0`, and are imported into SQLite every minute. Dashboard reads and operational saves use SQLite directly. Each row is one attendee. Registration ID + attendee name + relationship identifies a row independently of sorting. Removed or duplicate identities and stale edits are rejected. Conflicting direct Sheet edits to fields with pending database writes are surfaced for review rather than silently overwritten.
 
-Lodging uses **AD = location**, **AE = hotel/room number**, **AF = bed code**. Assignment writes preserve literal text and leading zeroes. Guest data stays in memory and is not embedded in the static build. Other registration edits remain in Sheets. Explicit RSVP values `Departed` and `Checked out` are recognized; changing scheduled checkout dates is necessary for date-driven linen tracking.
+Lodging uses **AD = location**, **AE = hotel/room number**, **AF = bed code**. Assignment writes preserve literal text and leading zeroes. Guest data is persisted in the backend database, kept only in memory by the browser, and never embedded in the static build. Other registration edits remain in Sheets. Explicit RSVP values `Departed` and `Checked out` are recognized; changing scheduled checkout dates is necessary for date-driven linen tracking.
 
 Travel choices include `CAR`, `FLIGHT`, `BUS`, and `Bus (arrival)`. The last applies only to arrivals; it does not infer a bus return. Location ABE is supported for bus pickup. Bus journeys do not invoke flight lookup or display flight trackers.
 
@@ -65,13 +67,15 @@ Yogi Prasad serves breakfast 8–10 AM, lunch 12–2 PM, and dinner 6–8 PM. On
 
 ## Shared backend
 
+The default API is `https://mandir-hospitality-api.usayouth.workers.dev/api`. A Cloudflare Durable Object stores each event's coordinated room inventory in SQLite. Validated changes, audit receipts, and a synchronization outbox commit atomically; the browser receives the result without waiting for Google. An alarm pushes pending field patches after about one second, and imports source changes every minute. Actual Sheet visibility depends on Google's response time. Failed syncs retain the saved database state and retry. The connection banner distinguishes saved/pending/synchronized states. See [database operations and rollback](worker/README.md).
+
 The existing **Mandir Hospitality Shared Editing** Apps Script project executes as the owner and serves Anyone. Update this project, not the registration project. `npm run build:backend` generates `apps-script/Code.gs`. Update the existing Web app deployment to a new version to preserve its URL; the static website release does not update Apps Script automatically.
 
 For first-time setup, invoke the private `setupHospitality_` helper from an editor-only temporary wrapper. It creates shared tabs and generates `ADMIN_ACCESS_KEY` only if absent. The private `showAdminLink_` helper logs the admin URL in the owner's editor. Remove any temporary wrapper before deploying. Apps Script hides underscore helpers from the public RPC interface and the normal function picker. Existing deployments retain the key when code is updated. Never return the key through `hospitalityRequest`.
 
-Shared tabs are `Transport Assignments`, `Transport Resources`, `Assignment History`, `Offsite Rooms`, and `Housekeeping`. Request IDs, a script lock, stale checks, literal writes and readback confirmation protect saves. History records changes, not verified personal identities. The browser refreshes every minute while visible and on returning to the tab.
+Shared tabs are `Transport Assignments`, `Transport Resources`, `Transport Display`, `Assignment History`, `Offsite Rooms`, and `Housekeeping`. Request IDs, transactional SQLite writes, a script lock, stale checks, literal writes and readback confirmation protect the database and its Sheet mirror. History records changes, not verified personal identities. The browser refreshes from SQLite every ten seconds while visible and on returning to the tab.
 
-The browser uses an Apps Script iframe with nonce/source/origin-checked postMessage RPC. These checks protect message transport; the server's access-key check supplies authorization. `VITE_APPS_SCRIPT_URL` can override the public `/exec` endpoint. Local bridge origins are localhost/127.0.0.1 on port 5174.
+The current browser uses HTTPS directly and does not load a Google iframe. `VITE_WORKSPACE_API_URL` overrides the default API; an explicit empty value selects the legacy iframe client for rollback/testing. Already-open legacy clients are forwarded by Apps Script through `DATABASE_API_URL`. The private `DATABASE_SYNC_KEY` property must match the Worker secret `SYNC_KEY`; neither belongs in browser code. `VITE_APPS_SCRIPT_URL` only applies to the legacy client. Rollback requires reconciling pending changes before removing the forwarding property.
 
 ## Verification
 
@@ -79,4 +83,4 @@ Unit tests cover backend permissions, stale writes, room conflicts, provisional 
 
 `VITE_DEMO_MODE=true` and `npm test` use the separate original sample-data workspace. Its registration, check-in, dispatch and housekeeping behavior is device-local and is not the live system of record.
 
-The initial page includes a minimal loading indicator before React starts and while the first Sheets snapshot loads. It respects reduced-motion preferences, keeps normal background refreshes unobtrusive, and displays a retry action on initial connection errors.
+The initial page includes a minimal loading indicator before React starts and while the first database snapshot loads. It respects reduced-motion preferences, keeps normal background refreshes unobtrusive, and displays a retry action on initial connection errors.
