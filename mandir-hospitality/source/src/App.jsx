@@ -70,8 +70,10 @@ export default function App() {
   const sheetWorkspace = useSheetWorkspace(!demoMode);
   const [requestedRoute, setRoute] = useState(currentRoute);
   const isAdmin = demoMode || (sheetWorkspace.role === "admin" && !isTeamView());
+  const canEditMeals = isAdmin || (isTeamView() && Boolean(sheetWorkspace.meals?.settings?.teamEditingEnabled));
   const connectionIssue = sheetWorkspace.error || sheetWorkspace.sync?.error;
-  const connectionStatus = connectionIssue ? "Connection needs attention" : sheetWorkspace.saving ? "Saving changes" : sheetWorkspace.sync?.pending ? "Saved; syncing to Google Sheets" : `Connected · ${isAdmin ? "Admin access" : "View-only access"}`;
+  const accessLabel = isAdmin ? "Admin access" : canEditMeals ? "Meal editing access" : "View-only access";
+  const connectionStatus = connectionIssue ? "Connection needs attention" : sheetWorkspace.saving ? "Saving changes" : sheetWorkspace.sync?.pending ? "Saved; syncing to Google Sheets" : `Connected · ${accessLabel}`;
   const route = requestedRoute;
   const visibleNavigation = navigation;
   const routeLink = (id) => `#${id}${isTeamView() ? "?team=yogi-prasad" : ""}`;
@@ -291,7 +293,7 @@ export default function App() {
             {demoMode ? <><span className="local-status"><span className="status-dot" />{storageError ? "Session only" : "Saved on this device"}</span><span className="demo-label">DEMO</span></> :
               <span className={`local-status connection-indicator${connectionIssue ? " has-error" : sheetWorkspace.sync?.pending ? " is-syncing" : ""}`} role="status" aria-label={connectionStatus} title={`${connectionStatus}. Updates automatically.`}>
                 <span className="status-dot" aria-hidden="true" />
-                <span className="connection-label">{connectionIssue ? "Connection issue" : sheetWorkspace.saving ? "Saving…" : sheetWorkspace.sync?.pending ? "Syncing…" : isAdmin ? "Admin access" : "View-only access"}</span>
+                <span className="connection-label">{connectionIssue ? "Connection issue" : sheetWorkspace.saving ? "Saving…" : sheetWorkspace.sync?.pending ? "Syncing…" : accessLabel}</span>
               </span>}
             <span className="topbar-divider" />
             <button
@@ -371,10 +373,15 @@ export default function App() {
             )}
             {route === "kitchen" && (demoMode || sheetWorkspace.refreshedAt) && (
               <Kitchen
-                readOnly={!isAdmin}
+                readOnly={!canEditMeals}
+                isAdmin={isAdmin}
                 guests={guests}
+                meals={sheetWorkspace.meals}
                 sheetMode={!demoMode}
-                onUpdateGuest={onUpdateGuest}
+                saving={sheetWorkspace.saving}
+                onSaveMealOverride={sheetWorkspace.saveMealOverride}
+                onSaveMealPlan={sheetWorkspace.saveMealPlan}
+                onSaveMealSettings={sheetWorkspace.saveMealSettings}
                 toast={toast}
               />
             )}
@@ -549,7 +556,7 @@ export default function App() {
             <h3>About this workspace</h3>
             {demoMode ? <p>This demo uses sample guests, saved in this browser.</p> : <>
               <p>Assignments are saved to the shared workspace and synchronized to Google Sheets in the background. Registration changes made in the sheet are imported automatically. Lodging updates affect only AD (location), AE (room number), and AF (custom code). Guest records are not saved to browser storage.</p>
-              <p>Editing rooms, transport and housekeeping requires a private admin link. The Yogi Prasad team link opens all four tabs in view-only mode. Only admins can change headcounts or assignments. Kitchen headcount adjustments remain device-local.</p>
+              <p>Editing rooms, transport and housekeeping requires a private admin link. Yogi Prasad meal plans and dining-list changes are shared across the workspace. Admins can decide whether the Yogi Prasad team link may make meal-only changes; all other assignments remain admin-only.</p>
               <button className="button secondary" onClick={async () => { try { await navigator.clipboard.writeText(yogiPrasadLink()); toast("Yogi Prasad team link copied."); } catch { toast(`Team link: ${yogiPrasadLink()}`); } }}>Copy Yogi Prasad team link</button>
               <a className="button secondary" href={SHEET_URL} target="_blank" rel="noreferrer">Open source sheet</a>
 
@@ -618,7 +625,7 @@ export default function App() {
               {
                 icon: Utensils,
                 title: "Prepare mahaprasad with care",
-                body: "Choose a planning day, switch between meals, and adjust the expected volunteers, walk-in visitors and preparation buffer. Each date keeps its own plan.",
+                body: "Choose a planning day, switch between meals, review who is dining, and adjust the shared dining count and preparation buffer.",
               },
             ].map((i) => (
               <div key={i.title}>

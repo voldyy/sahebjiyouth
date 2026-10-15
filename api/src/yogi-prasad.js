@@ -21,6 +21,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var yogi_prasad_exports = {};
 __export(yogi_prasad_exports, {
   CONTENT_SID: () => CONTENT_SID,
+  MEAL_COUNTS_URL: () => MEAL_COUNTS_URL,
   MESSAGING_SERVICE_SID: () => MESSAGING_SERVICE_SID,
   SENDER: () => SENDER,
   TIMER_SCHEDULE: () => TIMER_SCHEDULE,
@@ -37,9 +38,13 @@ __export(yogi_prasad_exports, {
 });
 module.exports = __toCommonJS(yogi_prasad_exports);
 
+// src/lib/offsite.js
+var OFFSITE_HOTELS = ["Comfort Inn", "Hilton Garden Inn"];
+
 // src/lib/lodgingRooms.js
 var samarpanRooms = [
-  { number: "204", beds: 4 },
+  { number: "203", beds: 4 },
+  { number: "204", beds: 3 },
   { number: "205", beds: 4 },
   { number: "206", beds: 4 },
   { number: "207", beds: 4 },
@@ -50,9 +55,36 @@ var samarpanRooms = [
   { number: "104", beds: 12 }
 ];
 var samarpanBedCount = samarpanRooms.reduce((sum, room) => sum + room.beds, 0);
+var sadhakRooms = [
+  { number: "101", beds: 3 },
+  { number: "102", beds: 3 },
+  { number: "104", beds: 2 },
+  { number: "201", beds: 1 },
+  { number: "202", beds: 3 },
+  { number: "203", beds: 2 },
+  { number: "204", beds: 2 }
+].map((room) => ({ ...room, lodging: "Sadhak" }));
+var FIXED_LODGINGS = ["Samarpan", "Sadhak"];
 
-// src/lib/offsite.js
-var OFFSITE_HOTELS = ["Comfort Inn", "Hilton Garden Inn"];
+// src/lib/transportDisplay.js
+var HOUR = 60 * 60 * 1e3;
+var formatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+var parts = (instant) => Object.fromEntries(formatter.formatToParts(new Date(instant)).map((p) => [p.type, p.value]));
+var dayOf = (p) => `${p.year}-${p.month}-${p.day}`;
+function allentownInstant(day, time) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day || "") || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time || "")) return null;
+  const wall = Date.parse(`${day}T${time}:00Z`);
+  if (!Number.isFinite(wall) || new Date(wall).toISOString().slice(0, 10) !== day) return null;
+  const candidates = [-24, 0, 24].map((hours) => {
+    const probe = wall + hours * HOUR, p = parts(probe);
+    const offset = Date.parse(`${dayOf(p)}T${p.hour}:${p.minute}:00Z`) - probe;
+    return wall - offset;
+  }).filter((instant) => {
+    const p = parts(instant);
+    return dayOf(p) === day && `${p.hour}:${p.minute}` === time;
+  });
+  return candidates.length ? Math.max(...candidates) : null;
+}
 
 // src/lib/occupancy.js
 var FIRST_STAY_DAY = "2026-10-11";
@@ -68,7 +100,7 @@ var WEEK_STARTS = Array.from({ length: 6 }, (_, i) => moveDay(FIRST_STAY_DAY, i 
 var SPREADSHEET_ID = "1YvVz4DyPZYTYtKC9qiDlEXsPd7Xz4DPNJIoe3NBkYMA";
 var SHEET_GID = 0;
 var SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit#gid=${SHEET_GID}`;
-var LODGING_LOCATIONS = ["Samarpan", ...OFFSITE_HOTELS];
+var LODGING_LOCATIONS = [...FIXED_LODGINGS, ...OFFSITE_HOTELS];
 var API = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`;
 var HEADERS = { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" };
 var text = (value) => String(value ?? "").trim();
@@ -105,6 +137,18 @@ function sheetDate(value) {
   const pad = (n) => String(n).padStart(2, "0");
   return { date: `${year}-${pad(month)}-${pad(day)}`, time: `${pad(hours)}:${pad(minutes)}` };
 }
+function registrationTime(value) {
+  const raw = text(value);
+  if (/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw)) {
+    const instant2 = Date.parse(raw);
+    return Number.isFinite(instant2) ? instant2 : null;
+  }
+  const { date, time } = sheetDate(value);
+  const instant = allentownInstant(date, time);
+  if (instant === null) return null;
+  const seconds = typeof value === "number" ? Math.round(value * 86400) % 60 : Number(raw.match(/\d{1,2}:\d{2}:(\d{2})/)?.[1] || raw.match(/^Date\(\d+,\d+,\d+,\d+,\d+,(\d+)\)/)?.[1] || 0);
+  return seconds < 60 ? instant + seconds * 1e3 : null;
+}
 function guestsFromRows(rows) {
   validateHeaders(rows[0] || []);
   const attendees = rows.slice(1).filter((row) => text(row[0]) && text(row[8]));
@@ -126,16 +170,24 @@ function guestsFromRows(rows) {
       registrationId: text(row[0]),
       sourceWritable: counts.get(identity) === 1,
       sourceLodging: lodging,
+      registeredAt: registrationTime(row[1]),
+      registrationOrder: index,
       name,
       initials: name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase(),
       group: "Individual",
+      isPrimaryContact: /^(YES|Y|TRUE)$/i.test(text(row[2])),
       primaryContact: text(row[3]),
       relationship: text(row[9]),
       city: text(row[7]),
       phone: text(row[5]),
       count: 1,
+      // Manual registrations have at least one of the normal online-form
+      // identifiers missing. Keep the raw email and ZIP out of dashboard data.
+      isManualRegistration: !text(row[4]) || !text(row[6]),
       arrivalDate: arrival.date,
       arrivalTime: arrival.time,
+      arrivalTimeKnown: typeof row[12] === "number" ? row[12] % 1 !== 0 : /(?:[T ]\d{1,2}:\d{2}|^Date\(\d+,\d+,\d+,\d+,\d+)/.test(text(row[12])),
+      departureTimeKnown: typeof row[13] === "number" ? row[13] % 1 !== 0 : /(?:[T ]\d{1,2}:\d{2}|^Date\(\d+,\d+,\d+,\d+,\d+)/.test(text(row[13])),
       departureDate: departure.date,
       departureTime: departure.time,
       travelMethod: text(row[11]),
@@ -161,43 +213,6 @@ function guestsFromRows(rows) {
   });
 }
 
-// src/lib/mealForecast.js
-var MEAL_CUTOFFS = { breakfast: 11 * 60, lunch: 15 * 60, dinner: 24 * 60 };
-function arrivalMinutes(value) {
-  const match = String(value || "").match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-  if (!match) return 0;
-  let hours = Number(match[1]);
-  if (match[3]) hours = hours % 12 + (match[3].toUpperCase() === "PM" ? 12 : 0);
-  return hours * 60 + Number(match[2]);
-}
-function getForecast(guests, meal, plan, day) {
-  const attending = guests.filter((guest) => {
-    if (guest.status === "Departed" || guest.status === "Cancelled") return false;
-    if (guest.sourceIdentity && (!guest.arrivalDate || !guest.departureDate)) return false;
-    if (guest.arrivalDate && guest.arrivalDate > day) return false;
-    if (guest.departureDate && guest.departureDate < day) return false;
-    if (guest.stay === "Day visitor" && guest.arrivalDate !== day) return false;
-    return guest.arrivalDate && guest.arrivalDate < day || arrivalMinutes(guest.arrivalTime) < meal.cutoff;
-  });
-  const guestCount = attending.reduce((sum, guest) => sum + Number(guest.count || 1), 0);
-  const expected = guestCount + Number(plan.volunteers) + Number(plan.visitors);
-  const bufferCount = Math.ceil(expected * Number(plan.buffer) / 100);
-  return {
-    guests: guestCount,
-    diners: attending.sort((a, b) => (a.name || "").localeCompare(b.name || "")),
-    expected,
-    bufferCount,
-    target: expected + bufferCount
-  };
-}
-function rosterMealCounts(guests, day) {
-  const plan = { volunteers: 0, visitors: 0, buffer: 0 };
-  return Object.fromEntries(Object.entries(MEAL_CUTOFFS).map(([name, cutoff]) => [
-    name,
-    getForecast(guests, { cutoff }, plan, day).expected
-  ]));
-}
-
 // notifications/yogi-prasad.js
 var CONTENT_SID = "HX7323dade1f484b504c551f0ecc262c07";
 var SENDER = "whatsapp:+16105021100";
@@ -205,6 +220,7 @@ var MESSAGING_SERVICE_SID = "MG88f1fc4ecdb340549c259343d48d7f54";
 var TIMER_SCHEDULE = "0 0,5,10,15 1,2 * * *";
 var TIME_ZONE = "America/New_York";
 var PARTITION = "yogi-prasad-whatsapp";
+var MEAL_COUNTS_URL = "https://mandir-hospitality-api.usayouth.workers.dev/api";
 function recipientFromEnv(env) {
   const recipient = env.YOGI_PRASAD_WHATSAPP_TO || "";
   if (!/^whatsapp:\+[1-9]\d{7,14}$/.test(recipient)) throw Error("YOGI_PRASAD_WHATSAPP_TO must be a WhatsApp E.164 address");
@@ -252,21 +268,29 @@ function parseRoster(text2) {
   return guestsFromRows(rows);
 }
 async function fetchMealCounts(day, fetchImpl = fetch) {
-  const url = new URL(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq`);
-  url.search = new URLSearchParams({ gid: "0", headers: "1", tqx: "out:json", range: "A:AF", _: String(Date.now()) });
-  const response = await fetchImpl(url, { signal: AbortSignal.timeout(3e4), cache: "no-store" });
-  if (!response.ok) throw Error(`Roster read failed (HTTP ${response.status})`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day || "") || (/* @__PURE__ */ new Date(`${day}T12:00:00Z`)).toISOString().slice(0, 10) !== day) throw Error("Invalid meal date");
+  const response = await fetchImpl(MEAL_COUNTS_URL, {
+    method: "POST",
+    signal: AbortSignal.timeout(3e4),
+    cache: "no-store",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "meal-counts", day })
+  });
+  if (!response.ok) throw Error(`Meal count service failed (HTTP ${response.status})`);
   const text2 = await response.text();
-  if (text2.length > 5 * 1024 * 1024) throw Error("Roster response is too large");
-  const guests = parseRoster(text2);
-  const counts = rosterMealCounts(guests, day);
-  if (!Object.values(counts).every((n) => Number.isSafeInteger(n) && n >= 0)) throw Error("Invalid meal headcounts");
-  return {
-    day,
-    counts,
-    rosterSize: guests.length,
-    excludedUndated: guests.filter((g) => g.status !== "Cancelled" && (!g.arrivalDate || !g.departureDate)).length
-  };
+  if (text2.length > 1e4) throw Error("Meal count response is too large");
+  let result;
+  try {
+    result = JSON.parse(text2);
+  } catch {
+    throw Error("Invalid meal count response");
+  }
+  const counts = result?.counts;
+  const validCount = (value) => Number.isSafeInteger(value) && value >= 0 && value <= 1e5;
+  if (result?.ok !== true || result.day !== day || !counts || Object.keys(counts).sort().join(",") !== "breakfast,dinner,lunch" || !Object.values(counts).every(validCount) || !validCount(result.rosterSize) || !validCount(result.excludedUndated) || result.excludedUndated > result.rosterSize) {
+    throw Error("Invalid meal count response");
+  }
+  return { day, counts: { breakfast: counts.breakfast, lunch: counts.lunch, dinner: counts.dinner }, rosterSize: result.rosterSize, excludedUndated: result.excludedUndated };
 }
 function contentVariables(counts) {
   return { "1": String(counts.breakfast), "2": String(counts.lunch), "3": String(counts.dinner) };
@@ -359,6 +383,7 @@ function createYogiPrasadHandler({ table, env, now = () => /* @__PURE__ */ new D
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   CONTENT_SID,
+  MEAL_COUNTS_URL,
   MESSAGING_SERVICE_SID,
   SENDER,
   TIMER_SCHEDULE,

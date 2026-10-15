@@ -1,5 +1,4 @@
-import { SPREADSHEET_ID, guestsFromRows } from "../src/lib/sheets.js";
-import { rosterMealCounts } from "../src/lib/mealForecast.js";
+import { guestsFromRows } from "../src/lib/sheets.js";
 
 export const CONTENT_SID = "HX7323dade1f484b504c551f0ecc262c07";
 export const SENDER = "whatsapp:+16105021100";
@@ -9,6 +8,7 @@ export const MESSAGING_SERVICE_SID = "MG88f1fc4ecdb340549c259343d48d7f54";
 export const TIMER_SCHEDULE = "0 0,5,10,15 1,2 * * *";
 export const TIME_ZONE = "America/New_York";
 const PARTITION = "yogi-prasad-whatsapp";
+export const MEAL_COUNTS_URL = "https://mandir-hospitality-api.usayouth.workers.dev/api";
 
 export function recipientFromEnv(env) {
   const recipient = env.YOGI_PRASAD_WHATSAPP_TO || "";
@@ -55,19 +55,25 @@ export function parseRoster(text) {
 }
 
 export async function fetchMealCounts(day, fetchImpl = fetch) {
-  const url = new URL(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq`);
-  url.search = new URLSearchParams({ gid: "0", headers: "1", tqx: "out:json", range: "A:AF", _: String(Date.now()) });
-  const response = await fetchImpl(url, { signal: AbortSignal.timeout(30000), cache: "no-store" });
-  if (!response.ok) throw Error(`Roster read failed (HTTP ${response.status})`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day || "") || new Date(`${day}T12:00:00Z`).toISOString().slice(0, 10) !== day) throw Error("Invalid meal date");
+  const response = await fetchImpl(MEAL_COUNTS_URL, {
+    method: "POST", signal: AbortSignal.timeout(30000), cache: "no-store",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "meal-counts", day }),
+  });
+  if (!response.ok) throw Error(`Meal count service failed (HTTP ${response.status})`);
   const text = await response.text();
-  if (text.length > 5 * 1024 * 1024) throw Error("Roster response is too large");
-  const guests = parseRoster(text);
-  const counts = rosterMealCounts(guests, day);
-  if (!Object.values(counts).every(n => Number.isSafeInteger(n) && n >= 0)) throw Error("Invalid meal headcounts");
-  return {
-    day, counts, rosterSize: guests.length,
-    excludedUndated: guests.filter(g => g.status !== "Cancelled" && (!g.arrivalDate || !g.departureDate)).length,
-  };
+  if (text.length > 10000) throw Error("Meal count response is too large");
+  let result;
+  try { result = JSON.parse(text); } catch { throw Error("Invalid meal count response"); }
+  const counts = result?.counts;
+  const validCount = value => Number.isSafeInteger(value) && value >= 0 && value <= 100000;
+  if (result?.ok !== true || result.day !== day || !counts || Object.keys(counts).sort().join(",") !== "breakfast,dinner,lunch" ||
+      !Object.values(counts).every(validCount) || !validCount(result.rosterSize) || !validCount(result.excludedUndated) || result.excludedUndated > result.rosterSize) {
+    throw Error("Invalid meal count response");
+  }
+  // Return only the bounded aggregate contract. Ignore any unexpected fields so
+  // notification claims and logs can never retain roster details.
+  return { day, counts: { breakfast: counts.breakfast, lunch: counts.lunch, dinner: counts.dinner }, rosterSize: result.rosterSize, excludedUndated: result.excludedUndated };
 }
 
 export function contentVariables(counts) {

@@ -88,6 +88,9 @@ export function guestsFromRows(rows) {
       name, initials: name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase(),
       group: "Individual", isPrimaryContact: /^(YES|Y|TRUE)$/i.test(text(row[2])), primaryContact: text(row[3]), relationship: text(row[9]),
       city: text(row[7]), phone: text(row[5]), count: 1,
+      // Manual registrations have at least one of the normal online-form
+      // identifiers missing. Keep the raw email and ZIP out of dashboard data.
+      isManualRegistration: !text(row[4]) || !text(row[6]),
       arrivalDate: arrival.date, arrivalTime: arrival.time,
       arrivalTimeKnown: typeof row[12] === "number" ? row[12] % 1 !== 0 : /(?:[T ]\d{1,2}:\d{2}|^Date\(\d+,\d+,\d+,\d+,\d+)/.test(text(row[12])),
       departureTimeKnown: typeof row[13] === "number" ? row[13] % 1 !== 0 : /(?:[T ]\d{1,2}:\d{2}|^Date\(\d+,\d+,\d+,\d+,\d+)/.test(text(row[13])),

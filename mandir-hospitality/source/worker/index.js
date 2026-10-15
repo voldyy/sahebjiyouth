@@ -2,6 +2,9 @@ import { DurableObject } from "cloudflare:workers";
 import { TABLES, createWorkspaceEngine } from "../shared/workspace-engine.js";
 import { tabularWorkspace } from "../shared/tabular-workspace.js";
 import { changesBetween, overlayChanges, same } from "../shared/workspace-sync.js";
+import { createMealState } from "./meal-state.js";
+import { createMealSurvey } from "./meal-survey.js";
+import { verifyTwilioSignature, signTwilioRequest } from "./twilio-webhook.js";
 
 const engine = createWorkspaceEngine({ uuid: () => crypto.randomUUID(), today: () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()), flush: () => {} });
 const encoder = new TextEncoder();
@@ -14,10 +17,12 @@ const mutating = new Set(["lodging", "transport", "resource", "linen", "offsite"
 const allowedOrigins = new Set(["https://www.sahebjiyouth.org", "https://sahebjiyouth.org", "http://localhost:5174", "http://127.0.0.1:5174", "http://localhost:5175", "http://127.0.0.1:5175"]);
 const noHistory = tables => Object.fromEntries(Object.entries(tables).filter(([name]) => name !== "Assignment History"));
 const fail = message => ({ ok: false, error: message });
+const mealActions = new Set(["meal-override", "meal-plan", "meal-settings"]);
+const surveyConfigured = env => /^HX[0-9a-f]{32}$/i.test(env.MEAL_ARRIVAL_CONTENT_SID || "") && /^HX[0-9a-f]{32}$/i.test(env.MEAL_FASTING_CONTENT_SID || "") && !!env.TWILIO_AUTH_TOKEN && !!env.TWILIO_API_KEY && !!env.TWILIO_API_SECRET && env.TWILIO_WHATSAPP_FROM === "whatsapp:+16105021100";
 
-async function boundedJson(request, max) {
+async function boundedText(request, max) {
   const reader = request.body?.getReader();
-  if (!reader) return {};
+  if (!reader) return "";
   let size = 0;
   const chunks = [];
   for (;;) {
@@ -30,8 +35,9 @@ async function boundedJson(request, max) {
   const bytes = new Uint8Array(size);
   let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
-  return JSON.parse(new TextDecoder().decode(bytes));
+  return new TextDecoder().decode(bytes);
 }
+async function boundedJson(request, max) { return JSON.parse(await boundedText(request, max) || "{}"); }
 
 export default {
   async fetch(request, env) {
@@ -42,6 +48,27 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
     const path = new URL(request.url).pathname;
     if (path === "/health") return Response.json({ ok: true, service: "Mandir Hospitality SQLite", version: 1 }, { headers });
+    if (path === "/twilio/whatsapp" && request.method === "POST") {
+      try {
+        if (!request.headers.get("Content-Type")?.startsWith("application/x-www-form-urlencoded")) return new Response("Form data required", { status: 415, headers });
+        const body = await boundedText(request, 16000), params = new URLSearchParams(body);
+        if (!await verifyTwilioSignature(request.url, params, request.headers.get("X-Twilio-Signature"), env.TWILIO_AUTH_TOKEN)) return new Response("Invalid signature", { status: 403, headers });
+        let mealFailed = false;
+        try { await env.WORKSPACES.getByName(env.WORKSPACE_ID).mealReply(Object.fromEntries(params)); }
+        catch (_) { mealFailed = true; console.error(JSON.stringify({ event: "meal_reply_storage_failed" })); }
+        // Keep the existing Chatwoot inbox, including the visible button reply.
+        // Its signature is recalculated for its own exact webhook URL.
+        const forwardUrl = "https://app.chatwoot.com/twilio/callback";
+        const response = await fetch(forwardUrl, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "X-Twilio-Signature": await signTwilioRequest(forwardUrl, params, env.TWILIO_AUTH_TOKEN) }, body, signal: AbortSignal.timeout(10000), redirect: "error" });
+        // A meal failure must not prevent delivery to the existing inbox.
+        // Signal the error after forwarding so Twilio can retry the same SID.
+        if (mealFailed) { await response.body?.cancel(); return new Response("Meal reply recording unavailable", { status: 503, headers }); }
+        return new Response(response.body, { status: response.status, headers: { ...headers, "Content-Type": response.headers.get("Content-Type") || "text/xml" } });
+      } catch (_) {
+        console.error(JSON.stringify({ event: "meal_reply_failed" }));
+        return new Response("Reply processing unavailable", { status: 503, headers });
+      }
+    }
     if (path !== "/api" || !["GET", "POST"].includes(request.method)) return Response.json(fail("Not found."), { status: 404, headers });
     try {
       const req = request.method === "GET" ? { action: "snapshot" } : await boundedJson(request, 16000);
@@ -68,9 +95,15 @@ export class HospitalityWorkspace extends DurableObject {
         CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS outbox (seq INTEGER PRIMARY KEY AUTOINCREMENT, changes TEXT NOT NULL, created_at TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS receipts (id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, changes TEXT NOT NULL, created_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS meal_records (kind TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(kind,id));
       `);
       if (!this.meta("stream")) this.putMeta("stream", crypto.randomUUID());
     });
+    this.meals = createMealState({ sql: ctx.storage.sql, bumpRevision: () => this.putMeta("revision", Number(this.meta("revision", "0")) + 1), configured: () => surveyConfigured(this.env), automaticDefault: this.env.MEAL_AUTOMATIC_QUESTIONS === "true" });
+    this.survey = createMealSurvey({ env, getGuests: () => engine.roster(tabularWorkspace(this.load())).guests,
+      getSettings: () => ({ ...this.meals.settings(), automaticQuestionsEnabled: this.meals.settings().automaticQuestionsEnabled && surveyConfigured(this.env) && Date.now() - Date.parse(this.meta("lastSyncedAt")) < 10 * 60000 }),
+      records: this.meals.records, get: this.meals.get, put: this.meals.put,
+      transaction: callback => this.ctx.storage.transactionSync(callback), saveAnswer: this.meals.saveAnswer, schedule: () => this.schedule(), now: () => new Date() });
   }
   meta(key, fallback = "") { return this.ctx.storage.sql.exec("SELECT value FROM metadata WHERE key = ?", key).toArray()[0]?.value ?? fallback; }
   putMeta(key, value) { this.ctx.storage.sql.exec("INSERT INTO metadata(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", key, String(value)); }
@@ -97,7 +130,12 @@ export class HospitalityWorkspace extends DurableObject {
   result(role) {
     const book = tabularWorkspace({ ...this.load(), "Assignment History": [TABLES["Assignment History"]] });
     const snapshot = engine.snapshot(book, "viewer");
-    return { ok: true, ...snapshot, role, ...(role === "admin" ? { rows: book.data.Attendees } : {}), revision: this.meta("revision", "0"), sync: this.syncState() };
+    return { ok: true, ...snapshot, guests: this.meals.augment(snapshot.guests), meals: this.meals.snapshot(role, snapshot.guests, role === "admin" ? this.survey.summary() : undefined), role, ...(role === "admin" ? { rows: book.data.Attendees } : {}), revision: this.meta("revision", "0"), sync: this.syncState() };
+  }
+  async mealReply(params) {
+    if (!String(params.ButtonPayload || "").startsWith("yp:") && !/^(STOP|STOPALL|UNSUBSCRIBE|CANCEL|END|QUIT)$/i.test(String(params.Body || "").trim())) return { status: "ignored" };
+    if (!this.meta("initialized")) throw Error("Workspace is not initialized.");
+    return this.survey.receive(params);
   }
   async persistHousekeeping() {
     const prepare = () => {
@@ -152,6 +190,23 @@ export class HospitalityWorkspace extends DurableObject {
       }
       if (req.action === "trip-display-read") return { ok: true, tripDisplay: this.result(role).tripDisplay };
       if (req.action === "notification-authorize") return { ok: true, authorized: role === "admin" };
+      if (req.action === "meal-counts") return { ok: true, ...this.meals.counts(engine.roster(tabularWorkspace(this.load())).guests, req.day) };
+      if (mealActions.has(req.action)) {
+        if (!/^[a-zA-Z0-9-]{20,80}$/.test(req.requestId || "")) throw Error("Missing request identifier.");
+        const { accessKey, ...safeRequest } = req;
+        const fingerprint = await digest(JSON.stringify(safeRequest));
+        await this.schedule();
+        const prior = this.ctx.storage.sql.exec("SELECT fingerprint FROM receipts WHERE id=?", req.requestId).toArray()[0];
+        if (prior && prior.fingerprint !== fingerprint) throw Error("This request identifier was already used for another change.");
+        // Check current permission even for a replay after team access changes.
+        if (role !== "admin" && (req.action === "meal-settings" || !this.meals.settings().teamEditingEnabled)) throw Error("Admin access is required to change dining counts.");
+        if (!prior) this.ctx.storage.transactionSync(() => {
+          this.meals.mutate(req, engine.roster(tabularWorkspace(this.load())).guests, role);
+          this.ctx.storage.sql.exec("INSERT INTO receipts(id,fingerprint,changes,created_at) VALUES (?,?,?,?)", req.requestId, fingerprint, "[]", new Date().toISOString());
+          this.putMeta("revision", Number(this.meta("revision", "0")) + 1);
+        });
+        return this.result(role);
+      }
       if (["flight", "accommodation-notifications"].includes(req.action)) {
         if (req.action === "accommodation-notifications") {
           if (role !== "admin") throw new Error("Admin access is required.");
@@ -221,5 +276,9 @@ export class HospitalityWorkspace extends DurableObject {
       await this.schedule(this.pending() && !this.meta("syncError") ? 1000 : 60000);
     }
   }
-  async alarm() { await this.synchronize(); }
+  async alarm() {
+    await this.synchronize();
+    try { await this.survey.process(); }
+    catch (_) { console.error(JSON.stringify({ event: "meal_survey_attention" })); }
+  }
 }

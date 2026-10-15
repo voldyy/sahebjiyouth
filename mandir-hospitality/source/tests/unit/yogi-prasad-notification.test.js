@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { rosterMealCounts } from "../../src/lib/mealForecast.js";
-import { isSendWindow, tomorrowEastern, createYogiPrasadHandler, createTwilioClient, SENDER, CONTENT_SID, parseRoster } from "../../notifications/yogi-prasad.js";
+import { isSendWindow, tomorrowEastern, createYogiPrasadHandler, createTwilioClient, fetchMealCounts, MEAL_COUNTS_URL, SENDER, CONTENT_SID, parseRoster } from "../../notifications/yogi-prasad.js";
 const RECIPIENT = "whatsapp:+12025550123";
 
 test("9 PM Eastern works in EDT, EST, and both daylight-saving transitions", () => {
@@ -29,6 +29,27 @@ test("meal counts follow arrival cutoffs, inclusive departure, and roster exclus
     { ...guest, stay: "Day visitor", arrivalDate: "2026-10-11" },
   ];
   assert.deepEqual(rosterMealCounts(guests, "2026-10-12"), { breakfast: 2, lunch: 4, dinner: 6 });
+});
+
+test("live meal counts come from the canonical Worker aggregate without retaining extra fields", async () => {
+  const result = await fetchMealCounts("2026-10-12", async (url, request) => {
+    assert.equal(url, MEAL_COUNTS_URL);
+    assert.equal(request.method, "POST");
+    assert.equal(request.headers["Content-Type"], "application/json");
+    assert.deepEqual(JSON.parse(request.body), { action: "meal-counts", day: "2026-10-12" });
+    return new Response(JSON.stringify({ ok: true, day: "2026-10-12", counts: { breakfast: 0, lunch: 4, dinner: 9 }, rosterSize: 10, excludedUndated: 1, guests: [{ name: "must not escape" }] }));
+  });
+  assert.deepEqual(result, { day: "2026-10-12", counts: { breakfast: 0, lunch: 4, dinner: 9 }, rosterSize: 10, excludedUndated: 1 });
+  assert.equal(Object.hasOwn(result, "guests"), false);
+});
+
+test("invalid or unbounded Worker meal-count responses fail closed", async () => {
+  const response = body => async () => new Response(typeof body === "string" ? body : JSON.stringify(body));
+  await assert.rejects(fetchMealCounts("2026-02-30", response({})), /Invalid meal date/);
+  await assert.rejects(fetchMealCounts("2026-10-12", response("not json")), /Invalid meal count response/);
+  await assert.rejects(fetchMealCounts("2026-10-12", response({ ok: true, day: "2026-10-13", counts: { breakfast: 1, lunch: 2, dinner: 3 }, rosterSize: 3, excludedUndated: 0 })), /Invalid meal count response/);
+  await assert.rejects(fetchMealCounts("2026-10-12", response({ ok: true, day: "2026-10-12", counts: { breakfast: -1, lunch: 2, dinner: 3 }, rosterSize: 3, excludedUndated: 0 })), /Invalid meal count response/);
+  await assert.rejects(fetchMealCounts("2026-10-12", response("x".repeat(10001))), /too large/);
 });
 
 function fixture() {

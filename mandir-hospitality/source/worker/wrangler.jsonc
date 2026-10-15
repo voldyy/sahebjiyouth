@@ -10,6 +10,10 @@
   "observability": { "enabled": true, "head_sampling_rate": 0.1, "traces": { "enabled": true, "head_sampling_rate": 0.1 } },
   "vars": {
     "WORKSPACE_ID": "allentown-2026",
+    "MEAL_AUTOMATIC_QUESTIONS": "true",
+    "MEAL_ARRIVAL_CONTENT_SID": "HXe3e2531896492283d3ed0b5c56f912c2",
+    "MEAL_FASTING_CONTENT_SID": "HX6ca41bc36d7a6b992b86275bd0cda576",
+    "TWILIO_WHATSAPP_FROM": "whatsapp:+16105021100",
     "APPS_SCRIPT_URL": "https://script.google.com/macros/s/AKfycbxYBR2sIywbufmytSNLiQvGRy2oYg_tsMTEqdUj855z1LX8OJcDf6rTI0gR14kzdzpGog/exec"
   }
 }

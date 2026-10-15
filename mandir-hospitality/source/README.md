@@ -2,7 +2,7 @@
 
 Transport and lodging WhatsApp notifications run in the existing Azure backend. Accommodations includes an admin-only **Send room details** preview/send action, with one message per attendee. See [notification setup and operations](notifications/HOSPITALITY.md).
 
-A responsive hospitality dashboard for Allentown Shri Swaminarayan Mandirji, backed by SQLite with background Google Sheets synchronization. Admins have Main, Transport, Accommodations, and Yogi Prasad. The Yogi Prasad team link opens an overall view-only version of all four tabs. The interface uses the supplied Anoopam Mission logo, sky blue, and soft orange.
+A responsive hospitality dashboard for Allentown Shri Swaminarayan Mandirji, backed by SQLite with background Google Sheets synchronization. Admins have Main, Transport, Accommodations, and Yogi Prasad. The Yogi Prasad team link can edit shared dining lists and meal counts when team meal editing is enabled; the other tabs remain view-only. The interface uses the supplied Anoopam Mission logo, sky blue, and soft orange.
 
 ## Development and release
 
@@ -23,13 +23,13 @@ Publish editable source to `voldyy/sahebjiyouth`, `mandir-hospitality/source/`, 
 
 ## Access
 
-The shareable team link is `https://www.sahebjiyouth.org/mandir-hospitality/#kitchen?team=yogi-prasad`. An admin can copy it from Workspace settings. It starts on Yogi Prasad and shows Main, Transport, Accommodations, and Yogi Prasad in view-only mode, including when opened in an existing admin tab. The team flag persists across navigation and driver filters. Search, filters, dates, guest/stay details, and flight lookups remain available. Editing controls and headcount adjustments are unavailable; a forged role or hash cannot authorize writes.
+The shareable team link is `https://www.sahebjiyouth.org/mandir-hospitality/#kitchen?team=yogi-prasad`. An admin can copy it from Workspace settings. It starts on Yogi Prasad with meal-only editing enabled by default. Admins can disable team meal editing in Meal settings. Main, Transport and Accommodations stay view-only, including when opened in an existing admin tab. The team flag persists across navigation and driver filters. Search, filters, dates, guest/stay details, and flight lookups remain available. A forged role or hash cannot authorize assignment writes.
 
 Full access uses a private link with an `admin` parameter in the URL fragment. The key is generated on the backend and stored in the Apps Script property `ADMIN_ACCESS_KEY`; its digest is synchronized to SQLite for authorization. The frontend consumes it into this tab's session storage and removes it from the address bar. It is never bundled in source or production assets. Possession grants admin access, so share this link only with admins. Rotating the script property invalidates old links after the next synchronization. No Google sign-in is required for dashboard users.
 
 The backend checks the key on every lodging, transport, resource, offsite, and linen write. Viewer snapshots return the normalized guest display records, transport assignments, room inventory, and housekeeping needed by all four tabs, without the raw source rows. Viewer snapshots do not create or update sheet records; due linen tasks can be derived in memory. Snapshot and flight lookup are permitted read actions. Source-sheet link sharing must remain **Viewer**, with named editors retained. Anonymous source-sheet editing would bypass dashboard restrictions.
 
-Yogi Prasad headcount adjustments remain device-local and are now available only to admins. Guest views cannot change headcounts or any shared assignments.
+Yogi Prasad dining-list overrides, numeric adjustments, preparation buffers and family questionnaire responses are shared SQLite records. The red minus excludes one attendee from one meal/date; Restore returns them to automatic planning, and Add can make an explicit exception to an arrival/fasting rule. All overrides remain bounded by active stay dates. The editable dining count stores an adjustment to the computed guest count, so later roster changes still update the total. See [WhatsApp meal questions](notifications/MEAL_QUESTIONS.md).
 
 ## Source data
 

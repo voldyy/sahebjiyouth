@@ -22,9 +22,9 @@ Please use these counts for meal planning.
 
 ## Counts
 
-The job reads the live shared roster, validates its column layout, and uses `src/lib/mealForecast.js`, the same calculation as the dashboard. Arrivals before 11 AM get all three meals, 11 AM through before 3 PM get lunch and dinner, and later arrivals get dinner. Earlier arrivals count for all meals. Departure date is inclusive, matching the dashboard. Cancelled/departed attendees, out-of-range stays, earlier day visits, and attendees missing arrival/departure dates are excluded. Zero is a valid headcount.
+The job reads the canonical `meal-counts` aggregate from the Cloudflare workspace API, which uses `src/lib/mealForecast.js`, the same calculation as the dashboard. Arrivals before 11 AM get all three meals, 11 AM through before 3 PM get lunch and dinner, and later arrivals get dinner. A current arrival answer overrides that cutoff only on arrival day. Fasting answers apply throughout the inclusive stay, and explicit meal/date overrides take precedence. Cancelled/departed attendees, out-of-range stays, earlier day visits, and attendees missing arrival/departure dates are excluded. Zero is a valid headcount. Invalid or unavailable aggregate responses stop the send; there is no stale Sheets-only fallback.
 
-These are registered-guest headcounts. Browser-local volunteer/walk-in adjustments and preparation buffers are not shared with the server and are not included. No guest names or roster rows are stored by this job or sent in WhatsApp.
+These counts include shared manual dining-count adjustments. Preparation buffers are not included. Old browser-local adjustments are not imported. No guest names or roster rows are stored by this job or sent in the nightly WhatsApp.
 
 ## Schedule and duplicate prevention
 

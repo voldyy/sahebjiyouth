@@ -52,7 +52,31 @@ Do not rotate ADMIN_ACCESS_KEY or expose it in client code.
 Manual FlightStats requests continue through the private bridge and are never
 automatically retried by the browser. Existing Azure notification schedules and
 recipients are unchanged. Accommodation message previews/queues first require
-all database changes to be synchronized. Kitchen overrides remain device-local.
+all assignment changes to be synchronized. Meal overrides, plans, survey claims
+and replies are stored in the separate SQLite `meal_records` table. They do not
+modify registration columns and are not mirrored to the public Sheet. Sheet
+imports cannot erase them. The nightly Azure headcount job reads the canonical
+`meal-counts` aggregate from this Worker, including shared adjustments.
+
+## Meal editing and WhatsApp
+
+`meal-override` and `meal-plan` permit admins and, while `teamEditingEnabled` is
+true, team viewers. `meal-settings` remains admin-only. Revisions reject stale
+updates; request receipts and audit records commit in the same transaction.
+The private admin link retains its broader permissions. Meal preferences can
+never include an inactive attendee or a date outside their stay.
+
+The existing minute alarm also runs the family questionnaire. It waits for both
+Twilio templates to be approved, claims each invitation before sending, and does
+not automatically retry an uncertain send. Incoming `POST /twilio/whatsapp`
+requires a valid Twilio HMAC signature. Exact button payloads update all captured
+family members atomically. Every valid incoming message is forwarded to the
+existing Chatwoot callback with a signature for that callback URL.
+
+Secrets: `TWILIO_ACCOUNT_SID`, `TWILIO_API_KEY`, `TWILIO_API_SECRET`, `TWILIO_AUTH_TOKEN`
+and existing `SYNC_KEY`. Template and sender identifiers live in Wrangler config.
+`MEAL_AUTOMATIC_QUESTIONS` sets the initial default; a saved admin setting takes
+precedence. See [meal questionnaire operations](../notifications/MEAL_QUESTIONS.md).
 
 ## Verification and recovery
 

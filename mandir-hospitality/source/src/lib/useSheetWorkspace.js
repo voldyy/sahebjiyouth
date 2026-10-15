@@ -4,12 +4,24 @@ import { workspaceRequest as sheetRequest, usesDatabase } from "./workspaceApi";
 import { stayRange } from "./occupancy";
 import { EMPTY_TRANSPORT } from "./transport";
 import { isTeamView } from "./access";
+
+const emptyMeals = () => ({
+  settings: {
+    teamEditingEnabled: false,
+    automaticQuestionsEnabled: false,
+    revision: "",
+  },
+  plans: [],
+  survey: {},
+});
+
 export function useSheetWorkspace(enabled) {
   const [guests, setGuests] = useState([]);
   const [transport, setTransport] = useState(EMPTY_TRANSPORT);
   const [offsiteRooms, setOffsiteRooms] = useState([]);
   const [housekeeping, setHousekeeping] = useState([]);
   const [tripDisplay, setTripDisplay] = useState([]);
+  const [meals, setMeals] = useState(emptyMeals);
   const [role, setRole] = useState(null);
   const [state, setState] = useState({
     loading: enabled,
@@ -39,6 +51,16 @@ export function useSheetWorkspace(enabled) {
     setTransport(result.transport || EMPTY_TRANSPORT);
     setOffsiteRooms(result.offsiteRooms || []);
     setHousekeeping(result.housekeeping || []);
+    setMeals({
+      ...emptyMeals(),
+      ...(result.meals || {}),
+      settings: {
+        ...emptyMeals().settings,
+        ...(result.meals?.settings || {}),
+      },
+      plans: Array.isArray(result.meals?.plans) ? result.meals.plans : [],
+      survey: result.meals?.survey && typeof result.meals.survey === "object" ? result.meals.survey : {},
+    });
     setState((s) => ({
       ...s,
       connected: true,
@@ -72,7 +94,7 @@ export function useSheetWorkspace(enabled) {
     document.addEventListener("visibilitychange", focus);
     const accessChanged = () => {
       generation.current++;
-      setRole(null); setGuests([]); setTransport(EMPTY_TRANSPORT); setHousekeeping([]); setOffsiteRooms([]);
+      setRole(null); setGuests([]); setTransport(EMPTY_TRANSPORT); setHousekeeping([]); setOffsiteRooms([]); setMeals(emptyMeals());
       setState((s) => ({ ...s, refreshedAt: null, connected: false }));
       refresh();
     };
@@ -84,8 +106,7 @@ export function useSheetWorkspace(enabled) {
       generation.current++;
     };
   }, [enabled, refresh]);
-  const save = async (request) => {
-    if (role !== "admin" || isTeamView()) throw new Error("This link is view-only. Open your private admin link to make changes.");
+  const commit = async (request) => {
     if (busy.current)
       throw new Error("Another change is being saved. Please wait.");
     busy.current = true;
@@ -94,6 +115,7 @@ export function useSheetWorkspace(enabled) {
     try {
       const result = await sheetRequest({ requestId: crypto.randomUUID(), ...request });
       if (saveGeneration === generation.current) apply(result);
+      return result;
     } catch (error) {
       setState((s) => ({ ...s, error: error.message }));
       throw error;
@@ -103,12 +125,23 @@ export function useSheetWorkspace(enabled) {
       if (saveGeneration !== generation.current) refresh();
     }
   };
+  const save = async (request) => {
+    if (role !== "admin" || isTeamView()) throw new Error("This link is view-only. Open your private admin link to make changes.");
+    return commit(request);
+  };
+  const saveMeal = async (request) => {
+    if (!((role === "admin" && !isTeamView()) || (isTeamView() && meals.settings.teamEditingEnabled))) {
+      throw new Error("Meal editing is not enabled for this link.");
+    }
+    return commit(request);
+  };
   return {
     guests,
     transport,
     offsiteRooms,
     housekeeping,
     tripDisplay,
+    meals,
     role,
     ...state,
     refresh,
@@ -142,6 +175,12 @@ export function useSheetWorkspace(enabled) {
       save({ action: "resource", type, name, active }),
     saveOffsiteRoom: (room) => save({ action: "offsite", ...room }),
     refreshLinens: (bed) => save({ action: "linen", roomCode: bed.roomCode, expected: bed.events.map((e) => e.id) }),
+    saveMealOverride: (identity, day, meal, included, expectedRevision = "") =>
+      saveMeal({ action: "meal-override", identity, day, meal, included, expectedRevision }),
+    saveMealPlan: (day, meal, adjustment, buffer, expectedRevision = "") =>
+      saveMeal({ action: "meal-plan", day, meal, adjustment, buffer, expectedRevision }),
+    saveMealSettings: (teamEditingEnabled, automaticQuestionsEnabled, expectedRevision = "") =>
+      save({ action: "meal-settings", teamEditingEnabled, automaticQuestionsEnabled, expectedRevision }),
     flightStatus: (group) =>
       sheetRequest({
         action: "flight",

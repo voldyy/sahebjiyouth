@@ -26,6 +26,16 @@ test("attendees are not multiplied by registration groups and dates are interpre
   assert.deepEqual(sheetDate("2/30/2026"), { date: "", time: "" });
   assert.deepEqual(sheetDate(1), { date: "1899-12-31", time: "00:00" });
 });
+test("manual registration detection uses actual blank email or ZIP without exposing either value", () => {
+  const online = attendee("ONLINE"); online[4] = "guest@example.com"; online[6] = "18001";
+  const missingEmail = attendee("NO-EMAIL"); missingEmail[6] = "18001";
+  const missingZip = attendee("NO-ZIP"); missingZip[4] = "guest@example.com";
+  const placeholders = attendee("PLACEHOLDERS"); placeholders[4] = "N/A"; placeholders[6] = "N/A";
+  const guests = guestsFromRows([header(), online, missingEmail, missingZip, placeholders]);
+  assert.deepEqual(guests.map((guest) => guest.isManualRegistration), [false, true, true, false]);
+  assert.equal(Object.hasOwn(guests[0], "email"), false);
+  assert.equal(Object.hasOwn(guests[0], "zip"), false);
+});
 test("duplicate or missing identities and unexpected headers are handled safely", () => {
   assert.equal(guestsFromRows([header(), attendee(), attendee()])[0].sourceWritable, false);
   assert.equal(guestsFromRows([header(), []]).length, 0);
