@@ -1,10 +1,11 @@
-import { samarpanRooms, samarpanRoomCode } from "./lodgingRooms.js";
+import { FIXED_LODGINGS, fixedRoomsFor, fixedRoomCode, isFixedLodging } from "./lodgingRooms.js";
+import { allentownInstant } from "./transportDisplay.js";
 import { assignmentIssue, stayRange, needsLodging } from "./occupancy.js";
 import { OFFSITE_HOTELS } from "./offsite.js";
 export const SPREADSHEET_ID = "1YvVz4DyPZYTYtKC9qiDlEXsPd7Xz4DPNJIoe3NBkYMA";
 export const SHEET_GID = 0;
 export const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit#gid=${SHEET_GID}`;
-export const LODGING_LOCATIONS = ["Samarpan", ...OFFSITE_HOTELS];
+export const LODGING_LOCATIONS = [...FIXED_LODGINGS, ...OFFSITE_HOTELS];
 const API = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`;
 const HEADERS = { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" };
 const text = (value) => String(value ?? "").trim();
@@ -46,6 +47,25 @@ export function sheetDate(value) {
   return { date: `${year}-${pad(month)}-${pad(day)}`, time: `${pad(hours)}:${pad(minutes)}` };
 }
 
+// Sheet timestamps are Allentown wall time; manual entries may carry an ISO offset.
+export function registrationTime(value) {
+  const raw = text(value);
+  if (/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw)) {
+    const instant = Date.parse(raw);
+    return Number.isFinite(instant) ? instant : null;
+  }
+  const { date, time } = sheetDate(value);
+  const instant = allentownInstant(date, time);
+  if (instant === null) return null;
+  const seconds = typeof value === "number"
+    ? Math.round(value * 86400) % 60
+    : Number(raw.match(/\d{1,2}:\d{2}:(\d{2})/)?.[1] || raw.match(/^Date\(\d+,\d+,\d+,\d+,\d+,(\d+)\)/)?.[1] || 0);
+  return seconds < 60 ? instant + seconds * 1000 : null;
+}
+
+export const newestRegistrationFirst = (a, b) => (b.registeredAt ?? 0) - (a.registeredAt ?? 0) ||
+  (a.registeredAt == null && b.registeredAt == null ? (b.registrationOrder ?? 0) - (a.registrationOrder ?? 0) : 0);
+
 export function guestsFromRows(rows) {
   validateHeaders(rows[0] || []);
   const attendees = rows.slice(1).filter((row) => text(row[0]) && text(row[8]));
@@ -64,6 +84,7 @@ export function guestsFromRows(rows) {
     return {
       id: counts.get(identity) === 1 ? identity : `${identity}:${index}`, sourceIdentity: identity, registrationId: text(row[0]),
       sourceWritable: counts.get(identity) === 1, sourceLodging: lodging,
+      registeredAt: registrationTime(row[1]), registrationOrder: index,
       name, initials: name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase(),
       group: "Individual", isPrimaryContact: /^(YES|Y|TRUE)$/i.test(text(row[2])), primaryContact: text(row[3]), relationship: text(row[9]),
       city: text(row[7]), phone: text(row[5]), count: 1,
@@ -149,10 +170,10 @@ export function validateAssignment(assignment) {
   if (values.every((v) => v === "")) return values;
   const provisional = OFFSITE_HOTELS.includes(values[0]) && /^O[a-zA-Z0-9-]+B[1-9]\d*$/.test(values[2]);
   if (!LODGING_LOCATIONS.includes(values[0]) || (!values[1] && !provisional) || !values[2]) throw new Error("Choose a lodging location and enter both the room number and custom room code.");
-  if (values[0] === "Samarpan" && !samarpanRooms.some((room) => room.number === values[1])) throw new Error("Choose a confirmed Samarpan room: 100–104 or 203–207.");
-  if (values[0] === "Samarpan") {
-    const bed = values[2].match(/^S\d+B([1-9]\d*)$/)?.[1];
-    if (!bed || samarpanRoomCode(values[1], bed) !== values[2]) throw new Error("Select a valid bed in the chosen Samarpan room to generate its code.");
+  if (isFixedLodging(values[0]) && !fixedRoomsFor(values[0]).some(room => room.number === values[1])) throw new Error(`Choose a confirmed ${values[0]} room.`);
+  if (isFixedLodging(values[0])) {
+    const bed = values[2].match(/^SD?\d+B([1-9]\d*)$/)?.[1];
+    if (!bed || fixedRoomCode(values[0], values[1], bed) !== values[2]) throw new Error(`Select a valid bed in the chosen ${values[0]} room to generate its code.`);
   }
   if (values.some((v) => v.length > 100 || /[\r\n\x00]/.test(v))) throw new Error("Room details must be single-line text, up to 100 characters each.");
   return values;
@@ -166,7 +187,7 @@ export async function writeLodging(guest, assignment, token) {
   if (matches.length !== 1) throw new Error("The attendee was removed, changed, or duplicated in the sheet. Refresh before assigning a room.");
   const match = matches[0];
   if (JSON.stringify(lodgingValues(match.row)) !== JSON.stringify(guest.sourceLodging)) throw new Error("Someone changed this attendee’s lodging in the sheet. Refresh and review their assignment first.");
-  if (values[0] === "Samarpan") {
+  if (isFixedLodging(values[0])) {
     const currentGuests = guestsFromRows(snapshot.rows);
     const currentGuest = currentGuests.find((item) => item.sourceIdentity === guest.sourceIdentity);
     if (!currentGuest || !needsLodging(currentGuest)) throw new Error("This guest no longer needs overnight accommodation. Refresh the roster.");

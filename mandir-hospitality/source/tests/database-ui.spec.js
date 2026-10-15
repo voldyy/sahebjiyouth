@@ -159,3 +159,80 @@ test('at 8 AM whole previous days minimize with smaller gray dates and remain re
   await yesterday.click();await expect(yesterday).toHaveAttribute('aria-expanded','false');
   await page.screenshot({path:test.info().outputPath('transport-minimized-day-desktop.png'),fullPage:true});
 });
+
+test('compact lodging cards prioritize unassigned guests and Main prioritizes submission time', async ({page}) => {
+  const {h}=await setup(page);
+  Object.assign(h.rows[1], {1:'10/14/2026 9:00 AM',29:'Samarpan',30:'101',31:'S101B1'});
+  const add=(id,name,stamp,fields={})=>{const row=[...h.rows[1]];Object.assign(row,{0:id,1:stamp,8:name,29:'',30:'',31:'',...fields});h.rows.push(row);};
+  add('NEWEST-REG','Newest Registration','2026-10-15T15:00:00Z');
+  add('MIDDLE-REG','Middle Registration','10/15/2026 10:00 AM');
+  add('ASSIGNED-REG','Assigned Guest','10/13/2026 8:00 AM',{29:'Samarpan',30:'102',31:'S102B1'});
+  await page.reload();
+  await expect(page.locator('.mobile-guest-name').first()).toContainText('Newest Registration');
+  await page.goto('/#rooms');
+  await page.getByRole('button',{name:'Guest list',exact:true}).click();
+  await expect(page.locator('.sheet-attendee h3')).toHaveText(['Newest Registration','Middle Registration','Database Guest','Assigned Guest']);
+  await expect(page.locator('.sheet-attendee-list')).not.toContainText('NEWEST-REG');
+  await expect(page.locator('.sheet-attendee-list')).toContainText('Room 101 · Bed 1');
+  await page.setViewportSize({width:1440,height:1000});
+  const columns=await page.locator('.sheet-attendee-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
+  expect(columns).toBeGreaterThanOrEqual(3);
+  await page.screenshot({path:test.info().outputPath('guest-grid-desktop.png'),animations:'disabled'});
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:test.info().outputPath('guest-grid-mobile.png'),animations:'disabled'});
+});
+
+test('daily and weekly views start at the current Allentown day and week', async ({page}) => {
+  // November 3 in Allentown, November 4 UTC; also covers the second DST offset.
+  await page.clock.install({time:new Date('2026-11-04T04:30:00Z')});
+  await setup(page);
+  await page.goto('/#rooms');
+  await expect(page.getByLabel('Choose occupancy week')).toHaveValue('3');
+  await expect(page.getByRole('heading',{name:'Nov 1 – Nov 7, 2026'})).toBeVisible();
+  await page.getByRole('button',{name:'Daily view',exact:true}).click();
+  await expect(page.getByLabel('Choose occupancy date')).toHaveValue('2026-11-03');
+  await page.getByRole('button',{name:'Previous occupancy day'}).click();
+  await expect(page.getByLabel('Choose occupancy date')).toHaveValue('2026-11-02');
+  await page.getByRole('button',{name:'Weekly view',exact:true}).click();
+  await expect(page.getByLabel('Choose occupancy week')).toHaveValue('3');
+  await page.getByRole('button',{name:'Open daily view for Thursday, November 5, 2026'}).click();
+  await expect(page.getByLabel('Choose occupancy date')).toHaveValue('2026-11-05');
+});
+
+test('Sadhak assigns the chosen building in daily, overview and walk-in flows', async ({page}) => {
+  await page.clock.install({time:new Date('2026-10-18T14:00:00Z')});
+  const {h,requests}=await setup(page);
+  const occupied=[...h.rows[1]];
+  Object.assign(occupied,{0:'SAMARPAN-OCCUPANT',8:'Samarpan Occupant',29:'Samarpan',30:'101',31:'S101B1'});
+  h.rows.push(occupied);
+  await page.goto('/#rooms'); await page.reload();
+  await page.getByRole('button',{name:'Sadhak',exact:true}).click();
+  await expect(page.getByRole('region',{name:'Choose a Sadhak room'}).locator('.stay-room-chip')).toHaveCount(7);
+  await page.getByRole('button',{name:'Daily view',exact:true}).click();
+  await expect(page.locator('.stay-slot[data-lodging="Sadhak"][data-room="101"]')).toHaveCount(3);
+  await expect(page.locator('.stay-slot[data-lodging="Sadhak"][data-room="201"]')).toHaveCount(1);
+  await expect(page.locator('.stay-slot[data-lodging="Sadhak"][data-room="104"]')).toHaveCount(2);
+  await expect(page.locator('.stay-slot[data-lodging="Sadhak"][data-room="204"]')).toHaveCount(2);
+  await page.getByRole('button',{name:'Assign Sadhak room 101 bed 1 on Sunday, October 18, 2026',exact:true}).click();
+  await expect(page.locator('.stay-chosen-bed')).toContainText('Sadhak');
+  await page.getByLabel('Guest to assign').selectOption({label:'Database Guest · Oct 18 – Oct 20'});
+  await page.getByRole('button',{name:'Save assignment',exact:true}).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(h.rows[1].slice(29)).toEqual(['Sadhak','101','SD101B1']);
+  await expect(page.locator('.stay-slot[data-lodging="Sadhak"][data-room="101"][data-bed="1"]')).toContainText('Database Guest');
+  await page.getByRole('button',{name:'Day at a glance',exact:true}).click();
+  await expect(page.locator('.stay-overview-room').filter({hasText:'Samarpan Occupant'})).toHaveCount(1);
+  await expect(page.locator('.stay-overview-room').filter({hasText:'Database Guest'})).toHaveCount(1);
+  await page.getByRole('button',{name:'Assign guest to Sadhak room 203 bed 2',exact:true}).click();
+  await page.getByRole('button',{name:'New walk-in guest',exact:true}).click();
+  await expect(page.locator('.stay-chosen-bed')).toContainText('Sadhak');
+  await expect(page.locator('.stay-chosen-bed')).toContainText('Room 203 · Bed 2');
+  await page.getByLabel('Guest name',{exact:true}).fill('Sadhak New Walk In');
+  await page.getByLabel('Checkout',{exact:true}).fill('2026-10-20');
+  await page.getByRole('button',{name:'Add guest & assign bed',exact:true}).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(h.rows.at(-1).slice(29)).toEqual(['Sadhak','203','SD203B2']);
+  expect(requests.filter(r=>r.action==='lodging')).toHaveLength(1);
+  expect(requests.filter(r=>r.action==='guest')).toHaveLength(1);
+});

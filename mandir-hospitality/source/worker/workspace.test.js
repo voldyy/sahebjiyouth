@@ -162,3 +162,21 @@ test("admin snapshots retain due linen tasks through direct Sheet assignment rem
   expect(sheet.Housekeeping).toHaveLength(2);
   expect(imported.sync.pending).toBe(0);
 });
+
+test('Sadhak assignments validate and mirror, with submission times available to viewers', async () => {
+  sheet.Attendees[1][1] = '10/15/2026 9:00 AM';
+  const initial = await request({action:'snapshot'});
+  const [a,b] = initial.guests;
+  const assignment = {lodging:'Sadhak',roomNo:'104',roomCode:'SD104B2'};
+  expect((await request({...assign(a),assignment})).ok).toBe(true);
+  expect((await request({...assign(b),assignment})).error).toMatch(/occupied/);
+  expect((await request({...assign(b),assignment:{...assignment,roomCode:'SD104B3'}})).error).toMatch(/valid bed/);
+  // Same room and bed in a different building is independent.
+  expect((await request({...assign(b),assignment:{lodging:'Samarpan',roomNo:'104',roomCode:'S104B2'}})).ok).toBe(true);
+  await runDurableObjectAlarm(stub());
+  expect(sheet.Attendees[1].slice(29)).toEqual(['Sadhak','104','SD104B2']);
+  const viewer = await request({action:'snapshot',accessKey:''});
+  expect(viewer.guests[0].registeredAt).toBe(Date.parse('2026-10-15T13:00:00Z'));
+  expect(viewer.guests[0].roomCode).toBe('SD104B2');
+  expect(viewer.sync.pending).toBe(0);
+});

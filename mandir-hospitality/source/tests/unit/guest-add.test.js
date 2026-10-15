@@ -51,3 +51,15 @@ test('walk-in supports provisional offsite beds and preserves the planning code'
   assert.match(h.request({action:'guest',requestId:randomUUID(),guest:{...guest,name:'Conflict'},assignment}).error,/occupied/);
   assert.equal(h.rows.length,2);
 });
+
+test('Sadhak walk-ins preserve the building and reject out-of-range and overlapping beds', () => {
+  const h=createHarness([headers]);
+  const assignment={lodging:'Sadhak',roomNo:'201',roomCode:'SD201B1'};
+  const request={action:'guest',requestId:randomUUID(),guest:{name:'Sadhak Walk In',arrivalDate:'2026-10-18',departureDate:'2026-10-20',overnight:'YES'},assignment};
+  assert.equal(h.request(request).ok,true);
+  assert.deepEqual(h.rows[1].slice(29),['Sadhak','201','SD201B1']);
+  const send=assignment=>h.request({...request,requestId:randomUUID(),guest:{...request.guest,name:'Another Guest'},assignment});
+  assert.match(send(assignment).error,/occupied/);
+  assert.match(send({...assignment,roomCode:'SD201B2'}).error,/valid bed/);
+  assert.equal(h.rows.length,2);
+});

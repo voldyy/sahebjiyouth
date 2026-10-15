@@ -1,4 +1,4 @@
-import { samarpanRoomCode } from "./lodgingRooms.js";
+import { fixedRoomCode, isFixedLodging } from "./lodgingRooms.js";
 import { OFFSITE_HOTELS, offsiteRoomFor, offsiteBedCode } from "./offsite.js";
 
 export const FIRST_STAY_DAY = "2026-10-11";
@@ -27,13 +27,13 @@ export function overlaps(a, b) {
 }
 export const onDay = (guest, day) => overlaps(stayRange(guest), { start: day, end: moveDay(day, 1) });
 export function bedForGuest(guest, rooms = []) {
-  if (guest.lodging !== "Samarpan") {
+  if (!isFixedLodging(guest.lodging)) {
     const room = offsiteRoomFor(guest, rooms);
     const bed = Number(String(guest.roomCode || "").match(/B([1-9]\d*)$/)?.[1]);
     return room && bed >= 1 && bed <= room.beds ? bed : null;
   }
-  const bed = String(guest.roomCode || "").match(/^S\d+B([1-9]\d*)$/)?.[1];
-  return bed && samarpanRoomCode(guest.roomNo, bed) === guest.roomCode ? Number(bed) : null;
+  const bed = String(guest.roomCode || "").match(/^SD?\d+B([1-9]\d*)$/)?.[1];
+  return bed && fixedRoomCode(guest.lodging, guest.roomNo, bed) === guest.roomCode ? Number(bed) : null;
 }
 const sameGuest = (a, b) => (a.sourceIdentity || a.id) === (b.sourceIdentity || b.id);
 
@@ -44,7 +44,7 @@ export function bedState(guests, roomNo, bedNo, range, exceptGuest = null, lodgi
   const uncertain = [];
   for (const guest of guests) {
     if (!needsLodging(guest) || guest.lodging !== lodging || (exceptGuest && sameGuest(guest, exceptGuest))) continue;
-    if (lodging === "Samarpan") { if (String(guest.roomNo) !== String(roomNo)) continue; }
+    if (isFixedLodging(lodging)) { if (String(guest.roomNo) !== String(roomNo)) continue; }
     else {
       const target = rooms.find((r) => r.id === roomNo && r.lodging === lodging);
       const assigned = offsiteRoomFor(guest, rooms);
@@ -61,9 +61,9 @@ export function bedState(guests, roomNo, bedNo, range, exceptGuest = null, lodgi
 }
 
 export function assignmentIssue(guests, guest, assignment, rooms = []) {
-  if (assignment.lodging !== "Samarpan" && !OFFSITE_HOTELS.includes(assignment.lodging)) return "";
+  if (!isFixedLodging(assignment.lodging) && !OFFSITE_HOTELS.includes(assignment.lodging)) return "";
   const hotelRoom = offsiteRoomFor(assignment, rooms);
-  if (assignment.lodging !== "Samarpan" && !hotelRoom) return "Choose a hotel room and bed from the Offsite inventory.";
+  if (!isFixedLodging(assignment.lodging) && !hotelRoom) return "Choose a hotel room and bed from the Offsite inventory.";
   const range = stayRange(guest);
   if (!range) return "Add valid accommodation or arrival/departure dates in the source sheet before assigning a bed.";
   const bed = bedForGuest(assignment, rooms);

@@ -27,6 +27,13 @@ var Hospitality = (() => {
     showAdminLink: () => showAdminLink
   });
 
+  // src/lib/offsite.js
+  var OFFSITE_HOTELS = ["Comfort Inn", "Hilton Garden Inn"];
+  var offsiteBedCode = (room, bed) => `O${room.id}B${bed}`;
+  function offsiteRoomFor(guest, rooms) {
+    return rooms.find((room) => room.lodging === guest.lodging && new RegExp(`^O${room.id}B[1-9]\\d*$`).test(guest.roomCode || ""));
+  }
+
   // src/lib/lodgingRooms.js
   var samarpanRooms = [
     { number: "203", beds: 4 },
@@ -41,18 +48,48 @@ var Hospitality = (() => {
     { number: "104", beds: 12 }
   ];
   var samarpanBedCount = samarpanRooms.reduce((sum, room) => sum + room.beds, 0);
-  function samarpanRoomCode(roomNo, bedNo) {
-    const room = samarpanRooms.find((r) => r.number === String(roomNo));
+  var sadhakRooms = [
+    { number: "101", beds: 3 },
+    { number: "102", beds: 3 },
+    { number: "104", beds: 2 },
+    { number: "201", beds: 1 },
+    { number: "202", beds: 3 },
+    { number: "203", beds: 2 },
+    { number: "204", beds: 2 }
+  ].map((room) => ({ ...room, lodging: "Sadhak" }));
+  var FIXED_LODGINGS = ["Samarpan", "Sadhak"];
+  var fixedRoomsFor = (lodging) => lodging === "Samarpan" ? samarpanRooms : lodging === "Sadhak" ? sadhakRooms : [];
+  var isFixedLodging = (lodging) => FIXED_LODGINGS.includes(lodging);
+  function fixedRoomCode(lodging, roomNo, bedNo) {
+    const room = fixedRoomsFor(lodging).find((r) => r.number === String(roomNo));
     const bed = Number(bedNo);
     if (!room || !Number.isInteger(bed) || bed < 1 || bed > room.beds) return "";
-    return `S${room.number}B${bed}`;
+    return `${lodging === "Samarpan" ? "S" : "SD"}${room.number}B${bed}`;
   }
 
-  // src/lib/offsite.js
-  var OFFSITE_HOTELS = ["Comfort Inn", "Hilton Garden Inn"];
-  var offsiteBedCode = (room, bed) => `O${room.id}B${bed}`;
-  function offsiteRoomFor(guest, rooms) {
-    return rooms.find((room) => room.lodging === guest.lodging && new RegExp(`^O${room.id}B[1-9]\\d*$`).test(guest.roomCode || ""));
+  // src/lib/transportDisplay.js
+  var HOUR = 60 * 60 * 1e3;
+  var formatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  var parts = (instant) => Object.fromEntries(formatter.formatToParts(new Date(instant)).map((p) => [p.type, p.value]));
+  var dayOf = (p) => `${p.year}-${p.month}-${p.day}`;
+  function allentownInstant(day, time) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day || "") || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time || "")) return null;
+    const wall = Date.parse(`${day}T${time}:00Z`);
+    if (!Number.isFinite(wall) || new Date(wall).toISOString().slice(0, 10) !== day) return null;
+    const candidates = [-24, 0, 24].map((hours) => {
+      const probe = wall + hours * HOUR, p = parts(probe);
+      const offset = Date.parse(`${dayOf(p)}T${p.hour}:${p.minute}:00Z`) - probe;
+      return wall - offset;
+    }).filter((instant) => {
+      const p = parts(instant);
+      return dayOf(p) === day && `${p.hour}:${p.minute}` === time;
+    });
+    return candidates.length ? Math.max(...candidates) : null;
+  }
+  var dayDisplayId = (day) => JSON.stringify(["Day", day]);
+  function displayChangedAt(revision) {
+    const stamp = String(revision || "").split("|")[0];
+    return /^\d{4}-\d{2}-\d{2}T/.test(stamp) && Number.isFinite(Date.parse(stamp)) ? stamp : "";
   }
 
   // src/lib/occupancy.js
@@ -77,13 +114,13 @@ var Hospitality = (() => {
     return !!a && !!b && a.start < b.end && b.start < a.end;
   }
   function bedForGuest(guest, rooms = []) {
-    if (guest.lodging !== "Samarpan") {
+    if (!isFixedLodging(guest.lodging)) {
       const room = offsiteRoomFor(guest, rooms);
       const bed2 = Number(String(guest.roomCode || "").match(/B([1-9]\d*)$/)?.[1]);
       return room && bed2 >= 1 && bed2 <= room.beds ? bed2 : null;
     }
-    const bed = String(guest.roomCode || "").match(/^S\d+B([1-9]\d*)$/)?.[1];
-    return bed && samarpanRoomCode(guest.roomNo, bed) === guest.roomCode ? Number(bed) : null;
+    const bed = String(guest.roomCode || "").match(/^SD?\d+B([1-9]\d*)$/)?.[1];
+    return bed && fixedRoomCode(guest.lodging, guest.roomNo, bed) === guest.roomCode ? Number(bed) : null;
   }
   var sameGuest = (a, b) => (a.sourceIdentity || a.id) === (b.sourceIdentity || b.id);
   function bedState(guests, roomNo, bedNo, range, exceptGuest = null, lodging = "Samarpan", rooms = []) {
@@ -91,7 +128,7 @@ var Hospitality = (() => {
     const uncertain = [];
     for (const guest of guests) {
       if (!needsLodging(guest) || guest.lodging !== lodging || exceptGuest && sameGuest(guest, exceptGuest)) continue;
-      if (lodging === "Samarpan") {
+      if (isFixedLodging(lodging)) {
         if (String(guest.roomNo) !== String(roomNo)) continue;
       } else {
         const target = rooms.find((r) => r.id === roomNo && r.lodging === lodging);
@@ -108,9 +145,9 @@ var Hospitality = (() => {
     return { occupants, uncertain, free: occupants.length === 0 && uncertain.length === 0 };
   }
   function assignmentIssue(guests, guest, assignment, rooms = []) {
-    if (assignment.lodging !== "Samarpan" && !OFFSITE_HOTELS.includes(assignment.lodging)) return "";
+    if (!isFixedLodging(assignment.lodging) && !OFFSITE_HOTELS.includes(assignment.lodging)) return "";
     const hotelRoom = offsiteRoomFor(assignment, rooms);
-    if (assignment.lodging !== "Samarpan" && !hotelRoom) return "Choose a hotel room and bed from the Offsite inventory.";
+    if (!isFixedLodging(assignment.lodging) && !hotelRoom) return "Choose a hotel room and bed from the Offsite inventory.";
     const range = stayRange(guest);
     if (!range) return "Add valid accommodation or arrival/departure dates in the source sheet before assigning a bed.";
     const bed = bedForGuest(assignment, rooms);
@@ -126,7 +163,7 @@ var Hospitality = (() => {
   var SPREADSHEET_ID = "1YvVz4DyPZYTYtKC9qiDlEXsPd7Xz4DPNJIoe3NBkYMA";
   var SHEET_GID = 0;
   var SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit#gid=${SHEET_GID}`;
-  var LODGING_LOCATIONS = ["Samarpan", ...OFFSITE_HOTELS];
+  var LODGING_LOCATIONS = [...FIXED_LODGINGS, ...OFFSITE_HOTELS];
   var API = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`;
   var HEADERS = { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" };
   var text = (value) => String(value ?? "").trim();
@@ -163,6 +200,18 @@ var Hospitality = (() => {
     const pad = (n) => String(n).padStart(2, "0");
     return { date: `${year}-${pad(month)}-${pad(day)}`, time: `${pad(hours)}:${pad(minutes)}` };
   }
+  function registrationTime(value) {
+    const raw = text(value);
+    if (/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw)) {
+      const instant2 = Date.parse(raw);
+      return Number.isFinite(instant2) ? instant2 : null;
+    }
+    const { date, time } = sheetDate(value);
+    const instant = allentownInstant(date, time);
+    if (instant === null) return null;
+    const seconds = typeof value === "number" ? Math.round(value * 86400) % 60 : Number(raw.match(/\d{1,2}:\d{2}:(\d{2})/)?.[1] || raw.match(/^Date\(\d+,\d+,\d+,\d+,\d+,(\d+)\)/)?.[1] || 0);
+    return seconds < 60 ? instant + seconds * 1e3 : null;
+  }
   function guestsFromRows(rows) {
     validateHeaders(rows[0] || []);
     const attendees = rows.slice(1).filter((row) => text(row[0]) && text(row[8]));
@@ -184,6 +233,8 @@ var Hospitality = (() => {
         registrationId: text(row[0]),
         sourceWritable: counts.get(identity) === 1,
         sourceLodging: lodging,
+        registeredAt: registrationTime(row[1]),
+        registrationOrder: index,
         name,
         initials: name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase(),
         group: "Individual",
@@ -226,22 +277,13 @@ var Hospitality = (() => {
     if (values.every((v) => v === "")) return values;
     const provisional = OFFSITE_HOTELS.includes(values[0]) && /^O[a-zA-Z0-9-]+B[1-9]\d*$/.test(values[2]);
     if (!LODGING_LOCATIONS.includes(values[0]) || !values[1] && !provisional || !values[2]) throw new Error("Choose a lodging location and enter both the room number and custom room code.");
-    if (values[0] === "Samarpan" && !samarpanRooms.some((room) => room.number === values[1])) throw new Error("Choose a confirmed Samarpan room: 100\u2013104 or 203\u2013207.");
-    if (values[0] === "Samarpan") {
-      const bed = values[2].match(/^S\d+B([1-9]\d*)$/)?.[1];
-      if (!bed || samarpanRoomCode(values[1], bed) !== values[2]) throw new Error("Select a valid bed in the chosen Samarpan room to generate its code.");
+    if (isFixedLodging(values[0]) && !fixedRoomsFor(values[0]).some((room) => room.number === values[1])) throw new Error(`Choose a confirmed ${values[0]} room.`);
+    if (isFixedLodging(values[0])) {
+      const bed = values[2].match(/^SD?\d+B([1-9]\d*)$/)?.[1];
+      if (!bed || fixedRoomCode(values[0], values[1], bed) !== values[2]) throw new Error(`Select a valid bed in the chosen ${values[0]} room to generate its code.`);
     }
     if (values.some((v) => v.length > 100 || /[\r\n\x00]/.test(v))) throw new Error("Room details must be single-line text, up to 100 characters each.");
     return values;
-  }
-
-  // src/lib/transportDisplay.js
-  var HOUR = 60 * 60 * 1e3;
-  var formatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
-  var dayDisplayId = (day) => JSON.stringify(["Day", day]);
-  function displayChangedAt(revision) {
-    const stamp = String(revision || "").split("|")[0];
-    return /^\d{4}-\d{2}-\d{2}T/.test(stamp) && Number.isFinite(Date.parse(stamp)) ? stamp : "";
   }
 
   // src/lib/transport.js

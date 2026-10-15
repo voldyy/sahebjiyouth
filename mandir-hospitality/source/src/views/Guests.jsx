@@ -30,6 +30,7 @@ import { dateISO, formatTime, statusTone } from "../lib/data";
 import { exportCsv } from "../lib/storage";
 import Sheet from "../components/Sheet";
 import GuestForm from "../components/GuestForm";
+import { newestRegistrationFirst } from "../lib/sheets";
 import { shortDay } from "../lib/occupancy";
 import "../styles/guests.css";
 
@@ -48,14 +49,14 @@ export default function Guests({
   const [filter, setFilter] = useState("All guests");
   const [stay, setStay] = useState("All stays");
   const [arrivalDate, setArrivalDate] = useState("");
-  const [sort, setSort] = useState("Default");
+  const [sort, setSort] = useState("Newest registration");
   const [limit, setLimit] = useState(6);
   const [selectedId, setSelectedId] = useState(null);
   const [edit, setEdit] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const selected = guests.find((g) => g.id === selectedId);
   const total = guests.reduce((n, g) => n + g.count, 0);
-  const stayOptions = readOnly ? ["Samarpan", "Comfort Inn", "Hilton Garden Inn", "Pending lodging", "Day visitor"] : ["Samarpan", "Offsite", "Day visitor"];
+  const stayOptions = readOnly ? ["Samarpan", "Sadhak", "Comfort Inn", "Hilton Garden Inn", "Pending lodging", "Day visitor"] : ["Samarpan", "Offsite", "Day visitor"];
   const visibleStatuses = readOnly ? ["All guests", "Registered", "Cancelled", "Needs room"] : statuses;
   const checked = guests
     .filter((g) => g.status === "Checked in")
@@ -81,6 +82,7 @@ export default function Guests({
         (stay === "All stays" || g.stay === stay) &&
         (!arrivalDate || g.arrivalDate === arrivalDate),
     );
+    if (sort === "Newest registration") list.sort(newestRegistrationFirst);
     if (sort === "Arrival time")
       list.sort((a, b) => a.arrivalTime.localeCompare(b.arrivalTime));
     if (sort === "Guest name")
@@ -92,7 +94,7 @@ export default function Guests({
     setFilter("All guests");
     setStay("All stays");
     setArrivalDate("");
-    setSort("Default");
+    setSort("Newest registration");
     setLimit(6);
   };
   const checkIn = (g) => {
@@ -299,7 +301,7 @@ export default function Guests({
               <ChevronDown size={15} />
             </div>
             <button
-              className={`button secondary filter-button ${arrivalDate || sort !== "Default" ? "has-filters" : ""}`}
+              className={`button secondary filter-button ${arrivalDate || sort !== "Newest registration" ? "has-filters" : ""}`}
               onClick={() => setFiltersOpen(true)}
             >
               <SlidersHorizontal size={17} />
@@ -620,7 +622,7 @@ export default function Guests({
             <label className="field">
               Sort by
               <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                <option>Default</option>
+                <option>Newest registration</option>
                 <option>Arrival time</option>
                 <option>Guest name</option>
               </select>

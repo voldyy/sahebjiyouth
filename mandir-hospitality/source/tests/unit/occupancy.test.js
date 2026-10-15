@@ -36,3 +36,23 @@ test("all six weeks retain calendar dates across the daylight-saving boundary", 
   assert.equal(moveDay("2026-11-01", 6), "2026-11-07");
   assert.equal(moveDay(WEEK_STARTS.at(-1), 6), "2026-11-21");
 });
+
+test('Sadhak beds have independent inventory and full-stay occupancy from Samarpan', async () => {
+  const { sadhakRooms, roomAssignment, roomKey } = await import('../../src/lib/lodgingRooms.js');
+  const { validateAssignment } = await import('../../src/lib/sheets.js');
+  assert.deepEqual(sadhakRooms.map(r => [r.number,r.beds]), [['101',3],['102',3],['104',2],['201',1],['202',3],['203',2],['204',2]]);
+  const room = sadhakRooms.find(r => r.number === '101');
+  const value = roomAssignment(room, 3);
+  assert.deepEqual(value, {lodging:'Sadhak',roomNo:'101',roomCode:'SD101B3'});
+  assert.notEqual(roomKey(room), roomKey({number:'101'}));
+  assert.deepEqual(validateAssignment(value), ['Sadhak','101','SD101B3']);
+  assert.throws(() => validateAssignment({...value,roomCode:'SD101B4'}), /valid bed/);
+  assert.throws(() => validateAssignment({...value,roomCode:'S101B3'}), /valid bed/);
+  const incoming = {...guest('Incoming','2026-10-11','2026-10-17'), ...value};
+  const samarpan = guest('Samarpan','2026-10-11','2026-10-17','101',3);
+  assert.equal(assignmentIssue([samarpan],incoming,value), '');
+  const sadhak = {...guest('Later','2026-10-15','2026-10-18'), ...value};
+  assert.equal(bedState([sadhak], '101', 3, {start:'2026-10-11',end:'2026-10-12'},null,'Sadhak').free,true);
+  assert.match(assignmentIssue([sadhak],incoming,value), /occupied/);
+  assert.equal(assignmentIssue([sadhak],{...incoming,arrivalDate:'2026-10-18',departureDate:'2026-10-20'},value), '');
+});

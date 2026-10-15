@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { samarpanRoomCode } from "../lib/lodgingRooms";
-import { offsiteBedCode, roomLabel } from "../lib/offsite";
+import { roomKey, roomAssignment } from "../lib/lodgingRooms";
+import { roomLabel } from "../lib/offsite";
 import { assignmentIssue } from "../lib/occupancy";
 import ChosenBed from "./ChosenBed";
 
@@ -11,9 +11,9 @@ export default function WalkInForm({ workspace, rooms, initial, onCancel, onSave
   const [requestId] = useState(() => crypto.randomUUID());
   const [error, setError] = useState("");
   const [editingBed, setEditingBed] = useState(false);
-  const room = rooms.find(r => r.number === roomId);
+  const room = rooms.find(r => roomKey(r) === roomId);
   const proposed = { ...form, status: "Registered", stay: "Pending lodging" };
-  const assignment = number => ({ lodging: room.lodging || "Samarpan", roomNo: room.lodging ? room.roomNo : room.number, roomCode: room.lodging ? offsiteBedCode(room, number) : samarpanRoomCode(room.number, number) });
+  const assignment = number => roomAssignment(room, number);
   const issue = room && bed ? assignmentIssue(workspace.guests, proposed, assignment(bed), workspace.offsiteRooms) : "";
   const change = e => { setForm({ ...form, [e.target.name]: e.target.value }); setError(""); };
   return <form className="guest-form" onSubmit={async e => {
@@ -30,7 +30,7 @@ export default function WalkInForm({ workspace, rooms, initial, onCancel, onSave
         <label className="field">Checkout<input type="date" name="departureDate" min={form.arrivalDate} value={form.departureDate} onChange={change} required /></label>
       </div>
       {(!initial.room || !initial.bed || editingBed) && <div className="form-grid">
-        <label className="field">Room<select aria-label="Walk-in room" value={roomId} required onChange={e => { setRoomId(e.target.value); setBed(""); setError(""); }}><option value="">Choose a room</option>{rooms.map(r => <option key={r.number} value={r.number}>{r.lodging || "Samarpan"} · {roomLabel(r)}</option>)}</select></label>
+        <label className="field">Room<select aria-label="Walk-in room" value={roomId} required onChange={e => { setRoomId(e.target.value); setBed(""); setError(""); }}><option value="">Choose a room</option>{rooms.map(r => <option key={roomKey(r)} value={roomKey(r)}>{r.lodging || "Samarpan"} · {roomLabel(r)}</option>)}</select></label>
         <label className="field">Bed<select aria-label="Walk-in bed" value={bed} required disabled={!room} onChange={e => { setBed(e.target.value); setError(""); }}><option value="">Choose a bed</option>{Array.from({ length: room?.beds || 0 }, (_, i) => {
           const number = i + 1;
           const problem = form.departureDate ? assignmentIssue(workspace.guests, proposed, assignment(number), workspace.offsiteRooms) : "";

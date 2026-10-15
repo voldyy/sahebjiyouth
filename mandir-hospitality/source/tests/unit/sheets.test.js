@@ -125,3 +125,17 @@ test("Samarpan save rejects changed stay dates and permits checkout-day bed reus
   await writeLodging(guest, { lodging: "Samarpan", roomNo: "204", roomCode: "S204B1" }, "synthetic-token");
   assert.equal(google.writes.length, 1);
 });
+
+test('registration order uses submission timestamps across Sheet and ISO formats', async () => {
+  const { registrationTime, newestRegistrationFirst } = await import('../../src/lib/sheets.js');
+  assert.equal(registrationTime('10/15/2026 1:02:03 AM'), Date.parse('2026-10-15T05:02:03Z'));
+  assert.equal(registrationTime('2026-10-15T05:02:04Z'), Date.parse('2026-10-15T05:02:04Z'));
+  assert.equal(registrationTime('Date(2026,9,15,1,2,3)'), Date.parse('2026-10-15T05:02:03Z'));
+  assert.equal(registrationTime(46310.5), Date.parse('2026-10-15T16:00:00Z'));
+  assert.equal(registrationTime('invalid'), null);
+  const rows = [header(), attendee('OLDER'), attendee('NEWER'), attendee('NO-TIME')];
+  rows[1][1] = '10/15/2026 1:02:03 AM'; rows[2][1] = '2026-10-15T05:02:04Z';
+  const guests = guestsFromRows(rows).sort(newestRegistrationFirst);
+  assert.deepEqual(guests.map(g => g.registrationId), ['NEWER', 'OLDER', 'NO-TIME']);
+  assert.deepEqual(guestsFromRows([header(), attendee('FIRST'), attendee('LAST')]).sort(newestRegistrationFirst).map(g => g.registrationId), ['LAST','FIRST']);
+});
