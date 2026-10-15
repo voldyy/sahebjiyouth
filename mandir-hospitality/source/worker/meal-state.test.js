@@ -40,6 +40,7 @@ beforeEach(async () => {
   const adminDigest = await hash(admin);
   vi.stubGlobal("fetch", vi.fn(async (url, options = {}) => {
     if (String(url) === chatwootUrl) {
+      expect(options.redirect).toBe("manual"); // Workers do not support redirect: 'error'.
       forwarded.push({ body: String(options.body), headers: new Headers(options.headers) });
       return new Response("<Response/>", { status: 200, headers: { "Content-Type": "text/xml" } });
     }
@@ -63,6 +64,11 @@ afterEach(async () => {
 test("team viewers share remove and restore overrides while default editing remains enabled", async () => {
   const initial = await request({ action: "snapshot" });
   expect(initial.meals.settings).toMatchObject({ teamEditingEnabled: true, automaticQuestionsEnabled: false });
+  expect((await request({ action: "meal-health", accessKey: "" })).error).toMatch(/authorization/);
+  const health = await request({ action: "meal-health", accessKey: "", syncKey: "synthetic-sync-key" });
+  expect(health.ok).toBe(true);
+  expect(health.survey.families).toBe(2);
+  expect(JSON.stringify(health)).not.toContain("202-555");
   const identity = initial.guests[0].sourceIdentity;
   const remove = {
     action: "meal-override", accessKey: "", requestId: crypto.randomUUID(), identity,

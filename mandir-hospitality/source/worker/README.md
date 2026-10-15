@@ -77,6 +77,9 @@ Secrets: `TWILIO_ACCOUNT_SID`, `TWILIO_API_KEY`, `TWILIO_API_SECRET`, `TWILIO_AU
 and existing `SYNC_KEY`. Template and sender identifiers live in Wrangler config.
 `MEAL_AUTOMATIC_QUESTIONS` sets the initial default; a saved admin setting takes
 precedence. See [meal questionnaire operations](../notifications/MEAL_QUESTIONS.md).
+The `meal-health` action requires the admin key or private synchronization key
+and returns aggregate survey/configuration status and the last alarm result;
+it never returns attendee/contact rows or credentials.
 
 ## Verification and recovery
 

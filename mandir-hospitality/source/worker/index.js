@@ -59,7 +59,8 @@ export default {
         // Keep the existing Chatwoot inbox, including the visible button reply.
         // Its signature is recalculated for its own exact webhook URL.
         const forwardUrl = "https://app.chatwoot.com/twilio/callback";
-        const response = await fetch(forwardUrl, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "X-Twilio-Signature": await signTwilioRequest(forwardUrl, params, env.TWILIO_AUTH_TOKEN) }, body, signal: AbortSignal.timeout(10000), redirect: "error" });
+        const response = await fetch(forwardUrl, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "X-Twilio-Signature": await signTwilioRequest(forwardUrl, params, env.TWILIO_AUTH_TOKEN) }, body, signal: AbortSignal.timeout(10000), redirect: "manual" });
+        if (response.status >= 300 && response.status < 400) { await response.body?.cancel(); return new Response("Inbox redirect rejected", { status: 502, headers }); }
         // A meal failure must not prevent delivery to the existing inbox.
         // Signal the error after forwarding so Twilio can retry the same SID.
         if (mealFailed) { await response.body?.cancel(); return new Response("Meal reply recording unavailable", { status: 503, headers }); }
@@ -181,6 +182,10 @@ export class HospitalityWorkspace extends DurableObject {
         if (!this.meta("initialized")) throw new Error("The database is being connected to the roster. Please retry shortly.");
       }
       const role = await matchesDigest(req.accessKey, this.meta("adminDigest")) ? "admin" : "viewer";
+      if (req.action === "meal-health") {
+        if (role !== "admin" && !await matchesDigest(req.syncKey, await digest(this.env.SYNC_KEY || crypto.randomUUID()))) throw Error("Meal service authorization required.");
+        return { ok: true, configured: surveyConfigured(this.env), settings: this.meals.settings(), survey: this.survey.summary(), lastRun: this.meals.get("survey-config", "last-run"), lastSyncedAt: this.meta("lastSyncedAt") };
+      }
       if (req.action === "snapshot") {
         // Preserve the original admin-snapshot behavior: due linen tasks become
         // durable before a subsequent assignment clear or direct source edit.
@@ -278,7 +283,7 @@ export class HospitalityWorkspace extends DurableObject {
   }
   async alarm() {
     await this.synchronize();
-    try { await this.survey.process(); }
-    catch (_) { console.error(JSON.stringify({ event: "meal_survey_attention" })); }
+    try { this.meals.put("survey-config", "last-run", { ...await this.survey.process(), at: new Date().toISOString() }); }
+    catch (_) { this.meals.put("survey-config", "last-run", { status: "attention", at: new Date().toISOString() }); console.error(JSON.stringify({ event: "meal_survey_attention" })); }
   }
 }

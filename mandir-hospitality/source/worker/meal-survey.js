@@ -174,13 +174,13 @@ async function templateApproval(env, contentSid, fetchImpl) {
     method: "GET",
     headers: { Authorization: `Basic ${btoa(`${env.TWILIO_API_KEY}:${env.TWILIO_API_SECRET}`)}` },
     signal: AbortSignal.timeout(10000),
-    redirect: "error",
+    redirect: "manual",
   });
-  if (!response.ok) throw new Error("Template approval is unavailable.");
+  if (!response.ok) throw new Error(`Template approval HTTP ${response.status}.`);
   const result = await response.json();
   const status = result?.whatsapp?.status;
   if (result?.sid !== contentSid || result?.account_sid !== env.TWILIO_ACCOUNT_SID || !APPROVAL_STATUSES.has(status)) {
-    throw new Error("Template approval is unavailable.");
+    throw new Error("Template approval account, identifier or status did not match.");
   }
   return { contentSid, status };
 }
@@ -201,6 +201,7 @@ async function sendInvite(env, invite, fetchImpl) {
       ValidityPeriod: "3600",
     }),
     signal: AbortSignal.timeout(15000),
+    redirect: "manual",
   });
   let result;
   try { result = await response.json(); } catch { throw new Error("Twilio outcome is uncertain."); }
@@ -250,11 +251,14 @@ export function createMealSurvey({
       return templates;
     }
     const cached = get(CONFIG, "templates");
-    if (cached?.accountSid !== env.TWILIO_ACCOUNT_SID ||
+    if (cached?.version !== 2 || cached?.accountSid !== env.TWILIO_ACCOUNT_SID ||
         !Number.isFinite(Date.parse(cached.checkedAt)) || !Number.isFinite(Date.parse(cached.nextCheckAt)) ||
         Object.keys(QUESTIONS).some(question => cached[question]?.contentSid !== templates[question].contentSid ||
           !(APPROVAL_STATUSES.has(cached[question]?.status) || cached[question]?.status === "unavailable"))) return templates;
-    for (const question of Object.keys(QUESTIONS)) templates[question].status = cached[question].status;
+    for (const question of Object.keys(QUESTIONS)) {
+      templates[question].status = cached[question].status;
+      if (cached[question].error) templates[question].error = cached[question].error;
+    }
     templates.status = Object.keys(QUESTIONS).some(question => templates[question].status === "unavailable") ? "unavailable" :
       Object.keys(QUESTIONS).every(question => templates[question].status === "approved") ? "approved" : "pending";
     templates.checkedAt = cached.checkedAt;
@@ -275,10 +279,10 @@ export function createMealSurvey({
     const questions = Object.entries(QUESTIONS);
     // Both checks finish before a status is stored or any message can be claimed.
     const results = await Promise.allSettled(questions.map(([, config]) => templateApproval(env, env[config.sid], fetchImpl)));
-    const templates = { accountSid: env.TWILIO_ACCOUNT_SID, checkedAt: now().toISOString() };
+    const templates = { version: 2, accountSid: env.TWILIO_ACCOUNT_SID, checkedAt: now().toISOString() };
     results.forEach((result, index) => {
       const [question, config] = questions[index];
-      templates[question] = result.status === "fulfilled" ? result.value : { contentSid: env[config.sid], status: "unavailable" };
+      templates[question] = result.status === "fulfilled" ? result.value : { contentSid: env[config.sid], status: "unavailable", error: String(result.reason?.message || "Approval request failed.").slice(0, 160) };
     });
     const approved = questions.every(([question]) => templates[question].status === "approved");
     templates.nextCheckAt = new Date(Date.parse(templates.checkedAt) + (approved ? APPROVAL_CACHE_MS : APPROVAL_RETRY_MS)).toISOString();

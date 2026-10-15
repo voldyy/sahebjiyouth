@@ -108,7 +108,7 @@ test("both WhatsApp templates must be approved before any invitation is claimed"
     for (const request of f.approvalRequests) {
       assert.equal(request.method, "GET");
       assert.equal(request.headers.Authorization, `Basic ${btoa(`${ENV.TWILIO_API_KEY}:${ENV.TWILIO_API_SECRET}`)}`);
-      assert.equal(request.redirect, "error");
+      assert.equal(request.redirect, "manual");
     }
     assert.equal(f.templates().accountSid, ACCOUNT);
     assert.equal(f.survey.summary().templates.status, "pending");
