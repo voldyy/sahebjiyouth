@@ -4,6 +4,7 @@ export default defineConfig({
   plugins: [cloudflareTest({ wrangler: { configPath: "./worker/wrangler.jsonc" }, miniflare: { bindings: {
     SYNC_KEY: "synthetic-sync-key",
     APPS_SCRIPT_URL: "https://sheet.test/exec",
+    MEAL_AUTOMATIC_QUESTIONS: "false",
     TWILIO_ACCOUNT_SID: "AC00000000000000000000000000000000",
     TWILIO_AUTH_TOKEN: "12345",
     TWILIO_API_KEY: "SK00000000000000000000000000000000",
