@@ -91,6 +91,21 @@ test("team removes a diner with the red minus, restores them, and adds an exclud
   expect(fixture.requests.every(request => request.accessKey === "")).toBe(true);
 });
 
+test("ordinary dashboard visitors can remove, restore and add diners without a team link", async ({ page, context }) => {
+  const fixture = await setup({ page, context }, { team: false });
+  await page.getByRole('button', {name:/^Remove Amber Diner from lunch/}).click();
+  await expect(page.locator('.kit-big-number')).toHaveText('1guests');
+  await page.getByRole('button', {name:/^Restore automatic planning for Amber Diner/}).click();
+  await expect(page.locator('.kit-big-number')).toHaveText('2guests');
+  await page.getByRole('button', {name:/^Add Chandra Late Arrival to lunch/}).click();
+  await expect(page.locator('.kit-big-number')).toHaveText('3guests');
+  expect(fixture.requests.filter(r=>r.action==='meal-override').map(r=>r.included)).toEqual([false,null,true]);
+  expect(fixture.requests.every(r=>r.accessKey==='')).toBe(true);
+  await expect(page.getByRole('button',{name:'Meal settings',exact:true})).toHaveCount(0);
+  await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Accommodations',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Assign guest',exact:true})).toHaveCount(0);
+});
+
 test("dining count and buffer persist in shared records and appear in another tab", async ({ page, context }) => {
   const fixture = await setup({ page, context });
   await page.getByRole("button", { name: "Adjust dining count", exact: true }).click();
@@ -129,8 +144,8 @@ test("admin can disable team editing while retaining admin dining controls", asy
   await expect(page.getByRole("columnheader", { name: "Attendee", exact: true })).toBeVisible();
   await expect(page.getByLabel("Send automatic WhatsApp meal questions", { exact: true })).toBeDisabled();
   // Controlled checkbox waits for the shared save response before changing.
-  await page.getByLabel("Allow Yogi Prasad team meal editing", { exact: true }).click();
-  await expect(page.getByLabel("Allow Yogi Prasad team meal editing", { exact: true })).not.toBeChecked();
+  await page.getByLabel("Allow everyone to edit dining lists", { exact: true }).click();
+  await expect(page.getByLabel("Allow everyone to edit dining lists", { exact: true })).not.toBeChecked();
   await page.getByRole("button", { name: "Close dialog", exact: true }).click();
   await expect(page.getByRole("button", { name: "Adjust dining count", exact: true })).toBeVisible();
   expect(fixture.settings.teamEditingEnabled).toBe(false);

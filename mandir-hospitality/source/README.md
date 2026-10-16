@@ -2,7 +2,7 @@
 
 Transport and lodging WhatsApp notifications run in the existing Azure backend. Accommodations includes an admin-only **Send room details** preview/send action, with one message per attendee. See [notification setup and operations](notifications/HOSPITALITY.md).
 
-A responsive hospitality dashboard for Allentown Shri Swaminarayan Mandirji, backed by SQLite with background Google Sheets synchronization. Admins have Main, Transport, Accommodations, and Yogi Prasad. The Yogi Prasad team link can edit shared dining lists and meal counts when team meal editing is enabled; the other tabs remain view-only. The interface uses the supplied Anoopam Mission logo, sky blue, and soft orange.
+A responsive hospitality dashboard for Allentown Shri Swaminarayan Mandirji, backed by SQLite with background Google Sheets synchronization. Admins have Main, Transport, Accommodations, and Yogi Prasad. Anyone with a dashboard link can edit shared dining lists and meal counts when shared meal editing is enabled; other assignments remain admin-only. The interface uses the supplied Anoopam Mission logo, sky blue, and soft orange.
 
 ## Development and release
 
@@ -23,7 +23,7 @@ Publish editable source to `voldyy/sahebjiyouth`, `mandir-hospitality/source/`, 
 
 ## Access
 
-The shareable team link is `https://www.sahebjiyouth.org/mandir-hospitality/#kitchen?team=yogi-prasad`. An admin can copy it from Workspace settings. It starts on Yogi Prasad with meal-only editing enabled by default. Admins can disable team meal editing in Meal settings. Main, Transport and Accommodations stay view-only, including when opened in an existing admin tab. The team flag persists across navigation and driver filters. Search, filters, dates, guest/stay details, and flight lookups remain available. A forged role or hash cannot authorize assignment writes.
+The shareable team link is `https://www.sahebjiyouth.org/mandir-hospitality/#kitchen?team=yogi-prasad`. An admin can copy it from Workspace settings. It starts on Yogi Prasad, but the special team parameter is not required to add, remove or restore diners: ordinary dashboard links have the same meal-only editing access. Admins can disable shared meal editing in Meal settings. Main, Transport and Accommodations stay view-only on the team link, including when opened in an existing admin tab. The team flag persists across navigation and driver filters. Search, filters, dates, guest/stay details, and flight lookups remain available. A forged role or hash cannot authorize assignment writes.
 
 Full access uses a private link with an `admin` parameter in the URL fragment. The key is generated on the backend and stored in the Apps Script property `ADMIN_ACCESS_KEY`; its digest is synchronized to SQLite for authorization. The frontend consumes it into this tab's session storage and removes it from the address bar. It is never bundled in source or production assets. Possession grants admin access, so share this link only with admins. Rotating the script property invalidates old links after the next synchronization. No Google sign-in is required for dashboard users.
 

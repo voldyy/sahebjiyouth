@@ -130,7 +130,7 @@ export function useSheetWorkspace(enabled) {
     return commit(request);
   };
   const saveMeal = async (request) => {
-    if (!((role === "admin" && !isTeamView()) || (isTeamView() && meals.settings.teamEditingEnabled))) {
+    if (!((role === "admin" && !isTeamView()) || meals.settings.teamEditingEnabled)) {
       throw new Error("Meal editing is not enabled for this link.");
     }
     return commit(request);

@@ -70,7 +70,7 @@ export default function App() {
   const sheetWorkspace = useSheetWorkspace(!demoMode);
   const [requestedRoute, setRoute] = useState(currentRoute);
   const isAdmin = demoMode || (sheetWorkspace.role === "admin" && !isTeamView());
-  const canEditMeals = isAdmin || (isTeamView() && Boolean(sheetWorkspace.meals?.settings?.teamEditingEnabled));
+  const canEditMeals = isAdmin || Boolean(sheetWorkspace.meals?.settings?.teamEditingEnabled);
   const connectionIssue = sheetWorkspace.error || sheetWorkspace.sync?.error;
   const accessLabel = isAdmin ? "Admin access" : canEditMeals ? "Meal editing access" : "View-only access";
   const connectionStatus = connectionIssue ? "Connection needs attention" : sheetWorkspace.saving ? "Saving changes" : sheetWorkspace.sync?.pending ? "Saved; syncing to Google Sheets" : `Connected · ${accessLabel}`;
@@ -556,7 +556,7 @@ export default function App() {
             <h3>About this workspace</h3>
             {demoMode ? <p>This demo uses sample guests, saved in this browser.</p> : <>
               <p>Assignments are saved to the shared workspace and synchronized to Google Sheets in the background. Registration changes made in the sheet are imported automatically. Lodging updates affect only AD (location), AE (room number), and AF (custom code). Guest records are not saved to browser storage.</p>
-              <p>Editing rooms, transport and housekeeping requires a private admin link. Yogi Prasad meal plans and dining-list changes are shared across the workspace. Admins can decide whether the Yogi Prasad team link may make meal-only changes; all other assignments remain admin-only.</p>
+              <p>Editing rooms, transport and housekeeping requires a private admin link. Yogi Prasad meal plans and dining-list changes are shared across the workspace. When shared meal editing is enabled, anyone with a dashboard link can add, remove or restore diners; all other assignments remain admin-only.</p>
               <button className="button secondary" onClick={async () => { try { await navigator.clipboard.writeText(yogiPrasadLink()); toast("Yogi Prasad team link copied."); } catch { toast(`Team link: ${yogiPrasadLink()}`); } }}>Copy Yogi Prasad team link</button>
               <a className="button secondary" href={SHEET_URL} target="_blank" rel="noreferrer">Open source sheet</a>
 

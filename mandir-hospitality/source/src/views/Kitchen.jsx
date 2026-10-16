@@ -167,7 +167,7 @@ function MealSettingsSheet({ settings, survey, saving, toast, onSave, onClose })
     try {
       await onSave(Boolean(next.teamEditingEnabled), Boolean(next.automaticQuestionsEnabled), settings.revision || "");
       toast(key === "teamEditingEnabled"
-        ? `Yogi Prasad team editing ${checked ? "enabled" : "disabled"}.`
+        ? `Shared meal editing ${checked ? "enabled" : "disabled"}.`
         : `Automatic WhatsApp questions ${checked ? "enabled" : "disabled"}.`);
     } catch (failure) {
       setError(failure.message || "The meal setting could not be saved.");
@@ -180,15 +180,15 @@ function MealSettingsSheet({ settings, survey, saving, toast, onSave, onClose })
         <label className="kit-setting-row">
           <span className="kit-setting-icon"><ShieldCheck size={19} /></span>
           <span>
-            <strong>Allow team meal editing</strong>
-            <small>The Yogi Prasad link may change dining counts and add or remove names. Other dashboard areas remain view-only.</small>
+            <strong>Allow everyone to edit dining lists</strong>
+            <small>Anyone with a dashboard link may change dining counts and add, remove or restore names. Other assignments require admin access.</small>
           </span>
           <input
             type="checkbox"
             checked={Boolean(settings.teamEditingEnabled)}
             disabled={saving}
             onChange={(event) => updateSetting("teamEditingEnabled", event.target.checked)}
-            aria-label="Allow Yogi Prasad team meal editing"
+            aria-label="Allow everyone to edit dining lists"
           />
         </label>
         <label className="kit-setting-row">
@@ -372,7 +372,7 @@ function DailyKitchenPlan({
             ? "Connected to shared guest and meal records"
             : isAdmin
               ? "Shared meal editing · Admin"
-              : "Shared meal editing enabled for the Yogi Prasad team"
+              : "Shared dining-list editing enabled for everyone"
           : "Demo meal plan saved on this device"}</span>
       </div>
       <div className="kit-meals" role="group" aria-label="Choose a meal">
