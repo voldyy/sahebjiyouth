@@ -66,6 +66,11 @@ export function FlightTime({ group }) {
 export default function FlightStatus({ group }) {
   const { flight, status, loading, travelDay, check } = useContext(LiveFlightContext);
   const PhaseIcon = status?.phase === "Landed" ? PlaneLanding : Plane;
+  if (!status || status.tone === "unknown") return <div className="transport-flight-status transport-flight-status--compact">
+    <span className="flight-unavailable" title={!travelDay ? "Live status is available on the travel day." : flight?.reason || "Check flight status when you need an update."} aria-live="polite">{loading ? "Checking…" : "Status unavailable"}</span>
+    {travelDay && <button type="button" className="text-button" onClick={check} disabled={loading} aria-label="Check flight status"><RefreshCw size={12} />{loading ? "Checking…" : "Check status"}</button>}
+    <a href={flightAwareUrl(group.flight)} target="_blank" rel="noreferrer">Flight tracker <ExternalLink size={11} /></a>
+  </div>;
   return <div className="transport-flight-status">
     <div className={`flight-glance flight-glance--${status?.tone || "unknown"}`} aria-live="polite" aria-atomic="true">
       <div className="flight-glance-heading"><span className="flight-status-dot" aria-hidden="true" /><strong>Status: {status?.label || (!travelDay ? "Not available yet" : loading ? "Checking…" : "Unavailable")}</strong></div>

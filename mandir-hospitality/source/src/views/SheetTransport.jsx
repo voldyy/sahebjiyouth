@@ -305,7 +305,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                     {group.method === "Flight" ? <AirlineLabel flight={group.flight} airport={group.airport} /> : <><span className="eyebrow">
                       {group.method} ·{" "}
                       {group.airport || "Location needed"}
-                    </span><h3>{group.method} journey</h3></>}
+                    </span>{group.method !== "Pickup" && <h3>{group.method}</h3>}</>}
                     {group.guests.length > 1 && <span className="transport-guest-count">{group.guests.length} guests</span>}
                   </div>
                   <span

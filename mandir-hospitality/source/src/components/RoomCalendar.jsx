@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import WhatsAppSent from "./WhatsAppSent";
 import { BedDouble, ChevronLeft, ChevronRight, Plus, AlertCircle } from "lucide-react";
 import { samarpanRooms, roomAssignment, roomKey } from "../lib/lodgingRooms";
 import { roomLabel, OFFSITE_HOTELS } from "../lib/offsite";
@@ -21,7 +22,7 @@ export function RoomOverview({ guests, day, rooms, onAssign, onEdit, saving, rea
       <header><div><small>{room.lodging || "Samarpan"}</small><h2>{roomLabel(room)}</h2></div><span>{room.beds - free}/{room.beds} occupied</span></header>
       <div className="stay-overview-beds">{beds.map(({ number, state }) => <div className={`stay-overview-bed ${state.free ? "is-free" : state.uncertain.length || state.occupants.length > 1 ? "needs-review" : ""}`} key={number}>
         <span className="stay-overview-number">{number}</span><div>
-          {state.occupants.map(guest => <button key={guest.id} disabled={saving} onClick={() => onEdit(guest)}>{guest.name}</button>)}
+          {state.occupants.map(guest => <button key={guest.id} disabled={saving} onClick={() => onEdit(guest)}>{guest.name}<WhatsAppSent guest={guest} /></button>)}
           {state.uncertain.map(guest => <button key={guest.id} disabled={saving} onClick={() => onEdit(guest)}>{guest.name} · review</button>)}
           {state.occupants.length > 1 && <small>Double booking</small>}
           {state.free && (readOnly ? <span>Empty</span> : <button disabled={saving} onClick={() => onAssign(roomKey(room), number, day)} aria-label={`Assign existing guest to ${room.lodging === "Sadhak" ? "Sadhak " : ""}room ${room.number} bed ${number}`}>Empty</button>)}
@@ -45,7 +46,7 @@ function BedSlot({ guests, room, bed, day, onAssign, onEdit, saving, compact = f
     {preview && <span className="stay-drop-label">{problem ? "Stay conflicts" : drag.guest.name}</span>}
     {state.free ? (readOnly ? <div className="stay-empty">Empty bed</div> : <button className="stay-empty" disabled={saving} onClick={() => onAssign(roomKey(room), bed, day)} aria-label={`Assign ${room.lodging === "Sadhak" ? "Sadhak " : ""}room ${room.number} bed ${bed} on ${fullDay(day)}`}><Plus size={15} /><span>Empty bed</span></button>) : <>
       {conflict && <span className="stay-conflict"><AlertCircle size={12} /> Double booking</span>}
-      {state.occupants.map((guest) => <button className="stay-occupant" key={guest.id} disabled={saving} onClick={() => onEdit(guest)} aria-label={`${readOnly ? "View" : "Edit"} ${guest.name}, ${room.lodging === "Sadhak" ? "Sadhak " : ""}room ${room.number} bed ${bed}, ${shortDay(day)}`}><span className="stay-guest-initials">{guest.initials}</span><span>{guest.name}</span></button>)}
+      {state.occupants.map((guest) => <button className="stay-occupant" key={guest.id} disabled={saving} onClick={() => onEdit(guest)} aria-label={`${readOnly ? "View" : "Edit"} ${guest.name}, ${room.lodging === "Sadhak" ? "Sadhak " : ""}room ${room.number} bed ${bed}, ${shortDay(day)}`}><span className="stay-guest-initials">{guest.initials}</span><span>{guest.name}<WhatsAppSent guest={guest} /></span></button>)}
       {state.uncertain.length > 0 && <div className="stay-uncertain"><span>Needs review</span>{state.uncertain.map((guest) => <button key={guest.id} onClick={() => onEdit(guest)} disabled={saving}>{guest.name}</button>)}</div>}
     </>}
   </div>;

@@ -1,4 +1,5 @@
 import LodgingNotifications from "../components/LodgingNotifications";
+import WhatsAppSent from "../components/WhatsAppSent";
 import { useState } from "react";
 import { BedDouble, CalendarDays, ChevronLeft, ChevronRight, List, Plus, Search, Users, GripVertical, Building2, Sparkles, Settings2 } from "lucide-react";
 import Sheet from "../components/Sheet";
@@ -140,7 +141,7 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
           const pending = unassignedGuest(guest), bed = bedForGuest(guest, workspace.offsiteRooms);
           const hotelRoom = offsiteRoomFor(guest, workspace.offsiteRooms);
           return <article className={`card sheet-attendee ${pending ? "is-unassigned" : ""}`} key={guest.id}>
-            <div className="stay-card-heading"><h3>{guest.name}</h3>{pending && <span className="stay-pending-badge">Unassigned</span>}</div>
+            <div className="stay-card-heading"><h3>{guest.name}<WhatsAppSent guest={guest} /></h3>{pending && <span className="stay-pending-badge">Unassigned</span>}</div>
             <p className="stay-card-dates"><CalendarDays size={14} />{stayLabel(guest)}</p>
             <div className="stay-card-footer"><div className="sheet-room-details"><strong>{guest.lodging || "Lodging pending"}</strong><span>{guest.roomNo ? `Room ${guest.roomNo}` : hotelRoom?.label || "Room pending"}{bed ? ` · Bed ${bed}` : guest.roomCode ? ` · ${guest.roomCode}` : ""}</span></div>
               <button className="button secondary" disabled={(!readOnly && !guest.sourceWritable) || workspace.saving} onClick={() => openGuest(guest)}>{readOnly ? "View stay" : pending ? "Assign lodging" : "Edit assignment"}</button>

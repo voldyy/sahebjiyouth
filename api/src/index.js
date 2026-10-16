@@ -43,6 +43,11 @@ app.timer('yogiPrasadDaily', {
 });
 
 const { createHospitalityWorker, createAccommodationHandler, loadSnapshot, SCHEDULE } = require('./hospitality-notifications');
+const { createLodgingStatusHandler } = require('./lodging-status');
+app.http('hospitalityLodgingStatus', {
+  route: 'lodging-notification-status', methods: ['GET'], authLevel: 'function',
+  handler: createLodgingStatusHandler({ table: registrationTable, env: process.env }),
+});
 app.timer('hospitalityNotifications', {
   schedule: SCHEDULE, runOnStartup: false, useMonitor: true,
   handler: createHospitalityWorker({ table: registrationTable, env: process.env }),

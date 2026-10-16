@@ -169,11 +169,11 @@ test("weekly calendar has six bounded weeks, correct room beds, and checkout-day
   await expect(page.getByRole("heading", { name: "Nov 8 – Nov 14, 2026" })).toBeVisible();
 });
 
-test("daily view shows all 74 beds, date-filtered unassigned guests, and saves from an empty bed", async ({ page }) => {
+test("daily view shows all 76 beds, date-filtered unassigned guests, and saves from an empty bed", async ({ page }) => {
   const { writes } = await openPlanner(page);
   await page.getByRole("button", { name: "Daily view", exact: true }).click();
-  await expect(page.locator(".stay-day-room")).toHaveCount(10);
-  await expect(page.locator(".stay-day-beds .stay-slot")).toHaveCount(74);
+  await expect(page.locator(".stay-day-room")).toHaveCount(11);
+  await expect(page.locator(".stay-day-beds .stay-slot")).toHaveCount(76);
   await expect(page.getByRole("button", { name: "Assign Chirag Mehta", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Assign Dev Shah", exact: true })).toHaveCount(0);
   await expect(page.getByText("1 unassigned guests need stay dates")).toBeVisible();
@@ -446,8 +446,8 @@ test('day overview adds a walk-in to the chosen bed and Main displays both dates
   await page.getByRole('button',{name:'Day at a glance',exact:true}).click();
   await page.getByLabel('Choose occupancy date').fill('2026-10-14');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await expect(page.locator('.stay-overview-room')).toHaveCount(10);
-  await expect(page.locator('.stay-overview-bed')).toHaveCount(74);
+  await expect(page.locator('.stay-overview-room')).toHaveCount(18);
+  await expect(page.locator('.stay-overview-bed')).toHaveCount(92);
   await expect(page.locator('.stay-overview')).toContainText('Bela Shah');
   await expect(page.locator('.stay-overview')).not.toContainText('Amal Patel');
   await page.getByRole('button',{name:'Assign guest to room 203 bed 2',exact:true}).click();

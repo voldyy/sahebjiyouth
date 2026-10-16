@@ -81,6 +81,14 @@ The `meal-health` action requires the admin key or private synchronization key
 and returns aggregate survey/configuration status and the last alarm result;
 it never returns attendee/contact rows or credentials.
 
+Accommodation sent badges are imported from the existing Azure notification
+claims through `GET /api/lodging-notification-status`, protected by Azure's
+function key. Store it only in the Worker secret `LODGING_STATUS_KEY`. The
+Worker keeps the last verified status and matches its attendee/contact/stay/room
+signature before showing a badge. Room changes hide an old badge immediately.
+Azure checks existing Twilio message SIDs and caches their delivery status; this
+endpoint never creates new messages. Queued and failed deliveries are excluded.
+
 ## Verification and recovery
 
 `npm run test:database` runs against real local Workers/SQLite with synthetic Sheet

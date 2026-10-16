@@ -42,6 +42,40 @@ test("viewer links stay view-only through the database client", async ({ page })
   await expect(page.getByRole('button', { name: 'Assign lodging', exact: true })).toHaveCount(0);
   await expect(page.getByRole('status', {name:'Connected · View-only access',exact:true})).toBeVisible();
 });
+
+test("WhatsApp receipt appears for a sent current room notice and not a queued message", async ({ page }) => {
+  const { h } = await setup(page, false);
+  h.rows[1].splice(29, 3, 'Samarpan', '202', 'S202B1');
+  let status = 'delivered';
+  await page.route(API, async route => {
+    const result = h.request(route.request().postDataJSON());
+    result.guests = guestsFromRows(h.rows).map(g => ({ ...g, lodgingNotification: { sent: status === 'delivered', status } }));
+    await route.fulfill({json:result});
+  });
+  await page.goto('/#rooms');
+  await page.reload();
+  await page.getByRole('button', {name:'Guest list',exact:true}).click();
+  await expect(page.getByRole('img',{name:'Current room details sent via WhatsApp'})).toBeVisible();
+  await expect(page.locator('.sheet-attendee')).toContainText('Room 202');
+  status = 'queued';
+  await page.reload();
+  await page.getByRole('button', {name:'Guest list',exact:true}).click();
+  await expect(page.getByRole('img',{name:'Current room details sent via WhatsApp'})).toHaveCount(0);
+});
+
+test("compact flight fallback keeps tracking available and removes Pickup journey", async ({ page }) => {
+  const { h } = await setup(page, false);
+  await page.goto('/#transport');
+  const fallback = page.locator('.transport-flight-status--compact').first();
+  await expect(fallback).toBeVisible();
+  await expect(fallback.getByRole('link',{name:'Flight tracker'})).toBeVisible();
+  await expect(fallback.locator('.flight-glance')).toHaveCount(0);
+  expect((await fallback.boundingBox()).height).toBeLessThan(65);
+  h.rows[1][11] = ''; h.rows[1][15] = ''; h.rows[1][17] = '';
+  await page.reload();
+  await expect(page.locator('.transport-journey').first()).toBeVisible();
+  await expect(page.getByText('Pickup journey',{exact:true})).toHaveCount(0);
+});
 test('bed selection shares a compact guest picker and checks the full stay', async ({ page }) => {
   const { h, requests } = await setup(page);
   const occupied = [...h.rows[1]];

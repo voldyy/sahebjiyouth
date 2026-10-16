@@ -36,6 +36,7 @@ var Hospitality = (() => {
 
   // src/lib/lodgingRooms.js
   var samarpanRooms = [
+    { number: "202", beds: 2 },
     { number: "203", beds: 4 },
     { number: "204", beds: 3 },
     { number: "205", beds: 4 },
@@ -244,6 +245,9 @@ var Hospitality = (() => {
         city: text(row[7]),
         phone: text(row[5]),
         count: 1,
+        // Manual registrations have at least one of the normal online-form
+        // identifiers missing. Keep the raw email and ZIP out of dashboard data.
+        isManualRegistration: !text(row[4]) || !text(row[6]),
         arrivalDate: arrival.date,
         arrivalTime: arrival.time,
         arrivalTimeKnown: typeof row[12] === "number" ? row[12] % 1 !== 0 : /(?:[T ]\d{1,2}:\d{2}|^Date\(\d+,\d+,\d+,\d+,\d+)/.test(text(row[12])),

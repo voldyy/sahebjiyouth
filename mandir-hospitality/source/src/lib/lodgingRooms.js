@@ -2,6 +2,7 @@ import { offsiteBedCode } from "./offsite.js";
 
 // Confirmed on-site inventory; hotels use separately managed planning rooms.
 export const samarpanRooms = [
+  { number: "202", beds: 2 },
   { number: "203", beds: 4 },
   { number: "204", beds: 3 },
   { number: "205", beds: 4 },

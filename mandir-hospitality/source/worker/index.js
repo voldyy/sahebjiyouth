@@ -5,6 +5,7 @@ import { changesBetween, overlayChanges, same } from "../shared/workspace-sync.j
 import { createMealState } from "./meal-state.js";
 import { createMealSurvey } from "./meal-survey.js";
 import { verifyTwilioSignature, signTwilioRequest } from "./twilio-webhook.js";
+import { withLodgingNotices } from "../src/lib/lodgingNotifications.js";
 
 const engine = createWorkspaceEngine({ uuid: () => crypto.randomUUID(), today: () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()), flush: () => {} });
 const encoder = new TextEncoder();
@@ -131,7 +132,17 @@ export class HospitalityWorkspace extends DurableObject {
   result(role) {
     const book = tabularWorkspace({ ...this.load(), "Assignment History": [TABLES["Assignment History"]] });
     const snapshot = engine.snapshot(book, "viewer");
-    return { ok: true, ...snapshot, guests: this.meals.augment(snapshot.guests), meals: this.meals.snapshot(role, snapshot.guests, role === "admin" ? this.survey.summary() : undefined), role, ...(role === "admin" ? { rows: book.data.Attendees } : {}), revision: this.meta("revision", "0"), sync: this.syncState() };
+    const notices = JSON.parse(this.meta("lodgingNotices", "[]"));
+    return { ok: true, ...snapshot, guests: withLodgingNotices(this.meals.augment(snapshot.guests), notices), meals: this.meals.snapshot(role, snapshot.guests, role === "admin" ? this.survey.summary() : undefined), role, ...(role === "admin" ? { rows: book.data.Attendees } : {}), revision: this.meta("revision", "0"), sync: this.syncState() };
+  }
+  async refreshLodgingNotices() {
+    if (!this.env.LODGING_STATUS_KEY) return;
+    try {
+      const response = await fetch("https://sahebjiyouth-reg-api.azurewebsites.net/api/lodging-notification-status", { headers: { "x-functions-key": this.env.LODGING_STATUS_KEY }, signal: AbortSignal.timeout(25000), redirect: "manual" });
+      const result = await boundedJson(response, 1024 * 1024);
+      if (!response.ok || !result.ok || !Array.isArray(result.notifications) || result.notifications.length > 5000 || result.notifications.some(n => typeof n.identity !== "string" || typeof n.signature !== "string" || typeof n.sent !== "boolean" || typeof n.status !== "string")) throw Error("Invalid notification status response.");
+      this.putMeta("lodgingNotices", JSON.stringify(result.notifications));
+    } catch (_) { console.warn(JSON.stringify({ event: "lodging_notification_status_deferred" })); }
   }
   async mealReply(params) {
     if (!String(params.ButtonPayload || "").startsWith("yp:") && !/^(STOP|STOPALL|UNSUBSCRIBE|CANCEL|END|QUIT)$/i.test(String(params.Body || "").trim())) return { status: "ignored" };
@@ -283,6 +294,7 @@ export class HospitalityWorkspace extends DurableObject {
   }
   async alarm() {
     await this.synchronize();
+    await this.refreshLodgingNotices();
     try { this.meals.put("survey-config", "last-run", { ...await this.survey.process(), at: new Date().toISOString() }); }
     catch (_) { this.meals.put("survey-config", "last-run", { status: "attention", at: new Date().toISOString() }); console.error(JSON.stringify({ event: "meal_survey_attention" })); }
   }
