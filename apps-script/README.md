@@ -31,6 +31,12 @@ Mail is sent from the deployment's executing account and is subject to its daily
 
 The source has been tested with mocked Google services. It must be copied and redeployed in Google to change live spreadsheet/email behavior.
 
+## Duplicates and capacity
+
+Inside the script lock, each POST reads columns B–G before saving. It returns `{ok: false, code: 'full'}` once `PUJA_CONFIG.MAX_REGISTRATIONS` (100) rows have a name, and `{ok: false, code: 'duplicate'}` when an existing row has the same phone or email and shares a first name (“Ravij Bhatt” after “Ravij & Orishtha Bhatt”), or has the identical name with the same ZIP code or city. A shared phone or email alone is allowed, because one family member often registers several couples. Refused requests write no row and send no email. Rows added by hand count toward the limit; delete or raise the limit to reopen. `GET ?action=status` returns only `{ok, open}` so the form can show its closed message.
+
+The live project is `dhanteras26`, bound to the registration sheet and owned by usayouth@anoopam.org. Deploy updates as a new version of the existing deployment to keep the `/exec` URL.
+
 ## HTML email styling
 
 The confirmation uses the registration form's cream, gold, deep red, and dark navy colors, with a centered mandir logo. Layout uses presentation tables and inline styles for email compatibility. Inter is preferred when installed, with system/Arial fallbacks because email clients do not consistently support web fonts. A plain-text alternative is included.

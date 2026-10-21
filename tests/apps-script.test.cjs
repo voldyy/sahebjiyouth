@@ -62,3 +62,37 @@ test('matches the supplied eight-column sheet without changing existing rows',()
  assert.deepEqual(app.rows[0],headers);assert.equal(app.rows[1][0],'old registration');
  assert.deepEqual(Array.from(app.rows[2].slice(1)),['4435550123','Example Participant','C','person@example.com','01234','Test, MA','Matched']);
 });
+
+const headers=['Timestamp','Phone','Name','C or S','Email','Zip Code','City, State','Lookup Status'];
+const existingRow=(phone,name,email='',zipCode='',cityState='')=>['2026-10-01',phone,name,'C',email,zipCode,cityState,'Manual'];
+test('rejects a repeat registration by the same phone or email and first name',()=>{
+ const app=setup();app.rows.push(headers.slice(),existingRow('4435550123','Ravij & Orishtha Bhatt','ravij@example.com'));
+ for (const input of [{...registration,name:'Ravij Bhatt'},{...registration,phone:'4435550999',email:'RAVIJ@example.com',name:'Orishthaben Bhatt'}]) {
+  const result=app.post(input);assert.equal(result.ok,false);assert.equal(result.code,'duplicate');
+ }
+ assert.equal(app.rows.length,2);assert.equal(app.emails.length,0);assert.equal(app.released,2);
+});
+test('rejects the identical name from the same ZIP code or city with a different phone',()=>{
+ const app=setup();app.rows.push(headers.slice(),existingRow('6100000000','Example & Partner Participant','','01234','Test, MA'));
+ assert.equal(app.post({...registration,name:'Partner & Example Participant'}).code,'duplicate');
+ assert.equal(app.post({...registration,name:'Partner & Example Participant',zipCode:'99999',cityState:'Elsewhere, PA'}).ok,true);
+});
+test('allows different couples who share a family phone or email',()=>{
+ const app=setup();app.rows.push(headers.slice(),existingRow('4435550123','Pinakin & Deepti Patel','person@example.com'));
+ assert.equal(app.post({...registration,name:'Vinodbhai & Kailasben Patel'}).ok,true);assert.equal(app.rows.length,3);
+});
+test('stops accepting registrations at the configured maximum',()=>{
+ const app=setup();vm.runInContext('PUJA_CONFIG.MAX_REGISTRATIONS=2',app.context);
+ app.rows.push(headers.slice(),existingRow('6100000001','First Person'));
+ assert.equal(app.post(registration).ok,true);
+ const result=app.post({...registration,phone:'6100000002',name:'Third Person'});
+ assert.equal(result.ok,false);assert.equal(result.code,'full');assert.equal(app.rows.length,3);assert.equal(app.emails.length,1);assert.equal(app.released,2);
+});
+test('status reports whether registration is open without registration data',()=>{
+ const app=setup();vm.runInContext('PUJA_CONFIG.MAX_REGISTRATIONS=1',app.context);
+ const status=()=>JSON.parse(vm.runInContext('doGet({parameter:{action:"status"}})',app.context).body);
+ assert.deepEqual(status(),{ok:true,open:true});
+ app.rows.push(headers.slice(),existingRow('6100000001','First Person'));
+ assert.deepEqual(status(),{ok:true,open:false});
+ assert.equal(JSON.parse(vm.runInContext('doGet({parameter:{}})',app.context).body).service,'Mahapuja registration');
+});

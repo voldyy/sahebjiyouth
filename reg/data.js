@@ -69,6 +69,19 @@ function loadContact(phone) {
   return {found: contacts.length > 0, contacts, contact: contacts.length === 1 ? contacts[0] : null};
 }
 
+// Only an explicit "closed" answer hides the form; Apps Script still enforces the limit on submit.
+async function fetchRegistrationOpen() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  try {
+    const response = await fetch(GOOGLE_SCRIPT_URL + "?action=status", { cache: "no-store", signal: controller.signal });
+    const data = await response.json();
+    return !(data.ok && data.open === false);
+  } catch (_) {
+    return true;
+  } finally { clearTimeout(timer); }
+}
+
 // Submit through Azure so Twilio credentials never reach the browser.
 const REGISTRATION_API_URL = "https://sahebjiyouth-reg-api.azurewebsites.net/api/register";
 const registrationRequestIds = new Map();
@@ -92,7 +105,9 @@ async function submitRsvp(payload) {
       signal: controller.signal,
     });
     const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.error || "The RSVP service could not process the request.");
+    if (!response.ok || !data.ok) {
+      throw Object.assign(new Error(data.error || "The RSVP service could not process the request."), { code: data.code });
+    }
     return data;
   } catch (error) {
     if (error.name === "AbortError" || error instanceof TypeError) {

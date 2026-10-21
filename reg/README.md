@@ -26,6 +26,10 @@ The Azure Function now handles registration and WhatsApp confirmation. Its older
 
 Push changes to `main` to run `.github/workflows/main.yml`. GitHub Actions runs the tests, authenticates to Azure with a federated managed identity, uploads versioned assets, and switches the registration index. Access is scoped to the existing `$web` container. A copy of the previous index is retained as a workflow artifact for 14 days. The workflow does not deploy Apps Script or the retired private API.
 
+## Duplicates and capacity
+
+Apps Script rejects repeat registrations and stops accepting them at 100 (see `apps-script/README.md`). The Azure API passes those two messages through with status 409. On load, the form asks Apps Script whether registration is open and shows a closed message if not; if that check fails the form stays open and the limit is still enforced on submit.
+
 ## WhatsApp confirmation
 
 Registrants may select “Send me a WhatsApp confirmation at this phone number.” This requires an email address because the approved `eventregistration2` template tells them to check that address. The template is sent automatically after the RSVP is saved and Apps Script reports the email sent. The form reports a warning if the email or WhatsApp request fails, without asking the user to create another registration.

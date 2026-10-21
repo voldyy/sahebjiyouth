@@ -1,4 +1,4 @@
-const { useMemo, useState } = React;
+const { useEffect, useMemo, useState } = React;
 
 function App() {
   const [form, setForm] = useState(initialForm);
@@ -12,6 +12,13 @@ function App() {
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
+  const [registrationClosed, setRegistrationClosed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetchRegistrationOpen().then((open) => { if (active && !open) setRegistrationClosed(true); });
+    return () => { active = false; };
+  }, []);
 
   const phoneDigits = normalizePhone(form.phone);
 
@@ -157,6 +164,7 @@ function App() {
       setSuggestions([]);
       setSuggestOpen(false);
     } catch (error) {
+      if (error.code === "full") setRegistrationClosed(true);
       setSubmitState("error");
       setSubmitMessage(error.message);
     }
@@ -189,6 +197,29 @@ function App() {
           ),
           confirmation?.whatsappStatus === "queued" && React.createElement("p", { className: "status success" }, "Your confirmation email was sent, and your WhatsApp confirmation has been queued."),
           confirmation?.warning && React.createElement("p", { className: "status info" }, confirmation.warning)
+        )
+      )
+    );
+  }
+
+  if (registrationClosed) {
+    return React.createElement(
+      "main",
+      { className: "page" },
+      React.createElement(
+        "section",
+        { className: "form-card confirmation-card", "aria-labelledby": "closedTitle" },
+        React.createElement(
+          "header",
+          { className: "form-header" },
+          React.createElement("img", {
+            className: "logo",
+            src: "./HIRES_AMLOGO_color_sm.png",
+            alt: "Allentown Mandir",
+          }),
+          React.createElement("p", { className: "eyebrow" }, "Registration Closed"),
+          React.createElement("h1", { id: "closedTitle" }, "Dhan Teras Puja 2026"),
+          React.createElement("p", { className: "intro" }, "Thank you for your interest. Registration has reached capacity and is no longer accepting responses. For questions, please email usayouth@anoopam.org.")
         )
       )
     );

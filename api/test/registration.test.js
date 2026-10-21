@@ -60,3 +60,12 @@ test('Twilio Content templates may return MM message IDs',async()=>{
  const svc=createServices(env,async()=>({ok:true,json:async()=>({sid:'MM'+'4'.repeat(32)})}));
  assert.equal((await svc.sendWhatsApp(input)).sid,'MM'+'4'.repeat(32));
 });
+test('duplicate and full registrations return the sheet message without WhatsApp',async()=>{
+ for (const code of ['duplicate','full']) {
+  const app=setup({saveRegistration:async()=>({ok:false,code,error:'Sheet says '+code})});
+  const result=await app.request();assert.equal(result.status,409);assert.deepEqual(result.jsonBody,{ok:false,code,error:'Sheet says '+code});
+  assert.equal(app.calls.length,0);assert.deepEqual((await app.request()).jsonBody,result.jsonBody);
+ }
+ const other=setup({saveRegistration:async()=>({ok:false,code:'other',error:'Raw internal detail'})});
+ assert.doesNotMatch((await other.request()).jsonBody.error,/Raw internal/);
+});

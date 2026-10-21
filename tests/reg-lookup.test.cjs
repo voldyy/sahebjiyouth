@@ -8,28 +8,32 @@ const appSource = fs.readFileSync(path.join(__dirname, '../reg/app.js'), 'utf8')
 const record = (id, phone, name) => ({ id, phone, name, email: 'test@example.com', zipCode: '01234', cityState: 'Test, MA' });
 const fixtures = [record('1', '5551234567', 'First'), record('2', '5551234567', 'Second'), record('3', '5559876543', 'Third')];
 
-function setup(database = { version: 1, contacts: fixtures }) {
-  const requests = [];
+function setup(database = { version: 1, contacts: fixtures }, {status = {ok: true, open: true}, register = {ok: true}} = {}) {
+  const requests = [], statusRequests = [];
   const context = vm.createContext({
     window: {REG_CONTACTS_DB: database},
     crypto: require("node:crypto").webcrypto, TextEncoder, AbortController, setTimeout, clearTimeout,
     fetch: async (url, options) => {
+      if (url.endsWith('?action=status')) {
+        statusRequests.push(url);
+        return { ok: true, json: async () => status };
+      }
       requests.push({ url, ...options });
       if (url.includes('/api/lookup')) {
         if (!database) return {ok:false, json:async () => ({ok:false,error:'Unavailable'})};
         const phone = JSON.parse(options.body).phone;
         return {ok:true, json:async () => ({ok:true,contacts:database.contacts.filter(c => c.phone === phone)})};
       }
-      return { ok: true, json: async () => ({ ok: true }) };
+      return { ok: register.ok, json: async () => register };
     },
   });
   vm.runInContext(source, context);
-  return { context, requests, run: (code) => vm.runInContext(code, context) };
+  return { context, requests, statusRequests, run: (code) => vm.runInContext(code, context) };
 }
 
 // Exercise component event handlers and state transitions without a browser or network.
-function component(database) {
-  const app = setup(database);
+function component(database, options) {
+  const app = setup(database, options);
   const values = [], effects = [], dependencies = [];
   let cursor = 0, dirty = false, tree;
   app.context.React = {
@@ -178,4 +182,32 @@ test('network retries keep the same registration ID',async()=>{
  await app.run('submitRsvp({phone:"5559876543",name:"Test",yajmanType:"Yajman Single",whatsappOptIn:false})');
  await app.run('submitRsvp({phone:"5559876543",name:"Test",yajmanType:"Yajman Single",whatsappOptIn:false})');
  assert.equal(JSON.parse(app.requests[0].body).requestId,JSON.parse(app.requests[1].body).requestId);
+});
+
+const settle = () => new Promise(resolve => setImmediate(resolve));
+test('a closed status replaces the form; an unreachable status leaves it open', async () => {
+  const closed = component(undefined, {status: {ok: true, open: false}});
+  closed.render(); await settle(); closed.render();
+  assert.equal(closed.statusRequests.length, 1);
+  assert.equal(closed.findAll(n => n.type === 'form').length, 0);
+  assert.ok(closed.findAll(n => n.children.includes('Registration Closed')).length);
+  const unknown = component(undefined, {status: {ok: false}});
+  unknown.render(); await settle(); unknown.render();
+  assert.equal(unknown.findAll(n => n.type === 'form').length, 1);
+});
+
+test('duplicate submissions show the message; a full response closes the form', async () => {
+  const submit = async app => {
+    app.render(); app.field('phone').props.onChange('5559876543'); app.render(); app.lookup(); app.render();
+    app.findAll(n => n.type === 'input' && n.props.value === 'Yajman Couple')[0].props.onChange(); app.render();
+    await app.findAll(n => n.type === 'form')[0].props.onSubmit({preventDefault() {}}); return app.render();
+  };
+  const duplicate = component(undefined, {register: {ok: false, code: 'duplicate', error: 'You are already registered.'}});
+  await submit(duplicate);
+  assert.ok(duplicate.findAll(n => n.children.includes('You are already registered.')).length);
+  assert.equal(duplicate.findAll(n => n.type === 'form').length, 1);
+  const full = component(undefined, {register: {ok: false, code: 'full', error: 'Registration is full.'}});
+  await submit(full);
+  assert.equal(full.findAll(n => n.type === 'form').length, 0);
+  assert.ok(full.findAll(n => n.children.includes('Registration Closed')).length);
 });

@@ -9,10 +9,11 @@ const PUJA_CONFIG = {
   EVENT_NAME: 'Dhan Teras Puja 2026',
   EVENT_DATE: 'Friday, November 6, 2026',
   EVENT_TIME: '5:30 PM Eastern Time',
-  VENUE: 'Allentown Mandir',
+  VENUE: 'Allentown Shri Swaminarayan Mandir',
   SENDER_NAME: 'Anoopam Mission USA',
   LOGO_URL: 'https://sahebjiyouth.z13.web.core.windows.net/reg/HIRES_AMLOGO_color_sm.png',
-  REPLY_TO: '', // Optional monitored email address.
+  REPLY_TO: 'usayouth@anoopam.org', // Optional monitored email address.
+  MAX_REGISTRATIONS: 100, // Sheet rows with a name; new registrations are refused at this count.
 };
 
 const RSVP_HEADERS = [
@@ -31,8 +32,18 @@ function authorizeGoogleAppsScript() {
   console.log('Remaining daily email recipient quota: ' + remaining);
 }
 
-/** A browser visit verifies deployment without exposing registration data. */
-function doGet() {
+/**
+ * A browser visit verifies deployment without exposing registration data.
+ * ?action=status reports only whether registration is still open.
+ */
+function doGet(e) {
+  if (e && e.parameter && e.parameter.action === 'status') {
+    try {
+      return jsonResponse_({ ok: true, open: countRegistrations_(readRegistrations_(getRegistrationSheet_())) < PUJA_CONFIG.MAX_REGISTRATIONS });
+    } catch (_) {
+      return jsonResponse_({ ok: false, error: 'Registration status is unavailable.' });
+    }
+  }
   return jsonResponse_({ ok: true, service: 'Mahapuja registration', method: 'POST' });
 }
 
@@ -59,6 +70,14 @@ function doPost(e) {
     }
     try {
       sheet = getRegistrationSheet_();
+      // Checked under the lock so simultaneous submissions cannot both pass.
+      const existing = readRegistrations_(sheet);
+      if (countRegistrations_(existing) >= PUJA_CONFIG.MAX_REGISTRATIONS) {
+        return jsonResponse_({ ok: false, code: 'full', error: 'Registration is full. We have reached the maximum of ' + PUJA_CONFIG.MAX_REGISTRATIONS + ' registrations for ' + PUJA_CONFIG.EVENT_NAME + '.' });
+      }
+      if (findDuplicate_(registration, existing)) {
+        return jsonResponse_({ ok: false, code: 'duplicate', error: 'You are already registered for ' + PUJA_CONFIG.EVENT_NAME + '. To change your registration, please email ' + PUJA_CONFIG.REPLY_TO + '.' });
+      }
       row = sheet.getLastRow() + 1;
       const values = [
         new Date(), sheetText_(registration.phone), sheetText_(registration.name),
@@ -124,6 +143,59 @@ function validateRegistration_(input) {
   };
 }
 
+/** Existing rows as {phone, name, email, zipCode, cityState}, skipping the header. */
+function readRegistrations_(sheet) {
+  const last = sheet.getLastRow();
+  if (last < 2) return [];
+  return sheet.getRange(2, 2, last - 1, 6).getValues().map(function (r) {
+    return { phone: normalizeSheetPhone_(r[0]), name: String(r[1]).trim(), email: String(r[3]).trim().toLowerCase(),
+      zipCode: String(r[4]).trim(), cityState: String(r[5]).trim().toLowerCase() };
+  });
+}
+
+function countRegistrations_(existing) {
+  return existing.filter(function (r) { return r.name; }).length;
+}
+
+function normalizeSheetPhone_(value) {
+  let digits = String(value).replace(/[^0-9]/g, '');
+  if (/^1[0-9]{10}$/.test(digits)) digits = digits.slice(1);
+  return digits;
+}
+
+/** Name words without punctuation; "Vinodbhai"/"Kailasben" compare as "vinod"/"kailas". */
+function nameTokens_(name) {
+  return String(name).toLowerCase().replace(/^'/, '').split(/[^a-z]+/).filter(function (t) {
+    return t && t !== 'and';
+  }).map(function (t) { return t.replace(/(bhai|ben)$/, '') || t; });
+}
+
+/** First names only: the last word is treated as the surname when there are several words. */
+function givenNames_(tokens) {
+  return tokens.length > 1 ? tokens.slice(0, -1) : tokens;
+}
+
+/**
+ * Same phone or email AND a shared first name; or the identical name from the same ZIP or city.
+ * A shared phone alone is allowed, because one family member often registers several couples.
+ */
+function findDuplicate_(registration, existing) {
+  const tokens = nameTokens_(registration.name);
+  const given = givenNames_(tokens);
+  const fullName = tokens.slice().sort().join(' ');
+  const email = registration.email.toLowerCase();
+  const zipCode = registration.zipCode;
+  const cityState = registration.cityState.toLowerCase();
+  return existing.find(function (r) {
+    if (!r.name) return false;
+    const other = nameTokens_(r.name);
+    const sharesFirstName = givenNames_(other).some(function (t) { return given.indexOf(t) !== -1; });
+    if (sharesFirstName && (r.phone === registration.phone || (email && r.email === email))) return true;
+    return other.slice().sort().join(' ') === fullName &&
+      ((zipCode && r.zipCode === zipCode) || (cityState && r.cityState === cityState));
+  }) || null;
+}
+
 function openRegistrationSpreadsheet_() {
   if (!PUJA_CONFIG.SPREADSHEET_ID || PUJA_CONFIG.SPREADSHEET_ID === 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE') {
     throw new Error('Set PUJA_CONFIG.SPREADSHEET_ID before running this script.');
@@ -185,7 +257,7 @@ function buildConfirmationHtml_(registration, registrationId) {
 <!--[if mso]><table role="presentation" width="560" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#ffffff" style="width:100%;max-width:560px;table-layout:fixed;background-color:#ffffff;border:1px solid #ead7b7;border-top:4px solid #a83224;border-radius:8px;border-spacing:0;font-family:${font};">
 <tr><td align="center" bgcolor="#fff1cf" style="padding:30px 24px 26px;text-align:center;background-color:#fff1cf;background-image:linear-gradient(135deg,#fff1cf,#fffdf8);border-bottom:1px solid #ead7b7;border-radius:6px 6px 0 0;">
-<img src="${e(PUJA_CONFIG.LOGO_URL)}" width="156" alt="Allentown Mandir" border="0" style="display:block;width:156px;max-width:100%;height:auto;margin:0 auto 22px;">
+<img src="${e(PUJA_CONFIG.LOGO_URL)}" width="156" alt="Allentown Shri Swaminarayan Mandir" border="0" style="display:block;width:156px;max-width:100%;height:auto;margin:0 auto 22px;">
 <p style="margin:0 0 10px;color:#a83224;font-size:11px;line-height:17px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;">Registration confirmed</p>
 <h1 style="margin:0;color:#172033;font-size:30px;line-height:35px;font-weight:800;overflow-wrap:anywhere;">${e(PUJA_CONFIG.EVENT_NAME)}</h1>
 </td></tr>
@@ -211,7 +283,7 @@ ${eventRow('Venue', PUJA_CONFIG.VENUE)}
 </td></tr></table>
 </td></tr>
 <tr><td style="padding:20px 24px 26px;">
-<p style="margin:0;color:#6b4c1f;font-size:14px;line-height:23px;">The puja will begin promptly. Please plan to arrive before the start time.</p>
+<p style="margin:0;color:#6b4c1f;font-size:14px;line-height:23px;">The puja will begin promptly at 5:30 PM. Please plan to arrive before the start time.</p>
 </td></tr>
 
 </table>

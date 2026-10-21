@@ -69,6 +69,8 @@ function createRegistrationHandler({table, allowRequest, allowRecipient, saveReg
         await update({phase:'review'});
         return reply(503,{ok:false,error:'We could not confirm whether your RSVP was saved. Please contact the mandir before registering again.',requestId:rowKey});
       }
+      // Apps Script refuses duplicates and registrations past capacity without saving a row.
+      if (!saved?.ok && ['duplicate','full'].includes(saved?.code) && typeof saved.error==='string') return await finish(409,{ok:false,code:saved.code,error:saved.error.slice(0,300)});
       if (!saved?.ok) return await finish(400,{ok:false,error:'The registration service could not save your RSVP. Please check your details or contact the mandir.'});
       if (typeof saved.registrationId!=='string' || typeof saved.emailStatus!=='string') {
         await update({phase:'review'});
