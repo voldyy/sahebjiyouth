@@ -30,11 +30,13 @@ test('view-only accommodation page does not offer WhatsApp sending', async ({pag
   await expect(page.getByRole('button',{name:'Send room details',exact:true})).toHaveCount(0);
 });
 
-async function setup(page, mode = "ok", attendeeRows = null) {
+const TODAY = new Date("2026-10-25T16:00:00Z"); // first planning day, so tests do not depend on the real date
+async function setup(page, mode = "ok", attendeeRows = null, today = TODAY) {
+  if (today) await page.clock.install({ time: today });
   const headers = Array(32).fill("");
   Object.assign(headers, { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" });
   const row = Array(32).fill("");
-  Object.assign(row, { 0: "SYNTHETIC-001", 3: "Synthetic Primary", 8: "Synthetic Guest", 9: "Self", 12: "10/18/2026", 13: "10/20/2026", 20: "YES", 24: "Confirmed" });
+  Object.assign(row, { 0: "SYNTHETIC-001", 3: "Synthetic Primary", 8: "Synthetic Guest", 9: "Self", 12: "11/1/2026", 13: "11/3/2026", 20: "YES", 24: "Confirmed" });
   const harness = createHarness([headers, ...(attendeeRows || [row])], mode === 'denied');
   await mockBridge(page.context(),harness);
   await page.goto("/");
@@ -76,14 +78,14 @@ test("admin shared assignment persists AD–AF only", async ({ page }) => {
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(writes).toEqual([{ range: "'Attendees'!AD2:AF2", majorDimension: "ROWS", values: [["Samarpan", "204", "S204B1"]] }]);
   expect(rows[1][8]).toBe("Synthetic Guest");
-  await expect(page.getByText("Room: 204", { exact: true })).toBeVisible();
+  await expect(page.locator(".sheet-room-details", { hasText: "Room 204" })).toBeVisible();
   const stored = await page.evaluate(() => JSON.stringify(localStorage));
   expect(stored).not.toContain("Synthetic Guest");
   expect(stored).not.toContain("synthetic-token");
   await page.reload();
   await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Accommodations", exact: true }).click();
   await page.getByRole("button", { name: "Guest list", exact: true }).click();
-  await expect(page.getByText("Room: 204", { exact: true })).toBeVisible();
+  await expect(page.locator(".sheet-room-details", { hasText: "Room 204" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in with Google", exact: true })).toHaveCount(0);
   const dimensions = await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]);
   expect(dimensions[0]).toBeLessThanOrEqual(dimensions[1]);
@@ -112,7 +114,7 @@ test("Samarpan offers only confirmed rooms with bed capacities", async ({ page }
   await page.getByRole("button", { name: "Assign lodging", exact: true }).click();
   const room = page.getByLabel("Room number (AE)");
   await expect(room).toHaveJSProperty("tagName", "SELECT");
-  await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "203 · 4 beds", "204 · 3 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds", "100 · 7 beds", "101 · 12 beds", "102 · 12 beds", "103 · 12 beds", "104 · 12 beds"]);
+  await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "202 · 2 beds", "203 · 4 beds", "204 · 3 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds", "100 · 7 beds", "101 · 12 beds", "102 · 12 beds", "103 · 12 beds", "104 · 12 beds"]);
   await room.selectOption("204");
   await expect(page.getByLabel("Bed number").locator("option")).toHaveCount(4);
   await page.getByLabel("Bed number").selectOption("1");
@@ -134,11 +136,11 @@ function plannerGuest(id, name, start, end, room = "", bed = "") {
   return row;
 }
 const plannerRows = () => [
-  plannerGuest("A", "Amal Patel", "2026-10-11", "2026-10-14", "204", "1"),
-  plannerGuest("B", "Bela Shah", "2026-10-14", "2026-10-17", "204", "1"),
-  plannerGuest("C", "Chirag Mehta", "2026-10-11", "2026-10-17"),
-  plannerGuest("D", "Dev Shah", "2026-10-18", "2026-10-20"),
-  plannerGuest("E", "Erin Patel", "2026-10-12", "2026-10-13", "101", "12"),
+  plannerGuest("A", "Amal Patel", "2026-10-25", "2026-10-28", "204", "1"),
+  plannerGuest("B", "Bela Shah", "2026-10-28", "2026-10-31", "204", "1"),
+  plannerGuest("C", "Chirag Mehta", "2026-10-25", "2026-10-31"),
+  plannerGuest("D", "Dev Shah", "2026-11-01", "2026-11-03"),
+  plannerGuest("E", "Erin Patel", "2026-10-26", "2026-10-27", "101", "12"),
   plannerGuest("F", "Guest Missing Dates", "", ""),
 ];
 async function openPlanner(page) {
@@ -148,18 +150,18 @@ async function openPlanner(page) {
 }
 const slot = (page, room, bed, day) => page.locator(`.stay-slot[data-room="${room}"][data-bed="${bed}"][data-day="${day}"]`);
 
-test("weekly calendar has six bounded weeks, correct room beds, and checkout-day handoffs", async ({ page }) => {
+test("weekly calendar has four bounded planning weeks, correct room beds, and checkout-day handoffs", async ({ page }) => {
   await openPlanner(page);
   await expect(page.getByRole("button", { name: "Weekly view" })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("heading", { name: "Oct 11 – Oct 17, 2026" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Oct 25 – Oct 31, 2026" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Previous week", exact: true })).toBeDisabled();
   await page.getByRole("button", { name: "Room 204 3 beds", exact: true }).click();
   await expect(page.locator(".stay-week-grid tbody tr")).toHaveCount(3);
-  await expect(slot(page, "204", "1", "2026-10-13")).toContainText("Amal Patel");
-  await expect(slot(page, "204", "1", "2026-10-14")).toContainText("Bela Shah");
-  await expect(slot(page, "204", "1", "2026-10-14")).not.toContainText("Amal Patel");
-  await expect(slot(page, "204", "1", "2026-10-17")).toContainText("Empty bed");
-  for (const label of ["Oct 18 – Oct 24, 2026", "Oct 25 – Oct 31, 2026", "Nov 1 – Nov 7, 2026", "Nov 8 – Nov 14, 2026", "Nov 15 – Nov 21, 2026"]) {
+  await expect(slot(page, "204", "1", "2026-10-27")).toContainText("Amal Patel");
+  await expect(slot(page, "204", "1", "2026-10-28")).toContainText("Bela Shah");
+  await expect(slot(page, "204", "1", "2026-10-28")).not.toContainText("Amal Patel");
+  await expect(slot(page, "204", "1", "2026-10-31")).toContainText("Empty bed");
+  for (const label of ["Nov 1 – Nov 7, 2026", "Nov 8 – Nov 14, 2026", "Nov 15 – Nov 21, 2026"]) {
     await page.getByRole("button", { name: "Next week", exact: true }).click();
     await expect(page.getByRole("heading", { name: label })).toBeVisible();
   }
@@ -167,6 +169,48 @@ test("weekly calendar has six bounded weeks, correct room beds, and checkout-day
   await expect(page.getByRole("button", { name: "Room 204 3 beds", exact: true })).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Previous week", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Nov 8 – Nov 14, 2026" })).toBeVisible();
+});
+
+test("room planning hides stays before the week of Oct 25 and limits dates to the planning window", async ({ page }) => {
+  await setup(page, "ok", [
+    plannerGuest("H1", "Hidden Early", "2026-10-20", "2026-10-24"),
+    plannerGuest("H2", "Hidden Boundary", "2026-10-23", "2026-10-25"),
+    plannerGuest("S1", "Shown Overlap", "2026-10-23", "2026-10-26"),
+    plannerGuest("S2", "Shown Current", "2026-10-27", "2026-10-29"),
+    plannerGuest("S3", "Shown Undated", "", ""),
+  ]);
+  await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Accommodations", exact: true }).click();
+  await expect(page.getByLabel("Choose occupancy week").locator("option")).toHaveText(["Oct 25 – Oct 31", "Nov 1 – Nov 7", "Nov 8 – Nov 14", "Nov 15 – Nov 21"]);
+  await expect(page.getByRole("button", { name: "Assign Shown Current", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Assign Shown Overlap", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Assign Hidden/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Guest list", exact: true }).click();
+  await expect(page.locator("body")).toContainText("Shown Overlap");
+  await expect(page.locator("body")).toContainText("Shown Current");
+  await expect(page.locator("body")).toContainText("Shown Undated");
+  await expect(page.locator("body")).not.toContainText("Hidden Early");
+  await expect(page.locator("body")).not.toContainText("Hidden Boundary");
+  await page.getByRole("button", { name: "Daily view", exact: true }).click();
+  await expect(page.getByLabel("Choose occupancy date")).toHaveAttribute("min", "2026-10-25");
+  await expect(page.getByRole("button", { name: "Previous occupancy day", exact: true })).toBeDisabled();
+});
+
+test("a hidden early guest still blocks their bed for a visible overlapping stay", async ({ page, browser }) => {
+  const h = await setup(page, "ok", [
+    plannerGuest("O", "Hidden Occupant", "2026-10-22", "2026-10-25", "204", "1"),
+    plannerGuest("N", "Needs Bed", "2026-10-24", "2026-10-27"),
+  ]);
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+  await context.clock.install({ time: TODAY });
+  await mockBridge(context, h);
+  const desktop = await context.newPage();
+  await desktop.goto("http://localhost:5175/#rooms");
+  await expect(desktop.getByRole("button", { name: /Hidden Occupant/ })).toHaveCount(0);
+  await desktop.getByRole("button", { name: "Room 204 3 beds", exact: true }).click();
+  await desktop.getByRole("button", { name: "Assign Needs Bed", exact: true }).dragTo(slot(desktop, "204", "1", "2026-10-26"));
+  await expect(desktop.locator(".stay-drop-error")).toContainText("occupied");
+  expect(h.writes).toHaveLength(0);
+  await context.close();
 });
 
 test("daily view shows all 76 beds, date-filtered unassigned guests, and saves from an empty bed", async ({ page }) => {
@@ -177,8 +221,8 @@ test("daily view shows all 76 beds, date-filtered unassigned guests, and saves f
   await expect(page.getByRole("button", { name: "Assign Chirag Mehta", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Assign Dev Shah", exact: true })).toHaveCount(0);
   await expect(page.getByText("1 unassigned guests need stay dates")).toBeVisible();
-  await slot(page, "204", "2", "2026-10-11").getByRole("button").click();
-  await page.getByLabel("Guest to assign").selectOption({ label: "Chirag Mehta · Oct 11 – Oct 17" });
+  await slot(page, "204", "2", "2026-10-25").getByRole("button").click();
+  await page.getByLabel("Guest to assign").selectOption({ label: "Chirag Mehta · Oct 25 – Oct 31" });
   await expect(page.locator('.stay-chosen-bed')).toContainText('Room 204 · Bed 2');
   await expect(page.getByLabel("Room number (AE)")).toHaveCount(0);
   await page.getByRole('button', { name: 'Change room or bed' }).click();
@@ -188,11 +232,11 @@ test("daily view shows all 76 beds, date-filtered unassigned guests, and saves f
   await page.getByRole("button", { name: "Save assignment" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(writes[0].values).toEqual([["Samarpan", "204", "S204B2"]]);
-  await expect(slot(page, "204", "2", "2026-10-11")).toContainText("Chirag Mehta");
+  await expect(slot(page, "204", "2", "2026-10-25")).toContainText("Chirag Mehta");
   await expect(page.getByRole("button", { name: "Assign Chirag Mehta", exact: true })).toHaveCount(0);
-  await page.getByLabel("Choose occupancy date").fill("2026-10-18");
+  await page.getByLabel("Choose occupancy date").fill("2026-11-01");
   await expect(page.getByRole("button", { name: "Assign Dev Shah", exact: true })).toBeVisible();
-  await expect(slot(page, "204", "2", "2026-10-18")).toContainText("Empty bed");
+  await expect(slot(page, "204", "2", "2026-11-01")).toContainText("Empty bed");
 });
 
 test("calendar layouts fit mobile and desktop and the weekly day header opens daily view", async ({ page }) => {
@@ -208,14 +252,14 @@ test("calendar layouts fit mobile and desktop and the weekly day header opens da
     }
   }
   await page.getByRole("button", { name: "Weekly view", exact: true }).click();
-  await page.getByRole("button", { name: "Open daily view for Wednesday, October 14, 2026", exact: true }).click();
-  await expect(page.getByLabel("Choose occupancy date")).toHaveValue("2026-10-14");
-  await expect(slot(page, "204", "1", "2026-10-14")).toContainText("Bela Shah");
+  await page.getByRole("button", { name: "Open daily view for Wednesday, October 28, 2026", exact: true }).click();
+  await expect(page.getByLabel("Choose occupancy date")).toHaveValue("2026-10-28");
+  await expect(slot(page, "204", "1", "2026-10-28")).toContainText("Bela Shah");
 });
 
 test('transport drivers, vehicles and assignments persist across independent browsers with stale save protection',async({page,browser})=>{
-  const rows=[plannerGuest('T1','Test Traveller One','2026-10-18','2026-10-20'),plannerGuest('T2','Test Traveller Two','2026-10-18','2026-10-20')];
-  rows.forEach(r=>Object.assign(r,{5:'(555) 010-1234',7:'Allentown, PA',11:'Flight',12:'10/18/2026 2:30 PM',13:'10/20/2026 3:00 PM',14:'PHL',15:'AA 123',16:'EWR',17:'UA 456',18:'YES'}));
+  const rows=[plannerGuest('T1','Test Traveller One','2026-11-01','2026-11-03'),plannerGuest('T2','Test Traveller Two','2026-11-01','2026-11-03')];
+  rows.forEach(r=>Object.assign(r,{5:'(555) 010-1234',7:'Allentown, PA',11:'Flight',12:'11/1/2026 2:30 PM',13:'11/3/2026 3:00 PM',14:'PHL',15:'AA 123',16:'EWR',17:'UA 456',18:'YES'}));
   const harness=await setup(page,'ok',rows);
   await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Transport',exact:true}).click();
   await expect(page.locator('.transport-journey')).toHaveCount(2);
@@ -240,8 +284,8 @@ test('transport drivers, vehicles and assignments persist across independent bro
   await expect(page.getByRole('button',{name:'Remove vehicle Backup Van'})).toBeVisible();
   await page.screenshot({path:test.info().outputPath('resources-mobile.png'),fullPage:true,scale:'css'});
   await page.getByRole('button',{name:'Close dialog',exact:true}).click();
-  const driverSelect = view => view.getByRole('combobox',{name:'Sevak driver for AA123 Arrivals 2026-10-18',exact:true});
-  const vehicleSelect = view => view.getByRole('combobox',{name:'Vehicle for AA123 Arrivals 2026-10-18',exact:true});
+  const driverSelect = view => view.getByRole('combobox',{name:'Sevak driver for AA123 Arrivals 2026-11-01',exact:true});
+  const vehicleSelect = view => view.getByRole('combobox',{name:'Vehicle for AA123 Arrivals 2026-11-01',exact:true});
   await expect(page.getByRole('button',{name:'Assign transport',exact:true})).toHaveCount(0);
   await driverSelect(page).selectOption('Test Sevak');
   await expect(driverSelect(page)).toBeEnabled();
@@ -251,6 +295,7 @@ test('transport drivers, vehicles and assignments persist across independent bro
   await expect(page.locator('.transport-journey').first()).toContainText('American · PHL');
   await expect(page.getByLabel('Driver notes',{exact:true})).toHaveCount(0);
   const context=await browser.newContext({viewport:{width:1280,height:900}});
+  await context.clock.install({time:TODAY});
   await mockBridge(context,harness);
   const second=await context.newPage();await second.goto('http://localhost:5175/#transport');
   await expect(vehicleSelect(second)).toHaveValue('Test Van');
@@ -312,21 +357,23 @@ test('mission branding, all four tabs, blue-orange theme and unassigned panel or
 test('dragging assigns the entire stay and rejects a conflict on a later night', async ({ page, browser }) => {
   const h = await openPlanner(page);
   const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+  await context.clock.install({time:TODAY});
   await mockBridge(context, h);
   const desktop = await context.newPage();
   await desktop.goto('http://localhost:5175/#rooms');
+  await desktop.getByRole('button', { name: 'Room 204 3 beds', exact: true }).click();
   const source = desktop.getByRole('button', { name: 'Assign Chirag Mehta', exact: true });
   await expect(source).toHaveAttribute('draggable', 'true');
-  await source.dragTo(slot(desktop, '204', '1', '2026-10-17'));
+  await source.dragTo(slot(desktop, '204', '1', '2026-10-31'));
   await expect(desktop.locator('.stay-drop-error')).toContainText('occupied');
   expect(h.writes).toHaveLength(0);
-  await slot(desktop, '204', '2', '2026-10-17').scrollIntoViewIfNeeded();
-  await source.dragTo(slot(desktop, '204', '2', '2026-10-17'));
+  await slot(desktop, '204', '2', '2026-10-31').scrollIntoViewIfNeeded();
+  await source.dragTo(slot(desktop, '204', '2', '2026-10-31'));
   await expect(source).toHaveCount(0);
   expect(h.rows.find(r => r[0] === 'C').slice(29)).toEqual(['Samarpan', '204', 'S204B2']);
-  await expect(slot(desktop, '204', '2', '2026-10-11')).toContainText('Chirag Mehta');
-  await expect(slot(desktop, '204', '2', '2026-10-16')).toContainText('Chirag Mehta');
-  await expect(slot(desktop, '204', '2', '2026-10-17')).toContainText('Empty bed');
+  await expect(slot(desktop, '204', '2', '2026-10-25')).toContainText('Chirag Mehta');
+  await expect(slot(desktop, '204', '2', '2026-10-30')).toContainText('Chirag Mehta');
+  await expect(slot(desktop, '204', '2', '2026-10-31')).toContainText('Empty bed');
   await desktop.screenshot({path:test.info().outputPath('drag-assigned.png'),fullPage:true,scale:'css'});
   await context.close();
 });
@@ -348,7 +395,7 @@ test('offsite rooms start provisional and retain guests when real numbers arrive
   await page.getByRole('button',{name:'Save assignment'}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(h.rows.find(r=>r[0]==='C')[30]).toBe('');
-  await expect(slot(page,hotelRoom.id,'2','2026-10-11')).toContainText('Chirag Mehta');
+  await expect(slot(page,hotelRoom.id,'2','2026-10-25')).toContainText('Chirag Mehta');
   await page.getByRole('button',{name:'Edit room details'}).click();
   await page.getByLabel('Hotel room number (optional)').fill('021');
   await page.getByRole('button',{name:'Save room',exact:true}).click();
@@ -356,11 +403,11 @@ test('offsite rooms start provisional and retain guests when real numbers arrive
   expect(h.rows.find(r=>r[0]==='C')[30]).toBe('021');
   await page.reload();
   await page.getByRole('button',{name:'Offsite',exact:true}).click();
-  await expect(slot(page,hotelRoom.id,'2','2026-10-11')).toContainText('Chirag Mehta');
+  await expect(slot(page,hotelRoom.id,'2','2026-10-25')).toContainText('Chirag Mehta');
   await page.getByRole('button',{name:'Daily view',exact:true}).click();
   await expect(page.locator('.stay-day-beds .stay-slot')).toHaveCount(2);
   await page.getByRole('button',{name:'Guest list',exact:true}).click();
-  await expect(page.getByText('Room: 021',{exact:true})).toBeVisible();
+  await expect(page.locator('.sheet-room-details',{hasText:'Room 021'})).toBeVisible();
   await page.getByLabel('Offsite hotel').selectOption('Hilton Garden Inn');
   await page.getByRole('button',{name:'Weekly view',exact:true}).click();
   await expect(page.getByRole('heading',{name:'No planning rooms yet'})).toBeVisible();
@@ -373,7 +420,7 @@ test('offsite rooms start provisional and retain guests when real numbers arrive
 
 test('housekeeping autoloads checkout beds and saves refreshed linens across reloads', async ({page}) => {
   const h = await openPlanner(page);
-  h.setToday('2026-10-14');
+  h.setToday('2026-10-28');
   await page.reload();
   await page.getByRole('button',{name:'Housekeeping',exact:true}).click();
   await expect(page.locator('.stay-linen-card')).toHaveCount(2);
@@ -383,7 +430,7 @@ test('housekeeping autoloads checkout beds and saves refreshed linens across rel
   await page.reload();
   await page.getByRole('button',{name:'Housekeeping',exact:true}).click();
   await expect(page.locator('.stay-linen-card')).toHaveCount(1);
-  h.setToday('2026-10-17');
+  h.setToday('2026-10-31');
   await page.reload();
   await page.getByRole('button',{name:'Housekeeping',exact:true}).click();
   await expect(page.locator('.stay-linen-card').filter({hasText:'Bela Shah'})).toBeVisible();
@@ -402,7 +449,7 @@ test('team links show all four tabs without edits and preserve view-only access 
   await expect(page.getByRole('button',{name:'Assign guest',exact:true})).toHaveCount(0);
   await expect(page.getByRole('button',{name:'View Chirag Mehta',exact:true})).toHaveAttribute('draggable','false');
   await page.getByRole('button',{name:'View Chirag Mehta',exact:true}).click();
-  await expect(page.getByRole('dialog')).toContainText('Oct 11 – Oct 17');
+  await expect(page.getByRole('dialog')).toContainText('Oct 25 – Oct 31');
   await expect(page.getByRole('button',{name:'Save assignment'})).toHaveCount(0);
   await page.getByRole('button',{name:'Close dialog',exact:true}).click();
   await page.getByRole('button',{name:'Offsite',exact:true}).click();
@@ -419,6 +466,7 @@ test('team links show all four tabs without edits and preserve view-only access 
   await expect(page.locator('.mobile-guest-name').first()).toBeVisible();
   await expect(page.getByRole('button',{name:'Add guest',exact:true})).toHaveCount(0);
   const context=await browser.newContext({viewport:{width:390,height:900}});
+  await context.clock.install({time:TODAY});
   await mockBridge(context,h,false);
   const viewer=await context.newPage();
   await viewer.goto('http://localhost:5175/#rooms?admin=forged');
@@ -430,7 +478,7 @@ test('team links show all four tabs without edits and preserve view-only access 
 });
 
 test('bus arrivals show Bus and ABE with no flight tracker', async({page})=>{
-  const row=plannerGuest('P','Priya Sharma','2026-10-15','2026-10-19');
+  const row=plannerGuest('P','Priya Sharma','2026-10-29','2026-11-02');
   Object.assign(row,{11:'Bus (arrival)',14:'ABE',18:'YES'});
   await setup(page,'ok',[row]);
   await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Transport',exact:true}).click();
@@ -444,7 +492,7 @@ test('day overview adds a walk-in to the chosen bed and Main displays both dates
   test.setTimeout(60000);
   const h=await openPlanner(page);
   await page.getByRole('button',{name:'Day at a glance',exact:true}).click();
-  await page.getByLabel('Choose occupancy date').fill('2026-10-14');
+  await page.getByLabel('Choose occupancy date').fill('2026-10-28');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await expect(page.locator('.stay-overview-room')).toHaveCount(18);
   await expect(page.locator('.stay-overview-bed')).toHaveCount(92);
@@ -457,7 +505,7 @@ test('day overview adds a walk-in to the chosen bed and Main displays both dates
   await expect(page.getByLabel('Walk-in room')).toHaveCount(0);
   await expect(page.getByLabel('Walk-in bed')).toHaveCount(0);
   await page.getByLabel('Guest name',{exact:true}).fill('Synthetic Walk In');
-  await page.getByLabel('Checkout',{exact:true}).fill('2026-10-17');
+  await page.getByLabel('Checkout',{exact:true}).fill('2026-10-31');
   await page.getByLabel('Checkout',{exact:true}).press('Tab');
   await page.getByRole('button',{name:'Add guest & assign bed',exact:true}).click({timeout:10000});
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -468,10 +516,10 @@ test('day overview adds a walk-in to the chosen bed and Main displays both dates
   await page.goto('/#guests');
   await page.getByLabel('Search guests',{exact:true}).fill('Synthetic Walk In');
   const row=page.locator('.guest-table tbody tr').filter({hasText:'Synthetic Walk In'});
-  await expect(row).toContainText('In · Oct 14');await expect(row).toContainText('Out · Oct 17');
+  await expect(row).toContainText('In · Oct 28');await expect(row).toContainText('Out · Oct 31');
   await page.setViewportSize({width:390,height:900});
   const card=page.locator('.mobile-guest-card').filter({hasText:'Synthetic Walk In'});
-  await expect(card).toContainText('In · Oct 14');await expect(card).toContainText('Out · Oct 17');
+  await expect(card).toContainText('In · Oct 28');await expect(card).toContainText('Out · Oct 31');
   await expect(card).not.toContainText('12:00 AM');
   await page.screenshot({path:test.info().outputPath('main-dates-mobile.png'),fullPage:true});
 });
@@ -479,7 +527,7 @@ test('day overview adds a walk-in to the chosen bed and Main displays both dates
 test('trip collapse defaults for past dates and synchronizes between admin and viewer', async ({ page, browser }) => {
   const row=plannerGuest('T','Synthetic Traveller','2000-10-11','2099-10-15');
   Object.assign(row,{11:'BUS',14:'ABE',16:'ABE'});
-  const h=await setup(page,'ok',[row]);
+  const h=await setup(page,'ok',[row],null); // uses real time: shared display timestamps come from the test server clock
   await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Transport',exact:true}).click();
   await page.getByRole('button',{name:'Expand trips for 2000-10-11',exact:true}).click();
   const past=page.getByRole('button',{name:'Expand Bus Arrivals 2000-10-11',exact:true});
@@ -507,10 +555,9 @@ test('trip collapse defaults for past dates and synchronizes between admin and v
 });
 
 test('flight status only calls the paid service on explicit request', async ({page}) => {
-  await page.clock.install({time:new Date('2026-10-18T16:00:00Z')});
-  const row=plannerGuest('MANUAL-FLIGHT','Test Flyer','10/18/2026 2:30 PM','10/20/2026 3:00 PM');
+  const row=plannerGuest('MANUAL-FLIGHT','Test Flyer','11/1/2026 2:30 PM','11/3/2026 3:00 PM');
   Object.assign(row,{11:'Flight',14:'PHL',15:'AA123',16:'EWR',17:'UA456',18:'YES'});
-  await setup(page,'ok',[row]);
+  await setup(page,'ok',[row],new Date('2026-11-01T16:00:00Z'));
   let calls=0;
   await page.context().route('https://script.google.com/test-rpc',route=>{
     const req=route.request().postDataJSON(); if(req.action!=='flight')return route.fallback();

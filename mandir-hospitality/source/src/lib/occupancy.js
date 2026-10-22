@@ -10,6 +10,9 @@ export function moveDay(iso, days) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 export const WEEK_STARTS = Array.from({ length: 6 }, (_, i) => moveDay(FIRST_STAY_DAY, i * 7));
+// Room planning now starts with the week of Oct 25; earlier stays are hidden from the Accommodations views.
+export const PLANNING_START_DAY = "2026-10-25";
+export const PLANNING_WEEK_STARTS = WEEK_STARTS.filter((start) => start >= PLANNING_START_DAY);
 export const shortDay = (iso) => localDay(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 export const fullDay = (iso) => localDay(iso).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
@@ -24,6 +27,11 @@ export function stayRange(guest) {
 }
 export function overlaps(a, b) {
   return !!a && !!b && a.start < b.end && b.start < a.end;
+}
+// Stays that end on or before the first planning day sit entirely before it (checkout day is free). Undated stays stay visible so they get corrected.
+export function inPlanningWindow(guest) {
+  const stay = stayRange(guest);
+  return !stay || stay.end > PLANNING_START_DAY;
 }
 export const onDay = (guest, day) => overlaps(stayRange(guest), { start: day, end: moveDay(day, 1) });
 export function bedForGuest(guest, rooms = []) {

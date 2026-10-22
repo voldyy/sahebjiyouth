@@ -11,20 +11,20 @@ import Housekeeping from "./Housekeeping";
 import { LODGING_LOCATIONS, SHEET_URL } from "../lib/sheets";
 import { samarpanRooms, sadhakRooms, fixedRoomsFor, isFixedLodging, roomKey, roomAssignment } from "../lib/lodgingRooms";
 import { OFFSITE_HOTELS, offsiteRoomFor, roomLabel } from "../lib/offsite";
-import { FIRST_STAY_DAY, LAST_STAY_DAY, WEEK_STARTS, moveDay, shortDay, fullDay, needsLodging, stayRange, overlaps, onDay, unassignedGuest, bedForGuest, assignmentIssue } from "../lib/occupancy";
+import { PLANNING_START_DAY, LAST_STAY_DAY, PLANNING_WEEK_STARTS, inPlanningWindow, moveDay, shortDay, fullDay, needsLodging, stayRange, overlaps, onDay, unassignedGuest, bedForGuest, assignmentIssue } from "../lib/occupancy";
 import "../styles/operations.css";
 import "../styles/sheets.css";
 import "../styles/accommodation-calendar.css";
 
 const stayLabel = (guest) => { const stay = stayRange(guest); return stay ? `${shortDay(stay.start)} – ${shortDay(stay.end)}` : "Stay dates needed"; };
 const assignmentFor = roomAssignment;
-const currentStayDay = () => { const today = allentownDay(); return today < FIRST_STAY_DAY ? FIRST_STAY_DAY : today > LAST_STAY_DAY ? LAST_STAY_DAY : today; };
+const currentStayDay = () => { const today = allentownDay(); return today < PLANNING_START_DAY ? PLANNING_START_DAY : today > LAST_STAY_DAY ? LAST_STAY_DAY : today; };
 
 export default function SheetAccommodation({ workspace, toast, readOnly = false }) {
   const [section, setSection] = useState("Samarpan");
   const [hotel, setHotel] = useState(OFFSITE_HOTELS[0]);
   const [view, setView] = useState("weekly");
-  const [weekIndex, setWeekIndex] = useState(() => WEEK_STARTS.findLastIndex(start => start <= currentStayDay()));
+  const [weekIndex, setWeekIndex] = useState(() => PLANNING_WEEK_STARTS.findLastIndex(start => start <= currentStayDay()));
   const [day, setDay] = useState(currentStayDay);
   const [roomNo, setRoomNo] = useState("203");
   const [query, setQuery] = useState("");
@@ -43,14 +43,14 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
   const [walkIn, setWalkIn] = useState(null);
   const [editingBed, setEditingBed] = useState(false);
   const allRooms = [...samarpanRooms, ...sadhakRooms, ...workspace.offsiteRooms];
-  const openWalkIn = (number = "", bed = "", date = allentownDay()) => {
+  const openWalkIn = (number = "", bed = "", date = currentStayDay()) => {
     if (!readOnly) { setAssignment(null); setWalkIn({ room: number, bed, day: date }); }
   };
   const lodging = section === "Offsite" ? hotel : section;
   const rooms = section === "Offsite" ? workspace.offsiteRooms.filter((r) => r.lodging === hotel) : fixedRoomsFor(section);
   const room = rooms.find((r) => roomKey(r) === roomNo) || rooms[0];
-  const guests = workspace.guests.filter(needsLodging);
-  const week = WEEK_STARTS[weekIndex];
+  const guests = workspace.guests.filter(needsLodging).filter(inPlanningWindow);
+  const week = PLANNING_WEEK_STARTS[weekIndex];
   const draftRooms = isFixedLodging(draft.lodging) ? fixedRoomsFor(draft.lodging) : workspace.offsiteRooms.filter((r) => r.lodging === draft.lodging);
   const selectedRoom = draftRooms.find((r) => isFixedLodging(draft.lodging) ? r.number === draft.roomNo : r.id === hotelRoomId);
   const windowRange = ["daily", "overview"].includes(view) ? { start: day, end: moveDay(day, 1) } : { start: week, end: moveDay(week, 7) };
@@ -62,8 +62,8 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
   const review = guests.filter((g) => g.lodging === lodging && (g.roomNo || g.roomCode) && (!bedForGuest(g, workspace.offsiteRooms) || !stayRange(g)));
   const candidates = guests.filter((g) => unassignedGuest(g) && (!assignment?.day || onDay(g, assignment.day)));
   const issue = selected && draft.roomCode ? assignmentIssue(workspace.guests, selected, draft, workspace.offsiteRooms) : "";
-  const selectDay = (next) => { if (next < FIRST_STAY_DAY || next > LAST_STAY_DAY) return; setDay(next); setWeekIndex(WEEK_STARTS.findLastIndex((start) => start <= next)); };
-  const changeWeek = (next) => { setWeekIndex(next); setDay(WEEK_STARTS[next]); };
+  const selectDay = (next) => { if (next < PLANNING_START_DAY || next > LAST_STAY_DAY) return; setDay(next); setWeekIndex(PLANNING_WEEK_STARTS.findLastIndex((start) => start <= next)); };
+  const changeWeek = (next) => { setWeekIndex(next); setDay(PLANNING_WEEK_STARTS[next]); };
   const resetForm = () => { setError(""); setBedNo(""); setSelected(null); setHotelRoomId(""); setEditingBed(false); };
   const openGuest = (guest) => {
     resetForm(); setSelected(guest);
@@ -125,12 +125,12 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
       {dragGuest && <p className="stay-drag-status" role="status">{drag.problem || `Place ${dragGuest.name} · ${stayLabel(dragGuest)}`}</p>}
       {view === "weekly" && <>
         {!!rooms.length && <RoomStrip selected={room ? roomKey(room) : ""} onSelect={setRoomNo} rooms={rooms} lodging={lodging} />}
-        <div className="stay-date-toolbar"><div><span className="stay-kicker">WEEK {weekIndex + 1} OF {WEEK_STARTS.length}</span><h2 aria-live="polite">{shortDay(week)} – {shortDay(moveDay(week, 6))}, 2026</h2></div><div className="stay-date-controls"><button className="stay-arrow" aria-label="Previous week" disabled={weekIndex === 0} onClick={() => changeWeek(weekIndex - 1)}><ChevronLeft size={20} /></button><select aria-label="Choose occupancy week" value={weekIndex} onChange={(e) => changeWeek(Number(e.target.value))}>{WEEK_STARTS.map((start, index) => <option key={start} value={index}>{shortDay(start)} – {shortDay(moveDay(start, 6))}</option>)}</select><button className="stay-arrow" aria-label="Next week" disabled={weekIndex === WEEK_STARTS.length - 1} onClick={() => changeWeek(weekIndex + 1)}><ChevronRight size={20} /></button></div></div>
+        <div className="stay-date-toolbar"><div><span className="stay-kicker">WEEK {weekIndex + 1} OF {PLANNING_WEEK_STARTS.length}</span><h2 aria-live="polite">{shortDay(week)} – {shortDay(moveDay(week, 6))}, 2026</h2></div><div className="stay-date-controls"><button className="stay-arrow" aria-label="Previous week" disabled={weekIndex === 0} onClick={() => changeWeek(weekIndex - 1)}><ChevronLeft size={20} /></button><select aria-label="Choose occupancy week" value={weekIndex} onChange={(e) => changeWeek(Number(e.target.value))}>{PLANNING_WEEK_STARTS.map((start, index) => <option key={start} value={index}>{shortDay(start)} – {shortDay(moveDay(start, 6))}</option>)}</select><button className="stay-arrow" aria-label="Next week" disabled={weekIndex === PLANNING_WEEK_STARTS.length - 1} onClick={() => changeWeek(weekIndex + 1)}><ChevronRight size={20} /></button></div></div>
         {queuePanel}
         {room && <WeeklyRooms guests={guests} room={room} week={week} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} rooms={workspace.offsiteRooms} drag={readOnly ? null : drag} readOnly={readOnly} onChooseDay={(next) => { selectDay(next); setView("daily"); }} />}
       </>}
       {["daily", "overview"].includes(view) && <>
-        <div className="stay-date-toolbar"><div><span className="stay-kicker">{view === "overview" ? "ALL ROOMS" : `ALL ${lodging.toUpperCase()} ROOMS`}</span><h2 aria-live="polite">{fullDay(day)}</h2></div><div className="stay-date-controls"><button className="stay-arrow" aria-label="Previous occupancy day" disabled={day === FIRST_STAY_DAY} onClick={() => selectDay(moveDay(day, -1))}><ChevronLeft size={20} /></button><label className="stay-date-input"><CalendarDays size={17} /><input type="date" aria-label="Choose occupancy date" min={FIRST_STAY_DAY} max={LAST_STAY_DAY} value={day} onChange={(e) => { if (e.target.value) selectDay(e.target.value); }} /></label><button className="stay-arrow" aria-label="Next occupancy day" disabled={day === LAST_STAY_DAY} onClick={() => selectDay(moveDay(day, 1))}><ChevronRight size={20} /></button></div></div>
+        <div className="stay-date-toolbar"><div><span className="stay-kicker">{view === "overview" ? "ALL ROOMS" : `ALL ${lodging.toUpperCase()} ROOMS`}</span><h2 aria-live="polite">{fullDay(day)}</h2></div><div className="stay-date-controls"><button className="stay-arrow" aria-label="Previous occupancy day" disabled={day === PLANNING_START_DAY} onClick={() => selectDay(moveDay(day, -1))}><ChevronLeft size={20} /></button><label className="stay-date-input"><CalendarDays size={17} /><input type="date" aria-label="Choose occupancy date" min={PLANNING_START_DAY} max={LAST_STAY_DAY} value={day} onChange={(e) => { if (e.target.value) selectDay(e.target.value); }} /></label><button className="stay-arrow" aria-label="Next occupancy day" disabled={day === LAST_STAY_DAY} onClick={() => selectDay(moveDay(day, 1))}><ChevronRight size={20} /></button></div></div>
         {view === "daily" ? <>{queuePanel}<div className="stay-daily-heading"><h2>Room availability</h2><p>Checkout day is free{!readOnly && " · Drag a guest or tap an empty bed"}</p></div><DailyRooms guests={guests} day={day} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} rooms={rooms} lodging={lodging} drag={readOnly ? null : drag} readOnly={readOnly} /></> : <><p className="stay-overview-note">All Samarpan, Sadhak and offsite rooms · Checkout day is free. {queue.length} unassigned guests staying today.</p><RoomOverview guests={guests} day={day} rooms={allRooms} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} readOnly={readOnly} /></>}
       </>}
       {!rooms.length && view !== "list" && <div className="stay-clean-state"><Building2 size={30} /><h2>No planning rooms yet</h2><p>{readOnly ? `No rooms have been added for ${hotel}.` : `Add a provisional room and its bed count to start assigning stays at ${hotel}.`}</p>{!readOnly && <button className="button primary" onClick={() => openRoom()}>Add planning room</button>}</div>}
