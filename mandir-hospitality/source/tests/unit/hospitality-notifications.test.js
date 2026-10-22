@@ -119,6 +119,20 @@ test("bulk sending verifies admin access, previews every attendee, rejects stale
   assert.equal((await handler(request(body))).jsonBody.queued, 0);
   assert.equal([...table.rows.values()].filter(r => r.partitionKey === "hospitality-notifications").length, 0);
 });
+test("automatic room messages can be paused without pausing transport messages", async () => {
+  const now = () => easternInstant("2026-10-20", "00:00");
+  const run = async env => {
+    const sent = [], worker = createHospitalityWorker({ table: memoryTable(), env: { HOSPITALITY_NOTIFICATIONS_ENABLED: "true", ...env }, getSnapshot: async () => snapshot(), now, readFlight: async () => ({ available: false }), send: async c => { sent.push(c); return accepted; } });
+    const summary = await worker();
+    return { summary, types: sent.map(c => c.type).sort() };
+  };
+  const on = await run({}), off = await run({ LODGING_AUTO_NOTIFICATIONS_ENABLED: "false" }), other = await run({ LODGING_AUTO_NOTIFICATIONS_ENABLED: "true" });
+  assert.equal(on.types.filter(t => t === "accommodation").length, 2);
+  assert.deepEqual(other.types, on.types);
+  assert.ok(on.types.some(t => t !== "accommodation"), "fixture should also produce a transport message");
+  assert.deepEqual(off.types, on.types.filter(t => t !== "accommodation"));
+  assert.equal(off.summary.status, "complete");
+});
 test("manual lodging batches and automatic reminders cannot send twice", async () => {
   const s = snapshot(), table = memoryTable(), now = () => easternInstant("2026-10-19", "16:30"), sent = [];
   const handler = createAccommodationHandler({ table, getSnapshot: async () => s, authorize: async () => true, now });

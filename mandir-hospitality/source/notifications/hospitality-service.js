@@ -129,7 +129,9 @@ export function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot
       }));
       await create(table, { partitionKey: STATE, rowKey: "initialized", initializedAt: new Date(started).toISOString() });
     }
-    const candidates = lodgingCandidates(snapshot, started), issues = [];
+    // LODGING_AUTO_NOTIFICATIONS_ENABLED=false pauses only the timed room-assignment message. Driver and passenger messages
+    // and the admin "Send room details" button are unaffected; an unset value keeps the automatic message on.
+    const candidates = env.LODGING_AUTO_NOTIFICATIONS_ENABLED === "false" ? [] : lodgingCandidates(snapshot, started), issues = [];
     for (const group of groups) {
       if (now() - started > 65000) break;
       const rowKey = "trip-" + digest(group.id), previous = await get(table, STATE, rowKey);

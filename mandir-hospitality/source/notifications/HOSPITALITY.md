@@ -1,6 +1,6 @@
 # Transport and accommodation WhatsApp notifications
 
-The existing Azure Function App `sahebjiyouth-reg-api` runs `hospitalityNotifications` every minute. Set `HOSPITALITY_NOTIFICATIONS_ENABLED=true` to enable it or `false` to pause it. Existing Twilio application settings are reused; credentials are never included in browser code. The separate 9 PM Yogi Prasad timer is unchanged.
+The existing Azure Function App `sahebjiyouth-reg-api` runs `hospitalityNotifications` every minute. Set `HOSPITALITY_NOTIFICATIONS_ENABLED=true` to enable it or `false` to pause it. Existing Twilio application settings are reused; credentials are never included in browser code. The separate 9 PM Yogi Prasad timer is unchanged. Set `LODGING_AUTO_NOTIFICATIONS_ENABLED=false` to pause only the timed room-assignment message (24 hours before arrival) while driver and passenger messages keep running; the admin **Send room details** button still works, and leaving the setting unset or `true` keeps the automatic message on.
 
 ## Templates and recipients
 
