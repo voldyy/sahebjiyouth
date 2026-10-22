@@ -96,3 +96,13 @@ test('status reports whether registration is open without registration data',()=
  assert.deepEqual(status(),{ok:true,open:false});
  assert.equal(JSON.parse(vm.runInContext('doGet({parameter:{}})',app.context).body).service,'Mahapuja registration');
 });
+test('singles count half toward the limit and couples count one',()=>{
+ const app=setup();vm.runInContext('PUJA_CONFIG.MAX_REGISTRATIONS=2',app.context);
+ const single=(phone,name)=>({...registration,phone,name,email:'',yajmanType:'Yajman Single'});
+ app.rows.push(headers.slice(),existingRow('6100000001','First Person'));
+ assert.equal(app.post(single('6100000002','Second Person')).ok,true);   // 1.5
+ assert.equal(app.post(single('6100000003','Third Person')).ok,true);    // 2.0
+ const full=app.post({...registration,phone:'6100000004',name:'Fourth Person'});
+ assert.equal(full.code,'full');assert.equal(app.rows.length,4);
+ assert.deepEqual(JSON.parse(vm.runInContext('doGet({parameter:{action:"status"}})',app.context).body),{ok:true,open:false});
+});

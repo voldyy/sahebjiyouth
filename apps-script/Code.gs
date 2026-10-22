@@ -13,7 +13,7 @@ const PUJA_CONFIG = {
   SENDER_NAME: 'Anoopam Mission USA',
   LOGO_URL: 'https://sahebjiyouth.z13.web.core.windows.net/reg/HIRES_AMLOGO_color_sm.png',
   REPLY_TO: 'usayouth@anoopam.org', // Optional monitored email address.
-  MAX_REGISTRATIONS: 100, // Sheet rows with a name; new registrations are refused at this count.
+  MAX_REGISTRATIONS: 100, // A couple counts 1 and a single counts 0.5; new registrations are refused at this total.
 };
 
 const RSVP_HEADERS = [
@@ -148,13 +148,16 @@ function readRegistrations_(sheet) {
   const last = sheet.getLastRow();
   if (last < 2) return [];
   return sheet.getRange(2, 2, last - 1, 6).getValues().map(function (r) {
-    return { phone: normalizeSheetPhone_(r[0]), name: String(r[1]).trim(), email: String(r[3]).trim().toLowerCase(),
-      zipCode: String(r[4]).trim(), cityState: String(r[5]).trim().toLowerCase() };
+    return { phone: normalizeSheetPhone_(r[0]), name: String(r[1]).trim(), type: String(r[2]).trim().toUpperCase(),
+      email: String(r[3]).trim().toLowerCase(), zipCode: String(r[4]).trim(), cityState: String(r[5]).trim().toLowerCase() };
   });
 }
 
+/** Couples count 1 toward the limit; singles count 0.5. */
 function countRegistrations_(existing) {
-  return existing.filter(function (r) { return r.name; }).length;
+  return existing.reduce(function (total, r) {
+    return r.name ? total + (r.type === 'S' ? 0.5 : 1) : total;
+  }, 0);
 }
 
 function normalizeSheetPhone_(value) {
