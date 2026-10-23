@@ -92,3 +92,15 @@ test("separate days reach the Yogi Prasad counts only on the days chosen", async
   expect([await dinner(0), await dinner(1), await dinner(2), await dinner(3), await dinner(4)]).toEqual([0, 1, 0, 1, 0]);
   expect(await (await post(form({ days: [etDay(200)] }))).json()).toEqual({ ok: false, error: "Choose days within the next four months." });
 });
+
+test("lunch and dinner can have different days and reach the counts only on those days", async () => {
+  const saved = await (await post(form({ names: ["Amit Patel", "Sheetal Patel"], from: undefined, to: undefined, meals: undefined, mealDays: { lunch: [etDay(1), etDay(2)], dinner: [etDay(4)] } }))).json();
+  expect(saved).toMatchObject({ ok: true, registration: { mealDays: { lunch: [etDay(1), etDay(2)], dinner: [etDay(4)] }, meals: ["lunch", "dinner"], from: etDay(1), to: etDay(4) } });
+  const counts = async offset => (await request({ action: "meal-counts", day: etDay(offset) })).counts;
+  expect(await counts(0)).toEqual({ breakfast: 0, lunch: 0, dinner: 0 });
+  expect(await counts(1)).toEqual({ breakfast: 0, lunch: 2, dinner: 0 });
+  expect(await counts(3)).toEqual({ breakfast: 0, lunch: 0, dinner: 0 });
+  expect(await counts(4)).toEqual({ breakfast: 0, lunch: 0, dinner: 2 });
+  const refused = await post(form({ meals: undefined, mealDays: { snack: [etDay(1)] } }));
+  expect([refused.status, await refused.json()]).toEqual([400, { ok: false, error: "Choose at least one meal." }]);
+});

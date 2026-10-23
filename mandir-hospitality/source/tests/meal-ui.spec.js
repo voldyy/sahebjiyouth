@@ -63,7 +63,7 @@ function createFixture() {
   return fixture;
 }
 
-const localDiner = (name, key) => ({ sourceIdentity: `local:abc:${key}`, registrationId: "LOCAL-abc", name, city: "Local", status: "Registered", stay: "Local", arrivalDate: DAY, departureDate: "2026-10-19", arrivalTime: "", departureTime: "", sourceWritable: true, count: 1, isLocalDiner: true, localMeals: ["lunch"] });
+const localDiner = (name, key) => ({ sourceIdentity: `local:abc:${key}`, registrationId: "LOCAL-abc", name, city: "Local", status: "Registered", stay: "Local", arrivalDate: DAY, departureDate: "2026-10-19", arrivalTime: "", departureTime: "", sourceWritable: true, count: 1, isLocalDiner: true, localMealDays: { lunch: [DAY, "2026-10-19"] } });
 async function setup({ page, context }, { admin = false, team = true, local = false } = {}) {
   const fixture = createFixture();
   if (local) fixture.localDiners = [localDiner("Local Family One", "11111111"), localDiner("Local Family Two", "22222222")];

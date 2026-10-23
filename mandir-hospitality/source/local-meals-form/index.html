@@ -40,19 +40,23 @@
     .blank { min-height: 46px; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip { min-height: 40px; padding: 0 14px; border: 1px solid #d8a437; border-radius: 999px; background: #fff6df; color: #684000; font-weight: 800; font-size: .9rem; cursor: pointer; }
-    .picked { margin: 0; min-height: 1.4em; font-weight: 750; color: #5a3a00; }
-    .picked:empty::before { content: "Tap days, or slide across to select a range"; color: var(--muted); font-weight: 600; }
     .regs { display: grid; gap: 12px; }
     .reg { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--field-bg); }
     .reg .actions { display: flex; gap: 10px; align-items: center; }
     .reg .actions .button { width: auto; flex: 1; min-height: 46px; }
-    .meals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .meal { position: relative; }
-    .meal input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
-    .meal span { display: grid; place-items: center; gap: 2px; min-height: 66px; border: 1px solid var(--field-line); border-radius: 8px; background: var(--field-bg); text-align: center; font-weight: 800; padding: 8px 4px; }
-    .meal small { color: var(--muted); font-weight: 600; font-size: .76rem; }
-    .meal input:checked + span { background: #fff1cf; border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); color: #5a3a00; }
-    .meal input:focus-visible + span { outline: 3px solid rgba(183,121,31,.3); }
+    .mealcards { display: grid; gap: 10px; }
+    .mealcard { border: 1px solid var(--field-line); border-radius: 10px; background: var(--field-bg); overflow: hidden; }
+    .mealcard.has-days { border-color: #d8a437; }
+    .mealcard.open { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+    .mealhead { display: grid; grid-template-columns: minmax(0,auto) minmax(0,1fr) 18px; align-items: center; gap: 12px; width: 100%; min-height: 66px; padding: 10px 14px; border: 0; background: none; color: var(--ink); text-align: left; cursor: pointer; }
+    .mealcard.has-days .mealhead { background: #fff6df; }
+    .mname strong { display: block; font-size: 1.02rem; }
+    .mname small { color: var(--muted); font-weight: 600; font-size: .76rem; }
+    .msum { color: var(--muted); font-size: .86rem; font-weight: 700; text-align: right; overflow-wrap: anywhere; }
+    .mealcard.has-days .msum { color: #5a3a00; }
+    .chev { width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); justify-self: center; transition: transform .15s; }
+    .mealcard.open .chev { transform: rotate(-135deg); }
+    .mealbody { display: grid; gap: 12px; padding: 4px 14px 14px; }
     .button { min-height: 52px; border-radius: 8px; padding: 0 18px; font-weight: 850; cursor: pointer; border: 0; width: 100%; }
     .button:disabled { opacity: .62; cursor: not-allowed; }
     .primary { background: linear-gradient(180deg,#c64a3a,var(--accent)); color: #fff; box-shadow: 0 14px 28px rgba(168,50,36,.24); }
@@ -80,12 +84,7 @@
       <div class="field"><label for="me">Your name</label><input id="me" type="text" autocomplete="name" autocapitalize="words" enterkeyhint="next" maxlength="60"></div>
       <fieldset class="field" id="familyField" hidden><legend>Family</legend><div id="family" style="display:grid;gap:8px"></div></fieldset>
       <button class="button secondary" type="button" id="add">+ Family member</button>
-      <fieldset class="field"><legend>Days</legend>
-        <div class="chips"><button type="button" class="chip" data-quick="week">Next 7 days</button><button type="button" class="chip" data-quick="weekends">Weekends</button><button type="button" class="chip" data-quick="clear">Clear</button></div>
-        <div class="cal" id="cal"></div>
-        <p class="picked" id="picked" aria-live="polite"></p>
-      </fieldset>
-      <fieldset class="field"><legend>Meals</legend><div class="meals" id="meals"></div></fieldset>
+      <fieldset class="field"><legend>Meals and days</legend><div class="mealcards" id="meals"></div></fieldset>
       <div class="trap" aria-hidden="true"><label for="ref-code">Leave this empty</label><input id="ref-code" name="ref-code" type="text" tabindex="-1" autocomplete="off"></div>
       <p class="error" id="error" role="alert"></p>
       <button class="button primary" type="submit" id="submit">Submit</button>
@@ -102,7 +101,7 @@
   <script>
   (() => {
     const API = "https://mandir-hospitality-api.usayouth.workers.dev/api", STORE = "yp-meals", OLD_STORE = "yp-diwali-meals";
-    const LAST = "2026-11-14", MAX_FAMILY = 11;   // the calendar ends here
+    const LAST = "2026-11-14", MAX_FAMILY = 11;   // the calendars end here
     const MEALS = [["breakfast", "Breakfast", "8–10 AM"], ["lunch", "Lunch", "12–2 PM"], ["dinner", "Dinner", "6–8 PM"]];
     const $ = id => document.getElementById(id);
     const uuid = () => crypto.randomUUID ? crypto.randomUUID() : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
@@ -111,15 +110,8 @@
     const shift = (iso, n) => new Date(Date.parse(`${iso}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
     const last = LAST;
     const dow = iso => new Date(`${iso}T12:00:00Z`).getUTCDay();
-    let saved = [], editing = null, picked = new Set(), attempt = { fp: "", id: "" };
-
-    // ---- meals ----
-    for (const [id, name, time] of MEALS) {
-      const label = document.createElement("label"); label.className = "meal";
-      const box = Object.assign(document.createElement("input"), { type: "checkbox", value: id });
-      const face = document.createElement("span"); face.append(name); const small = document.createElement("small"); small.textContent = time; face.append(small);
-      label.append(box, face); $("meals").append(label);
-    }
+    let saved = [], editing = null, attempt = { fp: "", id: "" };
+    const picked = Object.fromEntries(MEALS.map(([id]) => [id, new Set()]));   // the chosen days for each meal
 
     // ---- family rows ----
     const familyRows = () => [...$("family").querySelectorAll("input")];
@@ -136,19 +128,47 @@
     function sync() { $("familyField").hidden = !familyRows().length; $("add").hidden = familyRows().length >= MAX_FAMILY; }
     $("add").addEventListener("click", () => addFamily());
 
-    // ---- day calendar: tap a day, or slide across days to select a range ----
+    // ---- day helpers ----
     const month = iso => iso.slice(0, 7);
     const monthsToShow = () => { const out = []; for (let m = month(today); m <= month(last); m = month(shift(`${m}-15`, 31).slice(0, 8) + "01")) out.push(m); return out; };
-    const allMonths = monthsToShow();   // the months from today's through the last day
     const selectable = iso => iso >= today && iso <= last;
-    const label = iso => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
-    const buttons = () => [...$("cal").querySelectorAll("button[data-day]")];
-    function buildMonths() {
-      const cal = $("cal"); cal.replaceChildren();
-      allMonths.forEach(m => {
+    const fullLabel = iso => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+    const runs = days => { const out = []; for (const d of [...days].sort()) { const run = out.at(-1); if (run && shift(run.to, 1) === d) run.to = d; else out.push({ from: d, to: d }); } return out; };
+    const short = iso => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+    const describe = days => runs(days).map(({ from, to }) => from === to ? short(from) : month(from) === month(to) ? `${short(from)}–${to.slice(8).replace(/^0/, "")}` : `${short(from)} – ${short(to)}`).join(", ");
+    const countText = n => `${n} ${n === 1 ? "day" : "days"}`;
+
+    // ---- one compact card per meal; tapping it opens that meal's calendar ----
+    const cards = {};
+    for (const [id, name, time] of MEALS) {
+      const card = document.createElement("section"); card.className = "mealcard"; card.dataset.meal = id;
+      const head = document.createElement("button"); head.type = "button"; head.className = "mealhead"; head.setAttribute("aria-expanded", "false"); head.setAttribute("aria-controls", `panel-${id}`);
+      const title = document.createElement("span"); title.className = "mname"; const strong = document.createElement("strong"); strong.textContent = name; const small = document.createElement("small"); small.textContent = time; title.append(strong, small);
+      const sum = document.createElement("span"); sum.className = "msum"; const chev = document.createElement("span"); chev.className = "chev"; chev.setAttribute("aria-hidden", "true");
+      head.append(title, sum, chev);
+      const body = document.createElement("div"); body.className = "mealbody"; body.id = `panel-${id}`; body.hidden = true;
+      const chips = document.createElement("div"); chips.className = "chips";
+      for (const [kind, text] of [["week", "Next 7 days"], ["weekends", "Weekends"], ["all", "Same for all meals"], ["clear", "Clear"]]) {
+        const chip = Object.assign(document.createElement("button"), { type: "button", className: "chip", textContent: text }); chip.dataset.quick = kind; chips.append(chip);
+      }
+      const cal = document.createElement("div"); cal.className = "cal";
+      body.append(chips, cal); card.append(head, body); $("meals").append(card);
+      cards[id] = { card, head, body, cal, sum, name };
+      head.addEventListener("click", () => toggle(id));
+      chips.addEventListener("click", e => { const kind = e.target.closest("[data-quick]")?.dataset.quick; if (kind) quick(id, kind); });
+      attachCalendar(id, cal);
+    }
+    function toggle(id) {
+      const opening = !cards[id].card.classList.contains("open");
+      for (const [other, c] of Object.entries(cards)) { const on = opening && other === id; c.card.classList.toggle("open", on); c.body.hidden = !on; c.head.setAttribute("aria-expanded", String(on)); }
+      if (opening) cards[id].card.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+    function buildMonths(id) {
+      const { cal, name } = cards[id]; cal.replaceChildren();
+      for (const m of monthsToShow()) {
         const box = document.createElement("section"); box.className = "month";
         const title = document.createElement("h3"); title.textContent = new Date(`${m}-15T12:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }); box.append(title);
-        const grid = document.createElement("div"); grid.className = "grid"; grid.setAttribute("role", "group"); grid.setAttribute("aria-label", title.textContent);
+        const grid = document.createElement("div"); grid.className = "grid"; grid.setAttribute("role", "group"); grid.setAttribute("aria-label", `${name} · ${title.textContent}`);
         "SMTWTFS".split("").forEach(d => { const h = document.createElement("div"); h.className = "dow"; h.setAttribute("aria-hidden", "true"); h.textContent = d; grid.append(h); });
         // The first month starts at the current week, so days that are long past don't push the form down.
         const first = m === month(today) ? Math.max(1, +today.slice(8) - dow(today)) : 1;
@@ -157,68 +177,80 @@
         for (let n = first; n <= count; n++) {
           const iso = `${m}-${String(n).padStart(2, "0")}`;
           const b = Object.assign(document.createElement("button"), { type: "button", className: "day", textContent: n });
-          b.dataset.day = iso; b.setAttribute("aria-label", label(iso)); b.disabled = !selectable(iso);
+          b.dataset.day = iso; b.setAttribute("aria-label", `${name}: ${fullLabel(iso)}`); b.disabled = !selectable(iso);
           if (iso === today) b.classList.add("today");
           grid.append(b);
         }
         box.append(grid); cal.append(box);
-      });
-      refresh();
-    }
-    const runs = days => { const out = []; for (const d of [...days].sort()) { const run = out.at(-1); if (run && shift(run.to, 1) === d) run.to = d; else out.push({ from: d, to: d }); } return out; };
-    const short = iso => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-    const describe = days => {
-      const parts = runs(days).map(({ from, to }) => from === to ? short(from) : month(from) === month(to) ? `${short(from)}–${to.slice(8).replace(/^0/, "")}` : `${short(from)} – ${short(to)}`);
-      return parts.join(", ");
-    };
-    function refresh() {
-      for (const b of buttons()) {
-        const on = picked.has(b.dataset.day), d = b.dataset.day, col = dow(d);
-        b.setAttribute("aria-pressed", on ? "true" : "false");
-        b.classList.toggle("join-r", on && col < 6 && picked.has(shift(d, 1)) && d.slice(0, 7) === shift(d, 1).slice(0, 7));
-        b.classList.toggle("join-l", on && col > 0 && picked.has(shift(d, -1)) && d.slice(0, 7) === shift(d, -1).slice(0, 7));
       }
-      const n = picked.size; $("picked").textContent = n ? `${describe(picked)} · ${n} ${n === 1 ? "day" : "days"}` : "";
+      refresh(id);
     }
+    function refresh(id) {
+      const { cal, sum, card } = cards[id], set = picked[id];
+      for (const b of cal.querySelectorAll("button[data-day]")) {
+        const d = b.dataset.day, on = set.has(d), col = dow(d);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+        b.classList.toggle("join-r", on && col < 6 && set.has(shift(d, 1)) && month(d) === month(shift(d, 1)));
+        b.classList.toggle("join-l", on && col > 0 && set.has(shift(d, -1)) && month(d) === month(shift(d, -1)));
+      }
+      card.classList.toggle("has-days", set.size > 0);
+      sum.textContent = set.size ? `${describe(set)} · ${countText(set.size)}` : "Tap to choose days";
+    }
+    const buildAll = () => Object.keys(cards).forEach(buildMonths), refreshAll = () => Object.keys(cards).forEach(refresh);
+
     // A tap toggles one day. Sliding a finger (or the mouse) across days selects or clears the whole stretch from where it started.
-    let drag = null, afterDrag = false;
-    const dayAt = (x, y) => { const el = document.elementFromPoint(x, y)?.closest?.("button[data-day]"); return el && !el.disabled ? el.dataset.day : null; };
-    function paint(to) {
-      const [lo, hi] = [drag.anchor, to].sort(), next = new Set(drag.base);
-      for (let d = lo; d <= hi; d = shift(d, 1)) { if (!selectable(d)) continue; if (drag.on) next.add(d); else next.delete(d); }
-      picked = next; refresh();
+    function attachCalendar(id, cal) {
+      let drag = null, afterDrag = false;
+      const dayAt = (x, y) => { const el = document.elementFromPoint(x, y)?.closest?.("button[data-day]"); return el && !el.disabled && cal.contains(el) ? el.dataset.day : null; };
+      const paint = to => {
+        const [lo, hi] = [drag.anchor, to].sort(), next = new Set(drag.base);
+        for (let d = lo; d <= hi; d = shift(d, 1)) { if (!selectable(d)) continue; if (drag.on) next.add(d); else next.delete(d); }
+        picked[id] = next; refresh(id);
+      };
+      cal.addEventListener("pointerdown", e => { afterDrag = false; const day = dayAt(e.clientX, e.clientY); if (day) drag = { anchor: day, base: new Set(picked[id]), on: !picked[id].has(day), moved: false }; });
+      cal.addEventListener("pointermove", e => {
+        if (!drag) return; const day = dayAt(e.clientX, e.clientY);
+        if (!day || (day === drag.anchor && !drag.moved)) return;
+        drag.moved = true; paint(day);
+      });
+      const endDrag = () => { if (drag?.moved) afterDrag = true; drag = null; };   // the click that follows a drag is not a tap
+      addEventListener("pointerup", endDrag); addEventListener("pointercancel", endDrag);
+      cal.addEventListener("click", e => {
+        const b = e.target.closest("button[data-day]"); if (!b) return;
+        if (afterDrag) { afterDrag = false; return; }
+        const next = new Set(picked[id]); next.has(b.dataset.day) ? next.delete(b.dataset.day) : next.add(b.dataset.day); picked[id] = next; refresh(id);
+      });
     }
-    $("cal").addEventListener("pointerdown", e => { afterDrag = false; const day = dayAt(e.clientX, e.clientY); if (day) drag = { anchor: day, base: new Set(picked), on: !picked.has(day), moved: false }; });
-    $("cal").addEventListener("pointermove", e => {
-      if (!drag) return; const day = dayAt(e.clientX, e.clientY);
-      if (!day || (day === drag.anchor && !drag.moved)) return;
-      drag.moved = true; paint(day);
-    });
-    const endDrag = () => { if (drag?.moved) afterDrag = true; drag = null; };   // the click that follows a drag is not a tap
-    addEventListener("pointerup", endDrag); addEventListener("pointercancel", endDrag);
-    $("cal").addEventListener("click", e => {
-      const b = e.target.closest("button[data-day]"); if (!b) return;
-      if (afterDrag) { afterDrag = false; return; }
-      picked = new Set(picked); picked.has(b.dataset.day) ? picked.delete(b.dataset.day) : picked.add(b.dataset.day); refresh();
-    });
-    document.querySelectorAll("[data-quick]").forEach(chip => chip.addEventListener("click", () => {
-      const kind = chip.dataset.quick; picked = new Set([...picked].filter(d => !selectable(d)));
-      if (kind === "week") for (let i = 0; i < 7; i++) if (selectable(shift(today, i))) picked.add(shift(today, i));
-      if (kind === "weekends") for (let d = today; d <= last; d = shift(d, 1)) { if (dow(d) === 0 || dow(d) === 6) picked.add(d); }
-      refresh();
-    }));
+    function quick(id, kind) {
+      const keep = [...picked[id]].filter(d => !selectable(d));   // days that already passed stay as they were
+      if (kind === "all") { const days = new Set(picked[id]); for (const other of Object.keys(picked)) { picked[other] = new Set(days); } refreshAll(); return; }
+      const next = new Set(keep);
+      if (kind === "week") for (let i = 0; i < 7; i++) if (selectable(shift(today, i))) next.add(shift(today, i));
+      if (kind === "weekends") for (let d = today; d <= last; d = shift(d, 1)) { if (dow(d) === 0 || dow(d) === 6) next.add(d); }
+      picked[id] = next; refresh(id);
+    }
 
     // ---- confirmation list ----
-    const mealNames = ids => MEALS.filter(m => ids.includes(m[0])).map(m => m[1]).join(" · ");
+    // Meals with the same days are shown together, e.g. "Lunch · Dinner — Nov 6–8".
+    const mealLines = mealDays => {
+      const groups = new Map();
+      for (const [id, name] of MEALS) {
+        const days = mealDays[id]; if (!days?.length) continue;
+        const key = days.join(","); if (!groups.has(key)) groups.set(key, { names: [], days }); groups.get(key).names.push(name);
+      }
+      return [...groups.values()].map(g => `${g.names.join(" · ")} — ${describe(g.days)}`);
+    };
     const whoLine = names => names.length > 1 ? `${names[0]} + ${names.length - 1}` : names[0];
     function fill(reg) {
       $("me").value = reg.names[0] || ""; $("family").replaceChildren(); reg.names.slice(1).forEach(n => addFamily(n)); sync();
-      picked = new Set(reg.days); refresh();
-      document.querySelectorAll("#meals input").forEach(b => { b.checked = reg.meals.includes(b.value); });
+      for (const [id] of MEALS) picked[id] = new Set(reg.mealDays?.[id] || []);
+      refreshAll();
     }
     function blank() {
-      editing = null; $("me").value = ""; $("family").replaceChildren(); sync(); picked = new Set(); refresh();
-      document.querySelectorAll("#meals input").forEach(b => { b.checked = false; }); $("submit").textContent = "Submit"; fail("");
+      editing = null; $("me").value = ""; $("family").replaceChildren(); sync();
+      for (const [id] of MEALS) picked[id] = new Set();
+      refreshAll(); $("submit").textContent = "Submit"; fail("");
+      for (const [id, c] of Object.entries(cards)) { c.card.classList.remove("open"); c.body.hidden = true; c.head.setAttribute("aria-expanded", "false"); }
     }
     function showList() {
       $("another").hidden = today > LAST;
@@ -227,8 +259,8 @@
       for (const entry of saved) {
         const reg = entry.reg, card = document.createElement("div"); card.className = "reg";
         const summary = document.createElement("div"); summary.className = "summary";
-        const who = document.createElement("div"); who.textContent = whoLine(reg.names);
-        const when = document.createElement("span"); when.textContent = `${describe(reg.days)} · ${mealNames(reg.meals)}`; summary.append(who, when);
+        const who = document.createElement("div"); who.textContent = whoLine(reg.names); summary.append(who);
+        for (const line of mealLines(reg.mealDays || {})) { const when = document.createElement("span"); when.textContent = line; summary.append(when); }
         card.append(summary); $("regs").append(card);
         if (!entry.id) continue;   // a quietly ignored (bot) entry has nothing to edit
         const actions = document.createElement("div"); actions.className = "actions";
@@ -258,26 +290,26 @@
     $("form").addEventListener("submit", async event => {
       event.preventDefault(); fail("");
       const names = [$("me").value, ...familyRows().map(i => i.value)].map(n => n.trim()).filter((n, i) => i === 0 || n);
-      const meals = [...document.querySelectorAll("#meals input:checked")].map(b => b.value), days = [...picked].sort();
-      if (!names[0]) return fail("Add your name."); if (!days.length) return fail("Choose your days."); if (!meals.length) return fail("Choose a meal.");
-      const body = { action: "local-meals-submit", names, days, meals, website: $("ref-code").value, ...(editing ? { id: editing.id, editKey: editing.editKey } : {}) };
+      const mealDays = Object.fromEntries(MEALS.filter(([id]) => picked[id].size).map(([id]) => [id, [...picked[id]].sort()]));
+      if (!names[0]) return fail("Add your name."); if (!Object.keys(mealDays).length) return fail("Choose days for a meal.");
+      const body = { action: "local-meals-submit", names, mealDays, website: $("ref-code").value, ...(editing ? { id: editing.id, editKey: editing.editKey } : {}) };
       const fp = JSON.stringify(body); if (attempt.fp !== fp) attempt = { fp, id: uuid() };   // a retry of the same entry reuses its request id
       $("submit").disabled = true;
       const result = await call({ ...body, requestId: attempt.id });
       $("submit").disabled = false;
       if (!result.ok) return fail(result.error || "Please try again.");
       attempt = { fp: "", id: "" };
-      if (result.ignored) { saved = [...saved, { id: "", editKey: "", reg: { names, days, meals } }]; blank(); return showList(); }
+      if (result.ignored) { saved = [...saved, { id: "", editKey: "", reg: { names, mealDays } }]; blank(); return showList(); }
       const entry = { id: result.id, editKey: result.editKey, reg: result.registration };
       saved = editing ? saved.map(e => e === editing ? entry : e) : [...saved, entry]; persist(); blank(); showList();
     });
     $("another").addEventListener("click", () => { blank(); $("done").hidden = true; $("form").hidden = false; window.scrollTo(0, 0); });
 
-    buildMonths(); if (today > LAST) { $("form").hidden = true; $("closed").hidden = false; }
+    buildAll(); if (today > LAST) { $("form").hidden = true; $("closed").hidden = false; }
     // The first week follows the current day, including when the page stays open past midnight.
     const rollOver = () => {
       const now = todayET(); if (now === today) return;
-      today = now; buildMonths();
+      today = now; buildAll();
       if (today > LAST) { $("another").hidden = true; if ($("done").hidden) { $("form").hidden = true; $("closed").hidden = false; } }
     };
     document.addEventListener("visibilitychange", () => { if (!document.hidden) rollOver(); }); addEventListener("focus", rollOver);
