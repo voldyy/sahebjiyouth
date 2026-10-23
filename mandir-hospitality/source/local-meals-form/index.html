@@ -38,8 +38,8 @@
     .day.join-l { border-top-left-radius: 0; border-bottom-left-radius: 0; }
     .day.join-r::after { content: ""; position: absolute; right: -5px; top: -1px; bottom: -1px; width: 5px; background: var(--accent); }
     .blank { min-height: 46px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip { min-height: 40px; padding: 0 14px; border: 1px solid #d8a437; border-radius: 999px; background: #fff6df; color: #684000; font-weight: 800; font-size: .9rem; cursor: pointer; }
+    .chips { display: flex; justify-content: flex-end; }
+    .chip { min-height: 32px; padding: 0 12px; border: 1px solid #d8a437; border-radius: 999px; background: #fff6df; color: #684000; font-weight: 800; font-size: .78rem; cursor: pointer; }
     .regs { display: grid; gap: 12px; }
     .reg { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--field-bg); }
     .reg .actions { display: flex; gap: 10px; align-items: center; }
@@ -148,14 +148,12 @@
       head.append(title, sum, chev);
       const body = document.createElement("div"); body.className = "mealbody"; body.id = `panel-${id}`; body.hidden = true;
       const chips = document.createElement("div"); chips.className = "chips";
-      for (const [kind, text] of [["week", "Next 7 days"], ["weekends", "Weekends"], ["all", "Same for all meals"], ["clear", "Clear"]]) {
-        const chip = Object.assign(document.createElement("button"), { type: "button", className: "chip", textContent: text }); chip.dataset.quick = kind; chips.append(chip);
-      }
+      const clear = Object.assign(document.createElement("button"), { type: "button", className: "chip", textContent: "Clear" }); chips.append(clear);
       const cal = document.createElement("div"); cal.className = "cal";
       body.append(chips, cal); card.append(head, body); $("meals").append(card);
       cards[id] = { card, head, body, cal, sum, name };
       head.addEventListener("click", () => toggle(id));
-      chips.addEventListener("click", e => { const kind = e.target.closest("[data-quick]")?.dataset.quick; if (kind) quick(id, kind); });
+      clear.addEventListener("click", () => { picked[id] = new Set([...picked[id]].filter(d => !selectable(d))); refresh(id); });   // days that already passed stay as they were
       attachCalendar(id, cal);
     }
     function toggle(id) {
@@ -221,15 +219,6 @@
         const next = new Set(picked[id]); next.has(b.dataset.day) ? next.delete(b.dataset.day) : next.add(b.dataset.day); picked[id] = next; refresh(id);
       });
     }
-    function quick(id, kind) {
-      const keep = [...picked[id]].filter(d => !selectable(d));   // days that already passed stay as they were
-      if (kind === "all") { const days = new Set(picked[id]); for (const other of Object.keys(picked)) { picked[other] = new Set(days); } refreshAll(); return; }
-      const next = new Set(keep);
-      if (kind === "week") for (let i = 0; i < 7; i++) if (selectable(shift(today, i))) next.add(shift(today, i));
-      if (kind === "weekends") for (let d = today; d <= last; d = shift(d, 1)) { if (dow(d) === 0 || dow(d) === 6) next.add(d); }
-      picked[id] = next; refresh(id);
-    }
-
     // ---- confirmation list ----
     // Meals with the same days are shown together, e.g. "Lunch · Dinner — Nov 6–8".
     const mealLines = mealDays => {

@@ -98,20 +98,6 @@ test("lunch can be for one stretch of days and dinner for another", async ({ pag
   expect(state.calls[0].mealDays).toEqual({ lunch: ["2026-10-25", "2026-10-26", "2026-10-27"], dinner: ["2026-11-07", "2026-11-08"] });
 });
 
-test("same for all meals copies a meal's days to the others, which can then be adjusted", async ({ page }) => {
-  const state = await open(page);
-  await page.getByLabel("Your name").fill("Amit Patel");
-  await pick(page, "lunch", ...NOV_6_8);
-  await meal(page, "lunch").getByRole("button", { name: "Same for all meals" }).click();
-  for (const name of ["breakfast", "lunch", "dinner"]) await expect(summary(page, name)).toHaveText("Nov 6–8 · 3 days");
-  await pick(page, "dinner", "2026-11-07");                     // not staying for dinner on the 7th
-  await expect(summary(page, "dinner")).toHaveText("Nov 6, Nov 8 · 2 days");
-  await expect(summary(page, "lunch")).toHaveText("Nov 6–8 · 3 days");
-  await page.getByRole("button", { name: "Submit" }).click();
-  await expect(page.locator(".reg .summary span")).toHaveText(["Breakfast · Lunch — Nov 6–8", "Dinner — Nov 6, Nov 8"]);
-  expect(state.calls[0].mealDays).toEqual({ breakfast: NOV_6_8, lunch: NOV_6_8, dinner: ["2026-11-06", "2026-11-08"] });
-});
-
 test("days that are not next to each other can be chosen, and each tap toggles one day", async ({ page }) => {
   await open(page);
   await pick(page, "lunch", "2026-10-25", "2026-10-27", "2026-11-01", "2026-10-27");
@@ -164,18 +150,22 @@ test("on a touch screen a tap picks a day, a sideways swipe selects a stretch, a
   await expect(summary(page, "lunch")).toHaveText("Nov 3–6, Nov 10 · 5 days");
 });
 
-test("quick choices and past days", async ({ page }) => {
+test("Clear is the only shortcut, it is small, and it empties just that meal; past days cannot be chosen", async ({ page }) => {
   await open(page);
   await expand(page, "lunch");
+  await expect(meal(page, "lunch").locator(".chip")).toHaveText(["Clear"]);
+  await expect(page.getByRole("button", { name: /Next 7 days|Weekends|Same for all meals/ })).toHaveCount(0);
+  const size = await meal(page, "lunch").locator(".chip").evaluate(el => el.getBoundingClientRect().height);
+  expect(size).toBeLessThanOrEqual(34);
   await expect(day(page, "lunch", "2026-10-22")).toBeDisabled();
   await expect(day(page, "lunch", "2026-10-23")).toBeEnabled();
   await expect(day(page, "lunch", "2026-10-23")).toHaveClass(/today/);
-  await meal(page, "lunch").getByRole("button", { name: "Next 7 days" }).click();
-  await expect(summary(page, "lunch")).toHaveText("Oct 23–29 · 7 days");
-  await meal(page, "lunch").getByRole("button", { name: "Weekends" }).click();
-  await expect(summary(page, "lunch")).toHaveText("Oct 24–25, Oct 31 – Nov 1, Nov 7–8, Nov 14 · 7 days");
+  await pick(page, "lunch", "2026-10-25", "2026-10-26");
+  await pick(page, "dinner", "2026-10-25");
+  await expand(page, "lunch");
   await meal(page, "lunch").getByRole("button", { name: "Clear" }).click();
   await expect(summary(page, "lunch")).toHaveText("Tap to choose days");
+  await expect(summary(page, "dinner")).toHaveText("Oct 25 · 1 day");
 });
 
 test("the calendars end on Nov 14 and start in the week of the current day", async ({ page }) => {
@@ -328,7 +318,7 @@ test("names are shown as text, the decoy field is hidden from people, and the pa
   // Every field and the calendar stay inside the card, and each target is easy to hit with a thumb.
   const edges = await page.evaluate(() => { const right = selector => document.querySelector(selector).getBoundingClientRect().right; return { limit: right("#submit"), fields: ["#me", "[data-meal=lunch] .grid", "#add", ".mealhead"].map(right) }; });
   for (const edge of edges.fields) expect(edge).toBeLessThanOrEqual(edges.limit + 0.5);
-  const heights = await page.evaluate(() => ["#add", "#submit", "#me", ".mealhead", "[data-meal=lunch] button[data-day='2026-11-06']", "[data-meal=lunch] .chip"].map(selector => document.querySelector(selector).getBoundingClientRect().height));
+  const heights = await page.evaluate(() => ["#add", "#submit", "#me", ".mealhead", "[data-meal=lunch] button[data-day='2026-11-06']"].map(selector => document.querySelector(selector).getBoundingClientRect().height));
   expect(Math.min(...heights)).toBeGreaterThanOrEqual(40);
   const widths = await page.evaluate(() => [...document.querySelectorAll("[data-meal=lunch] button.day:not(:disabled)")].map(b => b.getBoundingClientRect().width));
   expect(Math.min(...widths)).toBeGreaterThanOrEqual(36);
