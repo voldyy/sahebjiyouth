@@ -548,3 +548,20 @@
   .transport-time .flight-time-scheduled { order: 1; white-space: nowrap; }
   .transport-time .flight-time-caption { order: 2; }
 }
+.transport-past-toggle {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  color: #326681;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.transport-past-toggle input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: #985127;
+}

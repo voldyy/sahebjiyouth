@@ -84,3 +84,11 @@ test("a filled-in decoy field is ignored and invalid entries get a plain message
   expect(invalid.status).toBe(400);
   expect(await invalid.json()).toEqual({ ok: false, error: "Enter each name using letters only." });
 });
+
+test("separate days reach the Yogi Prasad counts only on the days chosen", async () => {
+  const saved = await (await post(form({ names: ["Amit Patel"], from: undefined, to: undefined, days: [etDay(1), etDay(3)], meals: ["dinner"] }))).json();
+  expect(saved).toMatchObject({ ok: true, registration: { days: [etDay(1), etDay(3)], from: etDay(1), to: etDay(3) } });
+  const dinner = async offset => (await request({ action: "meal-counts", day: etDay(offset) })).counts.dinner;
+  expect([await dinner(0), await dinner(1), await dinner(2), await dinner(3), await dinner(4)]).toEqual([0, 1, 0, 1, 0]);
+  expect(await (await post(form({ days: [etDay(200)] }))).json()).toEqual({ ok: false, error: "Choose days within the next four months." });
+});

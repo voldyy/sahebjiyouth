@@ -86,3 +86,15 @@ export function assignmentIssue(guests, guest, assignment, rooms = []) {
 export function unassignedGuest(guest) {
   return needsLodging(guest) && (!guest.lodging || !guest.roomCode || (!guest.roomNo && !/^O[a-zA-Z0-9-]+B[1-9]\d*$/.test(guest.roomCode)));
 }
+
+// How full a lodging is on each given day: assigned beds against all beds, plus guests staying that day who still have no bed.
+export function lodgingOccupancy(guests, lodging, rooms, days, offsiteRooms = []) {
+  const capacity = rooms.reduce((sum, room) => sum + (room.beds || 0), 0);
+  const perDay = days.map((day) => {
+    const staying = guests.filter((guest) => needsLodging(guest) && onDay(guest, day));
+    const filled = staying.filter((guest) => guest.lodging === lodging && bedForGuest(guest, offsiteRooms) !== null).length;
+    return { day, filled, unassigned: staying.filter(unassignedGuest).length, percent: capacity ? Math.round((filled / capacity) * 100) : 0 };
+  });
+  const peak = perDay.reduce((best, entry) => (entry.filled > best.filled ? entry : best), perDay[0]);
+  return { capacity, perDay, peak };
+}

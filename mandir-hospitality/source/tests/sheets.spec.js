@@ -530,6 +530,8 @@ test('trip collapse defaults for past dates and synchronizes between admin and v
   Object.assign(row,{11:'BUS',14:'ABE',16:'ABE'});
   const h=await setup(page,'ok',[row],null); // uses real time: shared display timestamps come from the test server clock
   await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Transport',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Expand trips for 2000-10-11',exact:true})).toHaveCount(0);   // finished days are hidden by default
+  await page.getByLabel(/Show past trips/).check();
   await page.getByRole('button',{name:'Expand trips for 2000-10-11',exact:true}).click();
   const past=page.getByRole('button',{name:'Expand Bus Arrivals 2000-10-11',exact:true});
   await expect(past).toHaveAttribute('aria-expanded','false');
@@ -537,6 +539,7 @@ test('trip collapse defaults for past dates and synchronizes between admin and v
   const context=await browser.newContext({viewport:{width:390,height:900}});
   await mockBridge(context,h,false);
   const viewer=await context.newPage();await viewer.goto('http://localhost:5175/#transport');
+  await viewer.getByLabel(/Show past trips/).check();
   await expect(viewer.getByRole('button',{name:'Expand Bus Arrivals 2000-10-11',exact:true})).toHaveAttribute('aria-expanded','false');
   await past.click();
   await expect(page.getByRole('button',{name:'Collapse Bus Arrivals 2000-10-11',exact:true})).toHaveAttribute('aria-expanded','true');

@@ -56,3 +56,22 @@ test('Sadhak beds have independent inventory and full-stay occupancy from Samarp
   assert.match(assignmentIssue([sadhak],incoming,value), /occupied/);
   assert.equal(assignmentIssue([sadhak],{...incoming,arrivalDate:'2026-10-18',departureDate:'2026-10-20'},value), '');
 });
+
+test("capacity reached counts assigned beds against all beds, per day, and reports the busiest day", async () => {
+  const { lodgingOccupancy } = await import("../../src/lib/occupancy.js");
+  const rooms = [{ number: "204", beds: 3 }, { number: "203", beds: 1 }];
+  const guests = [
+    guest("A", "2026-10-26", "2026-10-29", "204", 1), guest("B", "2026-10-27", "2026-10-30", "204", 2), guest("C", "2026-10-27", "2026-10-28", "203", 1),
+    { ...guest("D", "2026-10-27", "2026-10-29"), lodging: "", roomNo: "", roomCode: "" },                // staying, no bed yet
+    { ...guest("E", "2026-10-27", "2026-10-29", "204", 3), status: "Cancelled" },                        // cancelled guests free their bed
+    { ...guest("F", "2026-10-27", "2026-10-29", "204", 3), stay: "Day visitor" },
+    { ...guest("G", "2026-10-27", "2026-10-29", "204", 3), roomCode: "S204B9" },                          // a bed that does not exist is not counted
+  ];
+  const days = ["2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29"];
+  const result = lodgingOccupancy(guests, "Samarpan", rooms, days);
+  assert.equal(result.capacity, 4);
+  assert.deepEqual(result.perDay.map((d) => [d.filled, d.percent]), [[1, 25], [3, 75], [2, 50], [1, 25]]);
+  assert.equal(result.perDay[1].unassigned, 1, "only D lacks a lodging; G's bad bed code is a review item, not a free bed or a filled one");
+  assert.equal(result.peak.day, "2026-10-27");
+  assert.equal(lodgingOccupancy(guests, "Samarpan", [], days).perDay[0].percent, 0);
+});

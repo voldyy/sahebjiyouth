@@ -189,3 +189,12 @@
 .notification-attendees { list-style: none; margin: 0; padding: 0; display: grid; gap: .7rem; max-height: 40vh; overflow: auto; }
 .notification-attendees li { display: grid; gap: .2rem; padding: .7rem .8rem; border: 1px solid var(--border, #dce5e8); border-radius: 10px; }
 .notification-attendees small { color: var(--text-muted, #637780); }
+
+.stay-capacity { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; min-height: 44px; margin: 0 0 12px; padding: 6px 14px; border: 1px solid #e0f0fb; border-radius: 12px; background: #fff; }
+.stay-capacity > strong { font-size: 1.05rem; color: #26435a; white-space: nowrap; }
+.stay-capacity > strong span { font-size: .8rem; font-weight: 650; color: #588aa6; }
+.stay-capacity > span { color: #588aa6; font-size: .82rem; font-weight: 600; }
+.stay-capacity-bar { flex: 1 1 120px; min-width: 100px; height: 10px; border-radius: 999px; background: #e8f3fa; overflow: hidden; }
+.stay-capacity-bar i { display: block; height: 100%; border-radius: inherit; background: #3b9b6a; transition: width .25s ease; }
+.stay-capacity-bar.is-busy i { background: #d99a1c; }
+.stay-capacity-bar.is-full i { background: #b3342a; }

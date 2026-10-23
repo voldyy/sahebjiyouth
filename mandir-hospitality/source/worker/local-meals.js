@@ -2,8 +2,8 @@
 // meal records and become lightweight "Local" diners for the Yogi Prasad counts; no registration sheet rows are created.
 import { MEAL_CUTOFFS } from "../src/lib/mealForecast.js";
 
-export const LOCAL_FIRST_DAY = "2026-10-14";
-export const LOCAL_LAST_DAY = "2026-11-21";
+// The form is reusable, so it accepts any day from today up to this many days ahead.
+export const HORIZON_DAYS = 120;
 export const MAX_REGISTRATIONS = 800;
 export const MAX_NAMES = 12;
 const MEALS = Object.keys(MEAL_CUTOFFS);
@@ -15,6 +15,10 @@ const READ_LIMIT = { perClient: 60, windowMs: 3600000 };
 export class FormError extends Error {}
 
 const validDay = day => typeof day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(day) && new Date(`${day}T12:00:00Z`).toISOString().slice(0, 10) === day;
+const shiftDay = (day, amount) => new Date(Date.parse(`${day}T12:00:00Z`) + amount * 86400000).toISOString().slice(0, 10);
+const daysBetween = (from, to) => { const days = []; for (let day = from; day <= to && days.length <= HORIZON_DAYS + 1; day = shiftDay(day, 1)) days.push(day); return days; };
+// Older registrations stored a single From-To range; newer ones store the exact days.
+export const daysOf = record => Array.isArray(record.days) ? record.days : daysBetween(record.from, record.to);
 const hex = bytes => Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, "0")).join("");
 const sha256 = async value => hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
 // Short synchronous hash so a person keeps the same identity (and any dining override) when the list is edited.
@@ -27,7 +31,7 @@ export function cleanName(value) {
   return name;
 }
 
-export function normalize(input, today) {
+export function normalize(input, today, previous = []) {
   if (!Array.isArray(input.names) || input.names.length < 1 || input.names.length > MAX_NAMES) throw new FormError(`Enter 1 to ${MAX_NAMES} names.`);
   const names = [], seen = new Set();
   for (const raw of input.names) {
@@ -35,12 +39,19 @@ export function normalize(input, today) {
     if (seen.has(key)) throw new FormError("Each name should appear once.");
     seen.add(key); names.push(name);
   }
-  if (!validDay(input.from) || !validDay(input.to)) throw new FormError("Choose your dates.");
-  if (input.from < LOCAL_FIRST_DAY || input.to > LOCAL_LAST_DAY) throw new FormError("Choose dates from Oct 14 to Nov 21.");
-  if (input.from > input.to) throw new FormError("The last day is before the first day.");
-  if (input.to < today) throw new FormError("Those dates have passed.");
+  let days;
+  if (Array.isArray(input.days)) days = input.days;
+  else if (validDay(input.from) && validDay(input.to)) {
+    if (input.from > input.to) throw new FormError("The last day is before the first day.");
+    days = daysBetween(input.from, input.to);
+  } else throw new FormError("Choose your days.");
+  if (!days.length || days.length > HORIZON_DAYS + 1 || days.some(day => !validDay(day))) throw new FormError("Choose your days.");
+  days = [...new Set(days)].sort();
+  if (days.at(-1) > shiftDay(today, HORIZON_DAYS)) throw new FormError("Choose days within the next four months.");
+  // Days that already passed can stay on an existing registration, but cannot be added.
+  if (days.some(day => day < today && !previous.includes(day))) throw new FormError("Those dates have passed.");
   if (!Array.isArray(input.meals) || !input.meals.length || input.meals.some(m => !MEALS.includes(m))) throw new FormError("Choose at least one meal.");
-  return { names, from: input.from, to: input.to, meals: MEALS.filter(m => input.meals.includes(m)) };
+  return { names, days, from: days[0], to: days.at(-1), meals: MEALS.filter(m => input.meals.includes(m)) };
 }
 
 export function createLocalMeals({ get, put, remove, records, bumpRevision, secret, today, now = Date.now }) {
@@ -65,20 +76,21 @@ export function createLocalMeals({ get, put, remove, records, bumpRevision, secr
     if (!record || !safeEqual(await keyFor(id), String(req.editKey || ""))) throw new FormError("This registration could not be found.");
     return record;
   };
-  const view = record => ({ id: record.id, names: record.names, from: record.from, to: record.to, meals: record.meals });
+  const view = record => ({ id: record.id, names: record.names, days: daysOf(record), from: record.from, to: record.to, meals: record.meals });
 
   async function submit(req, client = "") {
     limitWrite(client);
     // A filled-in hidden field means a bot: report success without storing anything.
     if (req.website) return { ok: true, ignored: true };
     if (!/^[a-zA-Z0-9-]{20,80}$/.test(req.requestId || "")) throw new FormError("Please try again.");
-    const data = normalize(req, today());
     const updating = !!req.id;
-    const id = updating ? (await authorize(req)).id : (await sha256(`local:${req.requestId}`)).slice(0, 24);
+    const current = updating ? await authorize(req) : null;
+    const data = normalize(req, today(), current ? daysOf(current) : []);
+    const id = updating ? current.id : (await sha256(`local:${req.requestId}`)).slice(0, 24);
     const existing = get("local", id);
     if (!updating && existing) {
       // The same request repeated (a double tap or retry) returns the original registration.
-      if (JSON.stringify([existing.names, existing.from, existing.to, existing.meals]) !== JSON.stringify([data.names, data.from, data.to, data.meals])) throw new FormError("Please try again.");
+      if (JSON.stringify([existing.names, daysOf(existing), existing.meals]) !== JSON.stringify([data.names, data.days, data.meals])) throw new FormError("Please try again.");
       return { ok: true, id, editKey: await keyFor(id), registration: view(existing) };
     }
     if (!updating && records("local").length >= MAX_REGISTRATIONS) throw new FormError("Registration is full.");
@@ -111,11 +123,11 @@ export function createLocalMeals({ get, put, remove, records, bumpRevision, secr
       return { ok: false, error: "Please try again." };
     }
   }
-  // Each person becomes a diner for every selected meal on every day of the range.
+  // Each person becomes a diner for every selected meal on each of the chosen days.
   const diners = () => records("local").flatMap(record => record.names.map(name => ({
     sourceIdentity: `local:${record.id}:${fnv(name.toLowerCase())}`, registrationId: `LOCAL-${record.id}`, name, city: "Local",
-    status: "Registered", stay: "Local", arrivalDate: record.from, departureDate: record.to, arrivalTime: "", departureTime: "",
-    sourceWritable: true, count: 1, isLocalDiner: true, localMeals: record.meals,
+    status: "Registered", stay: "Local", arrivalDate: daysOf(record)[0], departureDate: daysOf(record).at(-1), arrivalTime: "", departureTime: "",
+    sourceWritable: true, count: 1, isLocalDiner: true, localMeals: record.meals, localDays: daysOf(record),
   })));
   return { handle, diners, submit, lookup, cancel };
 }

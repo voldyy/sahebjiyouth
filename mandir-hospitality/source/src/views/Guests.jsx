@@ -30,11 +30,22 @@ import { dateISO, formatTime, statusTone } from "../lib/data";
 import { exportCsv } from "../lib/storage";
 import Sheet from "../components/Sheet";
 import GuestForm from "../components/GuestForm";
+import DailyMovements from "../components/DailyMovements";
+import { allentownDay } from "../lib/housekeeping";
 import { newestRegistrationFirst } from "../lib/sheets";
 import { shortDay } from "../lib/occupancy";
 import "../styles/guests.css";
 
 const statuses = ["All guests", "Arriving", "Checked in", "Needs room"];
+const DEFAULT_SORT = "Newest registration";
+// Guests arriving today or later come first, soonest first; earlier arrivals follow, most recent first, and undated ones last.
+const byArrivalDate = (today) => (a, b) => {
+  const rank = (g) => (!g.arrivalDate ? 2 : g.arrivalDate >= today ? 0 : 1);
+  const [ra, rb] = [rank(a), rank(b)];
+  if (ra !== rb) return ra - rb;
+  if (ra === 1) return b.arrivalDate.localeCompare(a.arrivalDate) || (a.arrivalTime || "").localeCompare(b.arrivalTime || "") || a.name.localeCompare(b.name);
+  return (a.arrivalDate || "").localeCompare(b.arrivalDate || "") || (a.arrivalTime || "99:99").localeCompare(b.arrivalTime || "99:99") || a.name.localeCompare(b.name);
+};
 const dateAndTime = (day, time, known = true) => `${day ? shortDay(day) : "Date needed"}${time && known ? ` · ${formatTime(time)}` : ""}`;
 export default function Guests({
   guests,
@@ -49,7 +60,8 @@ export default function Guests({
   const [filter, setFilter] = useState("All guests");
   const [stay, setStay] = useState("All stays");
   const [arrivalDate, setArrivalDate] = useState("");
-  const [sort, setSort] = useState("Newest registration");
+  const [sort, setSort] = useState(DEFAULT_SORT);
+  const [mode, setMode] = useState("list");
   const [limit, setLimit] = useState(6);
   const [selectedId, setSelectedId] = useState(null);
   const [edit, setEdit] = useState(false);
@@ -82,6 +94,7 @@ export default function Guests({
         (stay === "All stays" || g.stay === stay) &&
         (!arrivalDate || g.arrivalDate === arrivalDate),
     );
+    if (sort === "Arrival date") list.sort(byArrivalDate(allentownDay()));
     if (sort === "Newest registration") list.sort(newestRegistrationFirst);
     if (sort === "Arrival time")
       list.sort((a, b) => a.arrivalTime.localeCompare(b.arrivalTime));
@@ -94,7 +107,7 @@ export default function Guests({
     setFilter("All guests");
     setStay("All stays");
     setArrivalDate("");
-    setSort("Newest registration");
+    setSort(DEFAULT_SORT);
     setLimit(6);
   };
   const checkIn = (g) => {
@@ -235,6 +248,12 @@ export default function Guests({
           </button>
         </div>
       )}
+      <div className="view-switch" role="group" aria-label="Main views">
+        {[["list", "Guest list"], ["daily", "Daily arrivals & departures"]].map(([id, label]) => (
+          <button key={id} type="button" className={mode === id ? "active" : ""} aria-pressed={mode === id} onClick={() => setMode(id)}>{label}</button>
+        ))}
+      </div>
+      {mode === "daily" ? <DailyMovements guests={guests} /> : <>
       <section className="card roster-card" aria-label="Guest roster">
         <div className="roster-card-top">
           <div>
@@ -300,8 +319,25 @@ export default function Guests({
               </select>
               <ChevronDown size={15} />
             </div>
+            <div className="stay-select sort-select">
+              <ArrowDownUp size={16} />
+              <select
+                aria-label="Sort guests"
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value);
+                  setLimit(6);
+                }}
+              >
+                <option>Newest registration</option>
+                <option>Arrival date</option>
+                <option>Arrival time</option>
+                <option>Guest name</option>
+              </select>
+              <ChevronDown size={15} />
+            </div>
             <button
-              className={`button secondary filter-button ${arrivalDate || sort !== "Newest registration" ? "has-filters" : ""}`}
+              className={`button secondary filter-button ${arrivalDate || sort !== DEFAULT_SORT ? "has-filters" : ""}`}
               onClick={() => setFiltersOpen(true)}
             >
               <SlidersHorizontal size={17} />
@@ -597,6 +633,7 @@ export default function Guests({
           </button>
         </section>
       </div>
+      </>}
       {filtersOpen && (
         <Sheet
           title="Find the right guests"
@@ -623,6 +660,7 @@ export default function Guests({
               Sort by
               <select value={sort} onChange={(e) => setSort(e.target.value)}>
                 <option>Newest registration</option>
+                <option>Arrival date</option>
                 <option>Arrival time</option>
                 <option>Guest name</option>
               </select>

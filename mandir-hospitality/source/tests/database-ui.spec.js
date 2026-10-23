@@ -158,7 +158,7 @@ test('transport padding and six-hour collapse update while the page remains open
   await page.screenshot({path:test.info().outputPath('transport-collapsed-mobile.png'),fullPage:true});
 });
 
-test('at 8 AM whole previous days minimize with smaller gray dates and remain reopenable', async ({page}) => {
+test('at 8 AM whole previous days leave the page, and come back minimized and reopenable with the past-trips toggle', async ({page}) => {
   await page.clock.install({time:new Date('2026-10-29T11:59:00Z')});
   const {h}=await setup(page,false, null);
   h.rows[1][12]='10/28/2026 11:30 PM';h.rows[1][13]='10/29/2026 6:00 PM';
@@ -170,6 +170,10 @@ test('at 8 AM whole previous days minimize with smaller gray dates and remain re
   await expect(yesterday).toHaveAttribute('aria-expanded','true');
   await expect(page.getByRole('button',{name:'Expand AA123 Arrivals 2026-10-28',exact:true})).toBeVisible();
   await page.clock.runFor(1100);
+  // Once the day is over its trips leave the page; the toggle brings them back minimized.
+  await expect(yesterday).toHaveCount(0);
+  await expect(page.getByLabel(/Show past trips \(1\)/)).not.toBeChecked();
+  await page.getByLabel(/Show past trips/).check();
   await expect(yesterday).toHaveAttribute('aria-expanded','false');
   await expect(page.getByRole('button',{name:'Expand AA123 Arrivals 2026-10-28',exact:true})).toHaveCount(0);
   const today=page.getByRole('button',{name:'Collapse trips for 2026-10-29',exact:true});
@@ -189,7 +193,7 @@ test('at 8 AM whole previous days minimize with smaller gray dates and remain re
   await expect(yesterday).toHaveAttribute('aria-expanded','true');
   await expect(page.getByRole('button',{name:'Expand AA123 Arrivals 2026-10-28',exact:true})).toBeVisible();
   await page.clock.resume();
-  await page.reload();await expect(yesterday).toHaveAttribute('aria-expanded','true');
+  await page.reload();await expect(yesterday).toHaveCount(0);await page.getByLabel(/Show past trips/).check();await expect(yesterday).toHaveAttribute('aria-expanded','true');
   await page.setViewportSize({width:1440,height:1000});
   await page.screenshot({path:test.info().outputPath('transport-expanded-desktop.png'),fullPage:true});
   await yesterday.click();await expect(yesterday).toHaveAttribute('aria-expanded','false');
@@ -271,4 +275,68 @@ test('Sadhak assigns the chosen building in daily, overview and walk-in flows', 
   expect(h.rows.at(-1).slice(29)).toEqual(['Sadhak','203','SD203B2']);
   expect(requests.filter(r=>r.action==='lodging')).toHaveLength(1);
   expect(requests.filter(r=>r.action==='guest')).toHaveLength(1);
+});
+
+const addGuest = (h, id, name, fields = {}) => { const row = [...h.rows[1]]; Object.assign(row, { 0: id, 1: '10/20/2026 9:00 AM', 8: name, 29: '', 30: '', 31: '', ...fields }); h.rows.push(row); };
+
+test('Main can sort by arrival date and has a day-by-day arrivals and departures view', async ({page}) => {
+  const {h}=await setup(page, true);                      // today is Sunday Oct 25
+  Object.assign(h.rows[1],{12:'11/1/2026 2:00 PM',13:'11/3/2026 4:00 PM'});
+  addGuest(h,'EARLY','Early Bird',{12:'10/20/2026 9:00 AM',13:'10/22/2026 9:00 AM'});
+  addGuest(h,'LATER','Zed Later',{12:'11/2/2026 1:00 PM',13:'11/6/2026 1:00 PM'});
+  addGuest(h,'TODAY','Today Guest',{12:'10/25/2026 8:30 AM',13:'10/27/2026 6:15 PM',14:'ABE',15:'UA100',16:'ABE',17:'UA200',20:'YES'});
+  addGuest(h,'SOON','Soon Guest',{1:'10/21/2026 9:00 AM',12:'10/26/2026 3:00 PM',13:'10/27/2026 6:15 PM',16:'ABE',17:'UA201'});
+  await page.reload();
+  await page.setViewportSize({width:1440,height:1000});
+  await expect(page.locator('.guest-name-cell').first()).toBeVisible();
+  await expect(page.getByLabel('Sort guests')).toHaveValue('Newest registration');   // the default is unchanged
+  await page.getByLabel('Sort guests').selectOption('Arrival date');
+  // Arriving today or later come first, soonest first; earlier arrivals follow.
+  const order=async()=>page.locator('.guest-table .guest-name-cell strong').allInnerTexts();
+  await expect.poll(order).toEqual(['Today Guest','Soon Guest','Database Guest','Zed Later','Early Bird']);
+
+  await page.getByRole('button',{name:'Daily arrivals & departures'}).click();
+  await expect(page.getByRole('heading',{name:'Sunday, October 25, 2026'})).toBeVisible();
+  await expect(page.locator('.daily-arrivals .daily-trip strong')).toHaveText(['Today Guest']);
+  await expect(page.locator('.daily-arrivals .daily-trip')).toContainText('8:30 AM');
+  await expect(page.locator('.daily-arrivals .daily-trip')).toContainText('UA100');
+  await expect(page.locator('.daily-arrivals .daily-trip')).toContainText('Pickup');
+  await expect(page.locator('.daily-departures .daily-empty')).toBeVisible();
+  await page.getByRole('button',{name:'Next day'}).click();
+  await expect(page.locator('.daily-arrivals .daily-trip strong')).toHaveText(['Soon Guest']);
+  await page.getByRole('button',{name:/Tuesday, October 27, 2026: 0 arriving, 2 departing/}).click();
+  await expect(page.locator('.daily-departures .daily-trip strong')).toHaveText(['Soon Guest','Today Guest']);   // same time, so by name
+  await expect(page.locator('.daily-departures h3')).toContainText('2');
+  await page.getByRole('button',{name:'Today',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Sunday, October 25, 2026'})).toBeVisible();
+  await page.getByRole('button',{name:'Guest list'}).click();
+  await expect(page.locator('.guest-table')).toBeVisible();
+  // It is also usable on a phone.
+  await page.setViewportSize({width:390,height:844});
+  await page.getByRole('button',{name:'Daily arrivals & departures'}).click();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  const chip=await page.locator('.daily-chip').first().boundingBox();expect(chip.height).toBeGreaterThanOrEqual(44);
+});
+
+test('Accommodations shows how much of Samarpan is filled for the day or the busiest day of the week', async ({page}) => {
+  const {h}=await setup(page, true);
+  Object.assign(h.rows[1],{12:'10/26/2026 2:00 PM',13:'10/29/2026 4:00 PM',29:'Samarpan',30:'101',31:'S101B1'});
+  addGuest(h,'B2','Bed Two',{12:'10/26/2026 2:00 PM',13:'10/29/2026 4:00 PM',29:'Samarpan',30:'101',31:'S101B2'});
+  addGuest(h,'B3','Bed Three',{12:'10/27/2026 2:00 PM',13:'10/29/2026 4:00 PM',29:'Samarpan',30:'101',31:'S101B3'});
+  addGuest(h,'B4','Bed Four',{12:'10/28/2026 2:00 PM',13:'10/29/2026 4:00 PM',29:'Samarpan',30:'101',31:'S101B4'});
+  addGuest(h,'NOBED','Needs Bed',{12:'10/27/2026 2:00 PM',13:'10/29/2026 4:00 PM'});
+  await page.reload();
+  await page.goto('/#rooms');
+  const meter=page.getByLabel('Samarpan capacity',{exact:true});
+  await expect(meter).toContainText('5% reached');                       // 4 of 76 beds on the busiest day
+  await expect(meter).toContainText('4 of 76 beds');
+  await expect(meter).toContainText('busiest Oct 28');
+  await expect(meter).toContainText('1 without a bed');
+  await expect(meter.getByRole('progressbar')).toHaveAttribute('aria-valuenow','5');
+  await page.getByRole('button',{name:'Daily view',exact:true}).click();
+  await page.getByLabel('Choose occupancy date').fill('2026-10-26');
+  await expect(meter).toContainText('3% reached');                       // two beds that day
+  await expect(meter).toContainText('2 of 76 beds · Oct 26');
+  await page.getByRole('button',{name:'Sadhak',exact:true}).click();
+  await expect(page.getByLabel('Sadhak capacity',{exact:true})).toContainText('0% reached');
 });

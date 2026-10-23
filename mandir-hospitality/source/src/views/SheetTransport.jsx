@@ -24,7 +24,8 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
   const [query, setQuery] = useState(""),
     [airport, setAirport] = useState("All"),
     [driver, setDriver] = useState(() => driverFromUrl(location.href)),
-    [date, setDate] = useState("");
+    [date, setDate] = useState(""),
+    [showPast, setShowPast] = useState(false);
   const [resources, setResources] = useState(false),
     [inlineDraft, setInlineDraft] = useState(null),
     [saveState, setSaveState] = useState(null),
@@ -79,7 +80,9 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
   const airports = [
     ...new Set(groups.map((g) => g.airport).filter(Boolean)),
   ].sort();
-  const filtered = groups.filter(
+  // Once a day is over its trips are tucked away; the toggle (or choosing that exact date) brings them back.
+  const isPast = (g) => dayCollapseAt(g.day, now) !== null;
+  const matching = groups.filter(
     (g) =>
       (airport === "All" || g.airport === airport) &&
       (!date || g.day === date) &&
@@ -98,6 +101,8 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
         .toLowerCase()
         .includes(query.toLowerCase()),
   );
+  const pastTrips = matching.filter(isPast).length;
+  const filtered = showPast || date ? matching : matching.filter((g) => !isPast(g));
   const days = [...new Set(filtered.map((g) => g.day))];
   const assigned = filtered.filter(
     (g) => g.plan.driver && g.plan.vehicle,
@@ -248,6 +253,12 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
             All dates
           </button>
         )}
+        {!date && (
+          <label className="transport-past-toggle">
+            <input type="checkbox" checked={showPast} onChange={(e) => setShowPast(e.target.checked)} />
+            <span>Show past trips{pastTrips ? ` (${pastTrips})` : ""}</span>
+          </label>
+        )}
       </div>
       {driver !== "All" && driver !== "Unassigned" && (
         <div className="transport-driver-link">
@@ -270,7 +281,9 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
           <p>
             {workspace.loading
               ? "Loading travel details…"
-              : "Adjust the filters, or add travel details in the guest sheet."}
+              : pastTrips && !showPast && !date
+                ? "Earlier trips are hidden. Turn on “Show past trips” to see them."
+                : "Adjust the filters, or add travel details in the guest sheet."}
           </p>
         </div>
       )}
