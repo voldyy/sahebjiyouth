@@ -83,7 +83,6 @@
       <fieldset class="field"><legend>Days</legend>
         <div class="chips"><button type="button" class="chip" data-quick="week">Next 7 days</button><button type="button" class="chip" data-quick="weekends">Weekends</button><button type="button" class="chip" data-quick="clear">Clear</button></div>
         <div class="cal" id="cal"></div>
-        <button class="link" type="button" id="moreMonths">Show next month</button>
         <p class="picked" id="picked" aria-live="polite"></p>
       </fieldset>
       <fieldset class="field"><legend>Meals</legend><div class="meals" id="meals"></div></fieldset>
@@ -97,20 +96,22 @@
       <div class="regs" id="regs"></div>
       <button class="button secondary" type="button" id="another">+ Add another person or days</button>
     </section>
+    <section class="done" id="closed" hidden><h2 style="color:var(--muted)">Registration has closed</h2></section>
   </div></main>
 
   <script>
   (() => {
     const API = "https://mandir-hospitality-api.usayouth.workers.dev/api", STORE = "yp-meals", OLD_STORE = "yp-diwali-meals";
-    const HORIZON = 120, MAX_FAMILY = 11;
+    const LAST = "2026-11-14", MAX_FAMILY = 11;   // the calendar ends here
     const MEALS = [["breakfast", "Breakfast", "8–10 AM"], ["lunch", "Lunch", "12–2 PM"], ["dinner", "Dinner", "6–8 PM"]];
     const $ = id => document.getElementById(id);
     const uuid = () => crypto.randomUUID ? crypto.randomUUID() : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
-    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
+    const todayET = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
+    let today = todayET();
     const shift = (iso, n) => new Date(Date.parse(`${iso}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
-    const last = shift(today, HORIZON);
+    const last = LAST;
     const dow = iso => new Date(`${iso}T12:00:00Z`).getUTCDay();
-    let saved = [], editing = null, picked = new Set(), shown = 2, attempt = { fp: "", id: "" };
+    let saved = [], editing = null, picked = new Set(), attempt = { fp: "", id: "" };
 
     // ---- meals ----
     for (const [id, name, time] of MEALS) {
@@ -138,13 +139,13 @@
     // ---- day calendar: tap a day, or slide across days to select a range ----
     const month = iso => iso.slice(0, 7);
     const monthsToShow = () => { const out = []; for (let m = month(today); m <= month(last); m = month(shift(`${m}-15`, 31).slice(0, 8) + "01")) out.push(m); return out; };
-    const allMonths = monthsToShow();
+    const allMonths = monthsToShow();   // the months from today's through the last day
     const selectable = iso => iso >= today && iso <= last;
     const label = iso => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
     const buttons = () => [...$("cal").querySelectorAll("button[data-day]")];
     function buildMonths() {
       const cal = $("cal"); cal.replaceChildren();
-      allMonths.slice(0, shown).forEach(m => {
+      allMonths.forEach(m => {
         const box = document.createElement("section"); box.className = "month";
         const title = document.createElement("h3"); title.textContent = new Date(`${m}-15T12:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }); box.append(title);
         const grid = document.createElement("div"); grid.className = "grid"; grid.setAttribute("role", "group"); grid.setAttribute("aria-label", title.textContent);
@@ -152,7 +153,7 @@
         // The first month starts at the current week, so days that are long past don't push the form down.
         const first = m === month(today) ? Math.max(1, +today.slice(8) - dow(today)) : 1;
         for (let i = 0; i < dow(`${m}-${String(first).padStart(2, "0")}`); i++) { const b = document.createElement("div"); b.className = "blank"; grid.append(b); }
-        const count = new Date(Date.UTC(+m.slice(0, 4), +m.slice(5), 0)).getUTCDate();
+        const count = m === month(last) ? +last.slice(8) : new Date(Date.UTC(+m.slice(0, 4), +m.slice(5), 0)).getUTCDate();
         for (let n = first; n <= count; n++) {
           const iso = `${m}-${String(n).padStart(2, "0")}`;
           const b = Object.assign(document.createElement("button"), { type: "button", className: "day", textContent: n });
@@ -162,7 +163,7 @@
         }
         box.append(grid); cal.append(box);
       });
-      $("moreMonths").hidden = shown >= allMonths.length; refresh();
+      refresh();
     }
     const runs = days => { const out = []; for (const d of [...days].sort()) { const run = out.at(-1); if (run && shift(run.to, 1) === d) run.to = d; else out.push({ from: d, to: d }); } return out; };
     const short = iso => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
@@ -200,14 +201,11 @@
       if (afterDrag) { afterDrag = false; return; }
       picked = new Set(picked); picked.has(b.dataset.day) ? picked.delete(b.dataset.day) : picked.add(b.dataset.day); refresh();
     });
-    $("moreMonths").addEventListener("click", () => { shown = Math.min(allMonths.length, shown + 1); buildMonths(); });
     document.querySelectorAll("[data-quick]").forEach(chip => chip.addEventListener("click", () => {
       const kind = chip.dataset.quick; picked = new Set([...picked].filter(d => !selectable(d)));
-      if (kind === "week") for (let i = 0; i < 7; i++) picked.add(shift(today, i));
-      if (kind === "weekends") for (let d = today; d <= shift(today, 34); d = shift(d, 1)) { if (dow(d) === 0 || dow(d) === 6) picked.add(d); }
-      // Weekends can reach into months that are not showing yet.
-      const needed = allMonths.findIndex(m => m === month([...picked].sort().at(-1) || today)) + 1; if (needed > shown) shown = needed;
-      buildMonths();
+      if (kind === "week") for (let i = 0; i < 7; i++) if (selectable(shift(today, i))) picked.add(shift(today, i));
+      if (kind === "weekends") for (let d = today; d <= last; d = shift(d, 1)) { if (dow(d) === 0 || dow(d) === 6) picked.add(d); }
+      refresh();
     }));
 
     // ---- confirmation list ----
@@ -215,15 +213,16 @@
     const whoLine = names => names.length > 1 ? `${names[0]} + ${names.length - 1}` : names[0];
     function fill(reg) {
       $("me").value = reg.names[0] || ""; $("family").replaceChildren(); reg.names.slice(1).forEach(n => addFamily(n)); sync();
-      picked = new Set(reg.days); shown = Math.max(2, allMonths.findIndex(m => m === month([...picked].sort().at(-1) || today)) + 1); buildMonths();
+      picked = new Set(reg.days); refresh();
       document.querySelectorAll("#meals input").forEach(b => { b.checked = reg.meals.includes(b.value); });
     }
     function blank() {
-      editing = null; $("me").value = ""; $("family").replaceChildren(); sync(); picked = new Set(); shown = 2; buildMonths();
+      editing = null; $("me").value = ""; $("family").replaceChildren(); sync(); picked = new Set(); refresh();
       document.querySelectorAll("#meals input").forEach(b => { b.checked = false; }); $("submit").textContent = "Submit"; fail("");
     }
     function showList() {
-      if (!saved.length) { $("done").hidden = true; $("form").hidden = false; return; }
+      $("another").hidden = today > LAST;
+      if (!saved.length) { $("done").hidden = true; $("form").hidden = today > LAST; $("closed").hidden = today <= LAST; return; }
       $("form").hidden = true; $("done").hidden = false; $("regs").replaceChildren();
       for (const entry of saved) {
         const reg = entry.reg, card = document.createElement("div"); card.className = "reg";
@@ -274,7 +273,14 @@
     });
     $("another").addEventListener("click", () => { blank(); $("done").hidden = true; $("form").hidden = false; window.scrollTo(0, 0); });
 
-    buildMonths();
+    buildMonths(); if (today > LAST) { $("form").hidden = true; $("closed").hidden = false; }
+    // The first week follows the current day, including when the page stays open past midnight.
+    const rollOver = () => {
+      const now = todayET(); if (now === today) return;
+      today = now; buildMonths();
+      if (today > LAST) { $("another").hidden = true; if ($("done").hidden) { $("form").hidden = true; $("closed").hidden = false; } }
+    };
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) rollOver(); }); addEventListener("focus", rollOver);
     // Someone returning on the same phone sees their registrations and can edit or cancel them.
     (async () => {
       let stored = []; try { stored = JSON.parse(localStorage.getItem(STORE) || "null") || []; } catch { stored = []; }

@@ -7,10 +7,10 @@ const html = readFileSync(new URL("../local-meals-form/index.html", import.meta.
 const cors = { "Access-Control-Allow-Origin": "https://form.test", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 
 // A tiny stand-in for the Worker: it keeps one registration per id and checks the edit key.
-async function open(page, { fail = null, stored = null, seed = [] } = {}) {
+async function open(page, { fail = null, stored = null, seed = [], now = "2026-10-23T16:00:00Z" } = {}) {
   const state = { calls: [], regs: new Map(seed.map(reg => [reg.id, reg])) };
   if (stored) await page.addInitScript(([key, value]) => localStorage.setItem(key, value), stored);
-  await page.clock.install({ time: new Date("2026-10-23T16:00:00Z") });
+  await page.clock.install({ time: new Date(now) });
   await page.route(PAGE, route => route.fulfill({ contentType: "text/html", body: html }));
   await page.route("https://form.test/diwali/logo.png", route => route.fulfill({ contentType: "image/png", body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==", "base64") }));
   await page.route(API, async route => {
@@ -101,15 +101,16 @@ test("on a touch screen a tap picks a day, a sideways swipe selects a stretch, a
   await touch("touchEnd");
   await expect(page.locator("#picked")).toHaveText("Nov 3–6, Nov 10 · 5 days");
   // Swiping up and down moves the page and leaves the choice alone.
-  const [x3, y3] = await centre("2026-10-28"), before = await page.evaluate(() => scrollY);
-  await touch("touchStart", x3, y3 + 120);
-  for (let i = 1; i <= 8; i++) await touch("touchMove", x3, y3 + 120 - i * 25);
+  await page.evaluate(() => scrollTo(0, 0));
+  const box = await day(page, "2026-10-28").boundingBox(), [x3, y3, before] = [box.x + box.width / 2, box.y + box.height / 2, 0];
+  await touch("touchStart", x3, y3);
+  for (let i = 1; i <= 8; i++) await touch("touchMove", x3, y3 - i * 25);
   await touch("touchEnd");
   await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(before);
   await expect(page.locator("#picked")).toHaveText("Nov 3–6, Nov 10 · 5 days");
 });
 
-test("quick choices, past days and further months", async ({ page }) => {
+test("quick choices and past days", async ({ page }) => {
   await open(page);
   await expect(day(page, "2026-10-22")).toBeDisabled();
   await expect(day(page, "2026-10-23")).toBeEnabled();
@@ -117,17 +118,40 @@ test("quick choices, past days and further months", async ({ page }) => {
   await page.getByRole("button", { name: "Next 7 days" }).click();
   await expect(page.locator("#picked")).toHaveText("Oct 23–29 · 7 days");
   await page.getByRole("button", { name: "Weekends" }).click();
-  await expect(page.locator("#picked")).toHaveText("Oct 24–25, Oct 31 – Nov 1, Nov 7–8, Nov 14–15, Nov 21–22 · 10 days");
+  await expect(page.locator("#picked")).toHaveText("Oct 24–25, Oct 31 – Nov 1, Nov 7–8, Nov 14 · 7 days");
   await page.getByRole("button", { name: "Clear" }).click();
   await expect(page.locator("#picked")).toHaveText("");
-  await expect(day(page, "2026-12-05")).toHaveCount(0);
-  const more = page.getByRole("button", { name: "Show next month" });
-  await more.click();
-  await expect(day(page, "2026-12-05")).toBeVisible();
-  await more.click(); await more.click();
-  await expect(more).toBeHidden();
-  await expect(day(page, "2027-02-20")).toBeEnabled();
-  await expect(day(page, "2027-02-21")).toBeDisabled();   // four months ahead is the limit
+});
+
+test("the calendar ends on Nov 14 and starts in the week of the current day", async ({ page }) => {
+  await open(page);
+  await expect(page.getByRole("button", { name: "Show next month" })).toHaveCount(0);
+  await expect(page.locator(".month h3")).toHaveText(["October 2026", "November 2026"]);
+  await expect(day(page, "2026-11-14")).toBeEnabled();
+  await expect(day(page, "2026-11-15")).toHaveCount(0);
+  await expect(day(page, "2026-12-01")).toHaveCount(0);
+  // Friday Oct 23: the first row is the week of Sunday Oct 18, and nothing earlier is drawn.
+  await expect(page.locator("button[data-day]").first()).toHaveAttribute("data-day", "2026-10-18");
+  await expect(day(page, "2026-10-18")).toBeDisabled();
+  await expect(day(page, "2026-10-17")).toHaveCount(0);
+});
+
+test("the first week follows the day, including a page left open past midnight", async ({ page }) => {
+  await open(page, { now: "2026-11-11T16:00:00Z" });     // Wednesday Nov 11
+  await expect(page.locator(".month h3")).toHaveText(["November 2026"]);
+  await expect(page.locator("button[data-day]").first()).toHaveAttribute("data-day", "2026-11-08");
+  await expect(page.locator("button[data-day]")).toHaveCount(7);
+  await expect(page.locator("button[data-day]").last()).toHaveAttribute("data-day", "2026-11-14");
+  await expect(day(page, "2026-11-10")).toBeDisabled();
+  await pick(page, "2026-11-12");
+  // Overnight Thursday Nov 12 becomes the first day available; the earlier week row stays until its Sunday.
+  await page.clock.fastForward(24 * 3600 * 1000);
+  await page.evaluate(() => dispatchEvent(new Event("focus")));
+  await expect(day(page, "2026-11-11")).toBeDisabled();
+  await expect(day(page, "2026-11-12")).toHaveClass(/today/);
+  await page.clock.fastForward(3 * 24 * 3600 * 1000);   // Sunday Nov 15: the form is over
+  await page.evaluate(() => dispatchEvent(new Event("focus")));
+  await expect(page.getByRole("heading", { name: "Registration has closed" })).toBeVisible();
 });
 
 test("family members can be added and removed, and the summary counts them", async ({ page }) => {
