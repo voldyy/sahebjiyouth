@@ -3,9 +3,11 @@ import { createHarness, TEST_ADMIN_KEY } from "./helpers/apps-script-harness.js"
 import { transportGroups } from "../src/lib/transport.js";
 import { guestsFromRows } from "../src/lib/sheets.js";
 const API = "https://database.test/api";
-async function setup(page, admin = true) {
+const TODAY = new Date("2026-10-25T16:00:00Z"); // first room-planning day, so tests do not depend on the real date
+async function setup(page, admin = true, today = TODAY) {
+  if (today) await page.clock.install({ time: today });
   const headers = Array(32).fill(""); Object.assign(headers, { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" });
-  const row = Array(32).fill(""); Object.assign(row, { 0: "SYNTHETIC-DB", 8: "Database Guest", 9: "Self", 11: "Flight", 12: "10/18/2026 2:00 PM", 13: "10/20/2026", 14: "PHL", 15: "AA123", 18: "YES", 20: "YES", 24: "Confirmed" });
+  const row = Array(32).fill(""); Object.assign(row, { 0: "SYNTHETIC-DB", 8: "Database Guest", 9: "Self", 11: "Flight", 12: "11/1/2026 2:00 PM", 13: "11/3/2026", 14: "PHL", 15: "AA123", 18: "YES", 20: "YES", 24: "Confirmed" });
   const h = createHarness([headers, row]);
   if (admin) await page.addInitScript(key => sessionStorage.setItem("mandir.admin-access.v1", key), TEST_ADMIN_KEY);
   const requests = [];
@@ -79,22 +81,22 @@ test("compact flight fallback keeps tracking available and removes Pickup journe
 test('bed selection shares a compact guest picker and checks the full stay', async ({ page }) => {
   const { h, requests } = await setup(page);
   const occupied = [...h.rows[1]];
-  Object.assign(occupied, {0:'FUTURE-OCCUPANT',8:'Future Occupant',12:'10/19/2026',13:'10/21/2026',29:'Samarpan',30:'203',31:'S203B2'});
+  Object.assign(occupied, {0:'FUTURE-OCCUPANT',8:'Future Occupant',12:'11/2/2026',13:'11/4/2026',29:'Samarpan',30:'203',31:'S203B2'});
   h.rows.push(occupied);
   await page.goto('/#rooms');
   await page.reload();
   await page.getByRole('button',{name:'Daily view',exact:true}).click();
-  await page.getByLabel('Choose occupancy date').fill('2026-10-18');
+  await page.getByLabel('Choose occupancy date').fill('2026-11-01');
   await page.locator('.stay-slot[data-room="203"][data-bed="2"]').getByRole('button').click();
   await expect(page.locator('.stay-chosen-bed')).toContainText('Room 203 · Bed 2');
   await expect(page.getByLabel('Guest to assign')).toBeVisible();
   await expect(page.getByLabel('Room number (AE)')).toHaveCount(0);
   await page.getByRole('button',{name:'Close dialog'}).click();
   await page.getByRole('button',{name:'Day at a glance',exact:true}).click();
-  await page.getByLabel('Choose occupancy date').fill('2026-10-18');
+  await page.getByLabel('Choose occupancy date').fill('2026-11-01');
   await page.getByRole('button',{name:'Assign guest to room 203 bed 2',exact:true}).click();
   await expect(page.locator('.stay-chosen-bed')).toContainText('Room 203 · Bed 2');
-  await page.getByLabel('Guest to assign').selectOption({label:'Database Guest · Oct 18 – Oct 20'});
+  await page.getByLabel('Guest to assign').selectOption({label:'Database Guest · Nov 1 – Nov 3'});
   await expect(page.getByRole('alert')).toContainText('occupied during this guest’s stay');
   await expect(page.getByRole('button',{name:'Save assignment',exact:true})).toBeDisabled();
   await page.getByRole('button',{name:'Change room or bed'}).click();
@@ -135,17 +137,17 @@ test("lost save responses retry the same request once", async ({ page }) => {
 });
 
 test('transport padding and six-hour collapse update while the page remains open', async ({page}) => {
-  await page.clock.install({time:new Date('2026-10-14T20:29:00Z')});
-  const {h,requests}=await setup(page);
-  h.rows[1][12]='10/14/2026 10:30 AM';
+  await page.clock.install({time:new Date('2026-10-28T20:29:00Z')});
+  const {h,requests}=await setup(page, true, null);
+  h.rows[1][12]='10/28/2026 10:30 AM';
   const trip=transportGroups(guestsFromRows(h.rows),'Arrivals')[0];
   h.request({action:'trip-display',id:trip.id,collapsed:false,requestId:crypto.randomUUID()});
-  h.sheets.get('Transport Display').rows[1][2]='2026-10-14T15:00:00Z|before-cutoff';
+  h.sheets.get('Transport Display').rows[1][2]='2026-10-28T15:00:00Z|before-cutoff';
   await page.goto('/#transport');
   await page.reload();
   await expect(page.getByRole('heading',{name:'Airport Trips',exact:true})).toBeVisible();
-  await page.clock.pauseAt(new Date('2026-10-14T20:29:59Z'));
-  const toggle=()=>page.getByRole('button',{name:/^(Expand|Collapse) AA123 Arrivals 2026-10-14$/});
+  await page.clock.pauseAt(new Date('2026-10-28T20:29:59Z'));
+  const toggle=()=>page.getByRole('button',{name:/^(Expand|Collapse) AA123 Arrivals 2026-10-28$/});
   await expect(toggle()).toHaveAttribute('aria-expanded','true');
   const spacing=await toggle().evaluate(el=>({left:parseFloat(getComputedStyle(el).paddingLeft),right:parseFloat(getComputedStyle(el).paddingRight)}));
   expect(spacing.left).toBeGreaterThanOrEqual(12);expect(spacing.right).toBeGreaterThanOrEqual(12);
@@ -157,20 +159,20 @@ test('transport padding and six-hour collapse update while the page remains open
 });
 
 test('at 8 AM whole previous days minimize with smaller gray dates and remain reopenable', async ({page}) => {
-  await page.clock.install({time:new Date('2026-10-15T11:59:00Z')});
-  const {h}=await setup(page,false);
-  h.rows[1][12]='10/14/2026 11:30 PM';h.rows[1][13]='10/15/2026 6:00 PM';
+  await page.clock.install({time:new Date('2026-10-29T11:59:00Z')});
+  const {h}=await setup(page,false, null);
+  h.rows[1][12]='10/28/2026 11:30 PM';h.rows[1][13]='10/29/2026 6:00 PM';
   await page.goto('/#transport');
   await page.reload();
   await expect(page.getByRole('heading',{name:'Airport Trips',exact:true})).toBeVisible();
-  await page.clock.pauseAt(new Date('2026-10-15T11:59:59Z'));
-  const yesterday=page.getByRole('button',{name:/^(Expand|Collapse) trips for 2026-10-14$/});
+  await page.clock.pauseAt(new Date('2026-10-29T11:59:59Z'));
+  const yesterday=page.getByRole('button',{name:/^(Expand|Collapse) trips for 2026-10-28$/});
   await expect(yesterday).toHaveAttribute('aria-expanded','true');
-  await expect(page.getByRole('button',{name:'Expand AA123 Arrivals 2026-10-14',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Expand AA123 Arrivals 2026-10-28',exact:true})).toBeVisible();
   await page.clock.runFor(1100);
   await expect(yesterday).toHaveAttribute('aria-expanded','false');
-  await expect(page.getByRole('button',{name:'Expand AA123 Arrivals 2026-10-14',exact:true})).toHaveCount(0);
-  const today=page.getByRole('button',{name:'Collapse trips for 2026-10-15',exact:true});
+  await expect(page.getByRole('button',{name:'Expand AA123 Arrivals 2026-10-28',exact:true})).toHaveCount(0);
+  const today=page.getByRole('button',{name:'Collapse trips for 2026-10-29',exact:true});
   await expect(today).toHaveAttribute('aria-expanded','true');
   const oldStyle=await yesterday.evaluate(el=>({size:parseFloat(getComputedStyle(el).fontSize),color:getComputedStyle(el).color}));
   const todaySize=await today.evaluate(el=>parseFloat(getComputedStyle(el).fontSize));
@@ -180,12 +182,12 @@ test('at 8 AM whole previous days minimize with smaller gray dates and remain re
   await page.route(API,async route=>{
     const req=route.request().postDataJSON();if(req.action!=='trip-display')return route.fallback();
     const result=h.request(req);
-    h.sheets.get('Transport Display').rows.find(r=>r[0]===req.id)[2]='2026-10-15T12:00:01Z|reopened';
+    h.sheets.get('Transport Display').rows.find(r=>r[0]===req.id)[2]='2026-10-29T12:00:01Z|reopened';
     await route.fulfill({json:h.request({action:'trip-display-read',accessKey:''})});
   });
   await yesterday.click();
   await expect(yesterday).toHaveAttribute('aria-expanded','true');
-  await expect(page.getByRole('button',{name:'Expand AA123 Arrivals 2026-10-14',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Expand AA123 Arrivals 2026-10-28',exact:true})).toBeVisible();
   await page.clock.resume();
   await page.reload();await expect(yesterday).toHaveAttribute('aria-expanded','true');
   await page.setViewportSize({width:1440,height:1000});
@@ -196,11 +198,11 @@ test('at 8 AM whole previous days minimize with smaller gray dates and remain re
 
 test('compact lodging cards prioritize unassigned guests and Main prioritizes submission time', async ({page}) => {
   const {h}=await setup(page);
-  Object.assign(h.rows[1], {1:'10/14/2026 9:00 AM',29:'Samarpan',30:'101',31:'S101B1'});
+  Object.assign(h.rows[1], {1:'10/28/2026 9:00 AM',29:'Samarpan',30:'101',31:'S101B1'});
   const add=(id,name,stamp,fields={})=>{const row=[...h.rows[1]];Object.assign(row,{0:id,1:stamp,8:name,29:'',30:'',31:'',...fields});h.rows.push(row);};
-  add('NEWEST-REG','Newest Registration','2026-10-15T15:00:00Z');
-  add('MIDDLE-REG','Middle Registration','10/15/2026 10:00 AM');
-  add('ASSIGNED-REG','Assigned Guest','10/13/2026 8:00 AM',{29:'Samarpan',30:'102',31:'S102B1'});
+  add('NEWEST-REG','Newest Registration','2026-10-29T15:00:00Z');
+  add('MIDDLE-REG','Middle Registration','10/29/2026 10:00 AM');
+  add('ASSIGNED-REG','Assigned Guest','10/27/2026 8:00 AM',{29:'Samarpan',30:'102',31:'S102B1'});
   await page.reload();
   await expect(page.locator('.mobile-guest-name').first()).toContainText('Newest Registration');
   await page.goto('/#rooms');
@@ -220,23 +222,23 @@ test('compact lodging cards prioritize unassigned guests and Main prioritizes su
 test('daily and weekly views start at the current Allentown day and week', async ({page}) => {
   // November 3 in Allentown, November 4 UTC; also covers the second DST offset.
   await page.clock.install({time:new Date('2026-11-04T04:30:00Z')});
-  await setup(page);
+  await setup(page, true, null);
   await page.goto('/#rooms');
-  await expect(page.getByLabel('Choose occupancy week')).toHaveValue('3');
+  await expect(page.getByLabel('Choose occupancy week')).toHaveValue('1');
   await expect(page.getByRole('heading',{name:'Nov 1 – Nov 7, 2026'})).toBeVisible();
   await page.getByRole('button',{name:'Daily view',exact:true}).click();
   await expect(page.getByLabel('Choose occupancy date')).toHaveValue('2026-11-03');
   await page.getByRole('button',{name:'Previous occupancy day'}).click();
   await expect(page.getByLabel('Choose occupancy date')).toHaveValue('2026-11-02');
   await page.getByRole('button',{name:'Weekly view',exact:true}).click();
-  await expect(page.getByLabel('Choose occupancy week')).toHaveValue('3');
+  await expect(page.getByLabel('Choose occupancy week')).toHaveValue('1');
   await page.getByRole('button',{name:'Open daily view for Thursday, November 5, 2026'}).click();
   await expect(page.getByLabel('Choose occupancy date')).toHaveValue('2026-11-05');
 });
 
 test('Sadhak assigns the chosen building in daily, overview and walk-in flows', async ({page}) => {
-  await page.clock.install({time:new Date('2026-10-18T14:00:00Z')});
-  const {h,requests}=await setup(page);
+  await page.clock.install({time:new Date('2026-11-01T14:00:00Z')});
+  const {h,requests}=await setup(page, true, null);
   const occupied=[...h.rows[1]];
   Object.assign(occupied,{0:'SAMARPAN-OCCUPANT',8:'Samarpan Occupant',29:'Samarpan',30:'101',31:'S101B1'});
   h.rows.push(occupied);
@@ -248,9 +250,9 @@ test('Sadhak assigns the chosen building in daily, overview and walk-in flows', 
   await expect(page.locator('.stay-slot[data-lodging="Sadhak"][data-room="201"]')).toHaveCount(1);
   await expect(page.locator('.stay-slot[data-lodging="Sadhak"][data-room="104"]')).toHaveCount(2);
   await expect(page.locator('.stay-slot[data-lodging="Sadhak"][data-room="204"]')).toHaveCount(2);
-  await page.getByRole('button',{name:'Assign Sadhak room 101 bed 1 on Sunday, October 18, 2026',exact:true}).click();
+  await page.getByRole('button',{name:'Assign Sadhak room 101 bed 1 on Sunday, November 1, 2026',exact:true}).click();
   await expect(page.locator('.stay-chosen-bed')).toContainText('Sadhak');
-  await page.getByLabel('Guest to assign').selectOption({label:'Database Guest · Oct 18 – Oct 20'});
+  await page.getByLabel('Guest to assign').selectOption({label:'Database Guest · Nov 1 – Nov 3'});
   await page.getByRole('button',{name:'Save assignment',exact:true}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(h.rows[1].slice(29)).toEqual(['Sadhak','101','SD101B1']);
@@ -263,7 +265,7 @@ test('Sadhak assigns the chosen building in daily, overview and walk-in flows', 
   await expect(page.locator('.stay-chosen-bed')).toContainText('Sadhak');
   await expect(page.locator('.stay-chosen-bed')).toContainText('Room 203 · Bed 2');
   await page.getByLabel('Guest name',{exact:true}).fill('Sadhak New Walk In');
-  await page.getByLabel('Checkout',{exact:true}).fill('2026-10-20');
+  await page.getByLabel('Checkout',{exact:true}).fill('2026-11-03');
   await page.getByRole('button',{name:'Add guest & assign bed',exact:true}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(h.rows.at(-1).slice(29)).toEqual(['Sadhak','203','SD203B2']);

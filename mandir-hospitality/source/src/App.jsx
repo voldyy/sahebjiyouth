@@ -3,6 +3,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -79,6 +80,9 @@ export default function App() {
   const routeLink = (id) => `#${id}${isTeamView() ? "?team=yogi-prasad" : ""}`;
   const [demoGuests, setGuests] = useLocalStorage("seva.guests.v1", () => demoMode ? seedGuests : [], demoMode);
   const guests = demoMode ? demoGuests : sheetWorkspace.guests;
+  // Local mandal meal registrations count toward Yogi Prasad only; Main, Transport and Accommodations keep the registration roster.
+  const localDiners = sheetWorkspace.meals?.localDiners;
+  const kitchenGuests = useMemo(() => (demoMode || !localDiners?.length ? guests : [...guests, ...localDiners]), [demoMode, guests, localDiners]);
   const [linen, setLinen] = useLocalStorage("mandir-linen-v1", initialLinen);
   const [activity, setActivity] = useLocalStorage("seva.activity.v1", []);
   const [modal, setModal] = useState(null);
@@ -375,7 +379,7 @@ export default function App() {
               <Kitchen
                 readOnly={!canEditMeals}
                 isAdmin={isAdmin}
-                guests={guests}
+                guests={kitchenGuests}
                 meals={sheetWorkspace.meals}
                 sheetMode={!demoMode}
                 saving={sheetWorkspace.saving}

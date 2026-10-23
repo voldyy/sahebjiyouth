@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Yogi Prasad · Diwali</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#fff6e5">
+  <style>
+    :root { color-scheme: light; --ink:#172033; --muted:#667085; --line:#ead7b7; --field-line:#d7c19b; --field-bg:#fffdf8; --surface:#fff8ec; --accent:#a83224; --accent-dark:#81251b; --gold:#c28a18; --focus:#b7791f; --ok:#16794c;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--surface); -webkit-text-size-adjust: 100%; }
+    body { margin: 0; min-height: 100vh; min-height: 100dvh; color: var(--ink);
+      background: radial-gradient(circle at 12% 0%, rgba(194,138,24,.16), transparent 34rem), linear-gradient(180deg,#fffaf0 0%,#fff6e5 48%,#fffdf8 100%); }
+    button, input { font: inherit; }
+    .page { display: flex; justify-content: center; padding: max(18px, env(safe-area-inset-top)) 14px max(26px, env(safe-area-inset-bottom)); }
+    .card { width: min(100%, 520px); background: rgba(255,255,255,.95); border: 1px solid rgba(234,215,183,.95); border-radius: 8px; box-shadow: 0 18px 46px rgba(91,57,18,.12); }
+    header { padding: 22px 20px 18px; border-bottom: 1px solid var(--line); background: linear-gradient(135deg, rgba(255,241,207,.78), rgba(255,255,255,.96)), #fff; }
+    .logo { display: block; width: 140px; max-width: 62%; height: auto; margin-bottom: 16px; }
+    .eyebrow { margin: 0 0 6px; color: var(--accent); font-size: .76rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(1.7rem, 8vw, 2.3rem); line-height: 1.05; }
+    form, .done { padding: 20px; display: grid; gap: 18px; }
+    .field { display: grid; gap: 7px; border: 0; margin: 0; padding: 0; min-width: 0; }
+    label, legend { padding: 0; font-size: .96rem; font-weight: 780; color: #26364f; }
+    input[type=text], input[type=date] { width: 100%; min-height: 52px; border: 1px solid var(--field-line); border-radius: 8px; background: var(--field-bg); padding: 12px 13px; color: var(--ink); font-size: 1rem; }
+    input:focus-visible, button:focus-visible { outline: 3px solid rgba(183,121,31,.3); border-color: var(--focus); }
+    .row { display: grid; grid-template-columns: 1fr 52px; gap: 8px; align-items: center; }
+    .dates { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }
+    input[type=date] { min-width: 0; max-width: 100%; -webkit-appearance: none; appearance: none; }
+    .dates .field { gap: 7px; }
+    .meals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .meal { position: relative; }
+    .meal input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+    .meal span { display: grid; place-items: center; gap: 2px; min-height: 66px; border: 1px solid var(--field-line); border-radius: 8px; background: var(--field-bg); text-align: center; font-weight: 800; padding: 8px 4px; }
+    .meal small { color: var(--muted); font-weight: 600; font-size: .76rem; }
+    .meal input:checked + span { background: #fff1cf; border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); color: #5a3a00; }
+    .meal input:focus-visible + span { outline: 3px solid rgba(183,121,31,.3); }
+    .button { min-height: 52px; border-radius: 8px; padding: 0 18px; font-weight: 850; cursor: pointer; border: 0; width: 100%; }
+    .button:disabled { opacity: .62; cursor: not-allowed; }
+    .primary { background: linear-gradient(180deg,#c64a3a,var(--accent)); color: #fff; box-shadow: 0 14px 28px rgba(168,50,36,.24); }
+    .primary:not(:disabled):active { transform: translateY(1px); }
+    .secondary { border: 1px solid #d8a437; background: #fff6df; color: #684000; }
+    .icon { min-width: 52px; width: 52px; padding: 0; border: 1px solid var(--field-line); background: #fff; color: var(--accent); font-size: 1.4rem; line-height: 1; }
+    .link { background: none; border: 0; color: var(--muted); text-decoration: underline; min-height: 44px; cursor: pointer; }
+    .error { margin: 0; padding: 12px 14px; border-radius: 8px; background: #fdecea; color: #8a1f14; font-weight: 700; }
+    .error:empty { display: none; }
+    .trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    .done h2 { margin: 0; font-size: 1.5rem; color: var(--ok); }
+    .summary { margin: 0; display: grid; gap: 6px; font-size: 1.05rem; font-weight: 700; }
+    .summary span { color: var(--muted); font-weight: 600; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="page"><div class="card">
+    <header>
+      <img class="logo" src="/diwali/logo.png" alt="Anoopam Mission" width="140" height="48">
+      <p class="eyebrow">Diwali · Allentown mandal</p>
+      <h1>Yogi Prasad</h1>
+    </header>
+
+    <form id="form" novalidate>
+      <div class="field"><label for="me">Your name</label><input id="me" type="text" autocomplete="name" autocapitalize="words" enterkeyhint="next" maxlength="60"></div>
+      <fieldset class="field" id="familyField" hidden><legend>Family</legend><div id="family" style="display:grid;gap:8px"></div></fieldset>
+      <button class="button secondary" type="button" id="add">+ Family member</button>
+      <div class="dates">
+        <div class="field"><label for="from">From</label><input id="from" type="date"></div>
+        <div class="field"><label for="to">To</label><input id="to" type="date"></div>
+      </div>
+      <fieldset class="field"><legend>Meals</legend><div class="meals" id="meals"></div></fieldset>
+      <div class="trap" aria-hidden="true"><label for="ref-code">Leave this empty</label><input id="ref-code" name="ref-code" type="text" tabindex="-1" autocomplete="off"></div>
+      <p class="error" id="error" role="alert"></p>
+      <button class="button primary" type="submit" id="submit">Submit</button>
+    </form>
+
+    <section class="done" id="done" hidden aria-live="polite">
+      <h2>Thank you</h2>
+      <p class="summary" id="summary"></p>
+      <button class="button secondary" type="button" id="edit">Edit</button>
+      <button class="link" type="button" id="cancel">Cancel registration</button>
+    </section>
+  </div></main>
+
+  <script>
+  (() => {
+    const API = "https://mandir-hospitality-api.usayouth.workers.dev/api", STORE = "yp-diwali-meals";
+    const FIRST = "2026-10-14", LAST = "2026-11-21", MAX_FAMILY = 11;
+    const MEALS = [["breakfast", "Breakfast", "8–10 AM"], ["lunch", "Lunch", "12–2 PM"], ["dinner", "Dinner", "6–8 PM"]];
+    const $ = id => document.getElementById(id);
+    const uuid = () => crypto.randomUUID ? crypto.randomUUID() : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
+    let saved = null, reg_ = null, attempt = { fp: "", id: "" };
+
+    for (const [id, name, time] of MEALS) {
+      const label = document.createElement("label"); label.className = "meal";
+      const box = Object.assign(document.createElement("input"), { type: "checkbox", value: id });
+      const face = document.createElement("span"); face.append(name); const small = document.createElement("small"); small.textContent = time; face.append(small);
+      label.append(box, face); $("meals").append(label);
+    }
+    $("from").min = $("to").min = today > FIRST ? today : FIRST; $("from").max = $("to").max = LAST;
+
+    const familyRows = () => [...$("family").querySelectorAll("input")];
+    function addFamily(value = "") {
+      if (familyRows().length >= MAX_FAMILY) return;
+      const row = document.createElement("div"); row.className = "row";
+      const input = Object.assign(document.createElement("input"), { type: "text", value, maxLength: 60, autocapitalize: "words", autocomplete: "off" });
+      input.setAttribute("aria-label", "Family member name");
+      const remove = Object.assign(document.createElement("button"), { type: "button", className: "button icon", textContent: "×" });
+      remove.setAttribute("aria-label", "Remove family member");
+      remove.addEventListener("click", () => { row.remove(); sync(); });
+      row.append(input, remove); $("family").append(row); sync(); if (!value) input.focus();
+    }
+    function sync() { $("familyField").hidden = !familyRows().length; $("add").hidden = familyRows().length >= MAX_FAMILY; }
+    $("add").addEventListener("click", () => addFamily());
+    $("from").addEventListener("change", () => { if (!$("to").value || $("to").value < $("from").value) $("to").value = $("from").value; });
+
+    const day = iso => new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const mealNames = ids => MEALS.filter(m => ids.includes(m[0])).map(m => m[1]).join(" · ");
+    function fill(reg) {
+      $("me").value = reg.names[0] || ""; $("family").replaceChildren(); reg.names.slice(1).forEach(n => addFamily(n)); sync();
+      $("from").value = reg.from; $("to").value = reg.to;
+      document.querySelectorAll("#meals input").forEach(b => { b.checked = reg.meals.includes(b.value); });
+    }
+    function show(reg) {
+      $("form").hidden = true; $("done").hidden = false;
+      const first = document.createElement("div"); first.textContent = reg.names.length > 1 ? `${reg.names[0]} + ${reg.names.length - 1}` : reg.names[0];
+      const when = document.createElement("span"); when.textContent = `${reg.from === reg.to ? day(reg.from) : `${day(reg.from)} – ${day(reg.to)}`} · ${mealNames(reg.meals)}`;
+      $("summary").replaceChildren(first, when); reg_ = reg; window.scrollTo(0, 0);
+    }
+    const fail = text => { $("error").textContent = text; if (text) $("error").scrollIntoView({ block: "nearest" }); };
+    async function call(body) {
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
+      try {
+        const response = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: controller.signal });
+        return await response.json();
+      } catch { return { ok: false, error: "Not sent. Check your connection and try again." }; } finally { clearTimeout(timer); }
+    }
+
+    $("form").addEventListener("submit", async event => {
+      event.preventDefault(); fail("");
+      const names = [$("me").value, ...familyRows().map(i => i.value)].map(n => n.trim()).filter((n, i) => i === 0 || n);
+      const meals = [...document.querySelectorAll("#meals input:checked")].map(b => b.value), from = $("from").value, to = $("to").value;
+      if (!names[0]) return fail("Add your name."); if (!from || !to) return fail("Choose your dates."); if (to < from) return fail("The last day is before the first day.");
+      if (!meals.length) return fail("Choose a meal.");
+      const body = { action: "local-meals-submit", names, from, to, meals, website: $("ref-code").value, ...(saved ? { id: saved.id, editKey: saved.editKey } : {}) };
+      const fp = JSON.stringify(body); if (attempt.fp !== fp) attempt = { fp, id: uuid() };   // a retry of the same entry reuses its request id
+      $("submit").disabled = true;
+      const result = await call({ ...body, requestId: attempt.id });
+      $("submit").disabled = false;
+      if (!result.ok) return fail(result.error || "Please try again.");
+      attempt = { fp: "", id: "" };
+      if (result.ignored) return show({ names, from, to, meals });
+      saved = { id: result.id, editKey: result.editKey }; try { localStorage.setItem(STORE, JSON.stringify(saved)); } catch {}
+      show(result.registration);
+    });
+    $("edit").addEventListener("click", () => { fail(""); fill(reg_); $("submit").textContent = "Save"; $("done").hidden = true; $("form").hidden = false; });
+    $("cancel").addEventListener("click", async () => {
+      if (!saved || !confirm("Cancel this registration?")) return;
+      const result = await call({ action: "local-meals-cancel", id: saved.id, editKey: saved.editKey });
+      if (!result.ok) return alert(result.error || "Please try again.");
+      saved = null; try { localStorage.removeItem(STORE); } catch {}
+      $("form").reset(); $("family").replaceChildren(); sync(); $("submit").textContent = "Submit"; $("done").hidden = true; $("form").hidden = false;
+    });
+
+    // Someone returning on the same phone sees their registration and can edit or cancel it.
+    (async () => {
+      try { saved = JSON.parse(localStorage.getItem(STORE) || "null"); } catch { saved = null; }
+      if (!saved?.id || !saved?.editKey) { saved = null; return; }
+      const result = await call({ action: "local-meals-lookup", id: saved.id, editKey: saved.editKey });
+      if (result.ok) show(result.registration);
+      else if (result.error === "This registration could not be found.") { saved = null; try { localStorage.removeItem(STORE); } catch {} }
+    })();
+  })();
+  </script>
+</body>
+</html>

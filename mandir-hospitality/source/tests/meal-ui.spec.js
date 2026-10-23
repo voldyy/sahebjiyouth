@@ -16,9 +16,12 @@ function createFixture() {
     Object.assign(row, { 0: `SYNTHETIC-MEAL-${index}`, 8: name, 9: "Self", 11: "Car", 12: `10/18/2026 ${index === 2 ? "4:00 PM" : "9:00 AM"}`, 13: "10/20/2026", 18: "YES", 20: "YES", 24: "Confirmed" });
     return row;
   });
-  const guests = guestsFromRows([headers, ...rows]);
+  // Arrives after the meal day used below, so it never affects those counts; it sits inside the Oct 25+ room planning window.
+  const windowRow = Array(32).fill("");
+  Object.assign(windowRow, { 0: "SYNTHETIC-MEAL-WINDOW", 8: "Planning Window Guest", 9: "Self", 11: "Car", 12: "10/27/2026 9:00 AM", 13: "10/29/2026", 18: "YES", 20: "YES", 24: "Confirmed" });
+  const guests = guestsFromRows([headers, ...rows, windowRow]);
   const fixture = {
-    requests: [], guests, plans: [], overrides: [],
+    requests: [], guests, plans: [], overrides: [], localDiners: [],
     settings: { teamEditingEnabled: true, automaticQuestionsEnabled: false, revision: "" },
   };
   let revision = 0;
@@ -49,6 +52,7 @@ function createFixture() {
       guests: guests.map(guest => ({ ...guest, mealOverrides: fixture.overrides.filter(record => record.identity === guest.sourceIdentity) })),
       meals: {
         settings: fixture.settings, plans: fixture.plans,
+        localDiners: fixture.localDiners.map(guest => ({ ...guest, mealOverrides: fixture.overrides.filter(record => record.identity === guest.sourceIdentity) })),
         ...(role === "admin" ? { survey: { configured: false, families: 1, invitations: {}, responses: [
           { identity: "synthetic-response", name: "Synthetic Family Attendee", arrivalDate: DAY, arrival: "morning", fasting: "no" },
         ] } } : {}),
@@ -59,8 +63,10 @@ function createFixture() {
   return fixture;
 }
 
-async function setup({ page, context }, { admin = false, team = true } = {}) {
+const localDiner = (name, key) => ({ sourceIdentity: `local:abc:${key}`, registrationId: "LOCAL-abc", name, city: "Local", status: "Registered", stay: "Local", arrivalDate: DAY, departureDate: "2026-10-19", arrivalTime: "", departureTime: "", sourceWritable: true, count: 1, isLocalDiner: true, localMeals: ["lunch"] });
+async function setup({ page, context }, { admin = false, team = true, local = false } = {}) {
   const fixture = createFixture();
+  if (local) fixture.localDiners = [localDiner("Local Family One", "11111111"), localDiner("Local Family Two", "22222222")];
   if (admin) await context.addInitScript(key => sessionStorage.setItem("mandir.admin-access.v1", key), ADMIN);
   await context.route("https://script.google.com/**", route => route.abort());
   await context.route("https://*.workers.dev/**", route => route.abort());
@@ -68,7 +74,7 @@ async function setup({ page, context }, { admin = false, team = true } = {}) {
   await page.clock.setFixedTime(new Date("2026-10-18T14:00:00Z"));
   await page.goto(team ? TEAM_LINK : "/#kitchen");
   await expect(page.getByRole("heading", { name: "Lunch service" })).toBeVisible();
-  await expect(page.locator(".kit-big-number")).toHaveText("2guests");
+  await expect(page.locator(".kit-big-number")).toHaveText(local ? "4guests" : "2guests");
   return fixture;
 }
 
@@ -131,7 +137,8 @@ test("team link suppresses stored admin authority and cannot edit rooms or meal 
   await expect(page.getByRole("status", { name: "Connected · Meal editing access", exact: true })).toBeVisible();
   await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Accommodations", exact: true }).click();
   await page.getByRole("button", { name: "Guest list", exact: true }).click();
-  await expect(page.locator(".sheet-attendee-list")).toContainText("Amber Diner");
+  await expect(page.locator(".sheet-attendee-list")).toContainText("Planning Window Guest");
+  await expect(page.locator(".sheet-attendee-list")).not.toContainText("Amber Diner");
   await expect(page.getByRole("button", { name: "Assign lodging", exact: true })).toHaveCount(0);
   await expect(page).toHaveURL(/#rooms\?team=yogi-prasad$/);
   expect(fixture.requests.every(request => request.accessKey === "")).toBe(true);
@@ -170,4 +177,21 @@ test("meal controls and count dialog fit a narrow mobile viewport", async ({ pag
   expect(bounds.x).toBeGreaterThanOrEqual(0);
   expect(bounds.x + bounds.width).toBeLessThanOrEqual(321);
   await page.screenshot({ path: test.info().outputPath("meal-count-mobile.png"), animations: "disabled" });
+});
+
+test("local mandal diners appear in Yogi Prasad with a Local tag for their chosen meals only, and can be removed", async ({ page, context }) => {
+  const fixture = await setup({ page, context }, { local: true });
+  const lunch = page.getByRole("list", { name: "Lunch diners", exact: true });
+  await expect(lunch).toContainText("Local Family One");
+  await expect(lunch).toContainText("(Local)");
+  await page.getByRole("button", { name: /^Dinner/ }).click();
+  await expect(page.locator(".kit-big-number")).toHaveText("3guests");
+  await expect(page.getByRole("list", { name: "Dinner diners", exact: true })).not.toContainText("Local Family");
+  await page.getByRole("button", { name: /^Lunch/ }).click();
+  await page.getByRole("button", { name: /^Remove Local Family One from lunch/ }).click();
+  await expect(page.locator(".kit-big-number")).toHaveText("3guests");
+  expect(fixture.requests.filter(request => request.action === "meal-override").map(request => request.identity)).toEqual(["local:abc:11111111"]);
+  await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Main", exact: true }).click();
+  await expect(page.locator(".mobile-guest-name").filter({ hasText: "Local Family" })).toHaveCount(0);
+  await expect(page.locator(".mobile-guest-name").filter({ hasText: "Amber Diner" })).toHaveCount(1);
 });

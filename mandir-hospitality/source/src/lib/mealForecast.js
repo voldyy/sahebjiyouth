@@ -50,6 +50,8 @@ function currentOverride(guest, day, id) {
 }
 
 function automaticMealReason(guest, meal, day, id) {
+  // Local mandal registrations list the meals they chose; every other meal is simply not attended.
+  if (Array.isArray(guest.localMeals) && !guest.localMeals.includes(id)) return "not_selected";
   if (day === guest.arrivalDate) {
     const preference = guest.mealPreference || {};
     const selected = preference.arrivalDate === guest.arrivalDate ? ARRIVAL_MEALS[preference.arrival] : null;

@@ -4,6 +4,7 @@ import { tabularWorkspace } from "../shared/tabular-workspace.js";
 import { changesBetween, overlayChanges, same } from "../shared/workspace-sync.js";
 import { createMealState } from "./meal-state.js";
 import { createMealSurvey } from "./meal-survey.js";
+import { createLocalMeals } from "./local-meals.js";
 import { verifyTwilioSignature, signTwilioRequest } from "./twilio-webhook.js";
 import { withLodgingNotices } from "../src/lib/lodgingNotifications.js";
 
@@ -15,7 +16,9 @@ async function matchesDigest(value, expected) {
   return crypto.subtle.timingSafeEqual(encoder.encode(actual), encoder.encode(expected || "0".repeat(64)));
 }
 const mutating = new Set(["lodging", "transport", "resource", "linen", "offsite", "guest", "trip-display"]);
-const allowedOrigins = new Set(["https://www.sahebjiyouth.org", "https://sahebjiyouth.org", "http://localhost:5174", "http://127.0.0.1:5174", "http://localhost:5175", "http://127.0.0.1:5175"]);
+const allowedOrigins = new Set(["https://www.sahebjiyouth.org", "https://sahebjiyouth.org", "http://localhost:5174", "http://127.0.0.1:5174", "http://localhost:5175", "http://127.0.0.1:5175",
+  // Local mandal meals form (anoopam.us) and its Azure Front Door address.
+  "https://www.anoopam.us", "https://anoopam.us", "https://events.anoopam.us", "https://anoopam-events-adgphqgpcjgmcubv.z01.azurefd.net"]);
 const noHistory = tables => Object.fromEntries(Object.entries(tables).filter(([name]) => name !== "Assignment History"));
 const fail = message => ({ ok: false, error: message });
 const mealActions = new Set(["meal-override", "meal-plan", "meal-settings"]);
@@ -74,6 +77,8 @@ export default {
     if (path !== "/api" || !["GET", "POST"].includes(request.method)) return Response.json(fail("Not found."), { status: 404, headers });
     try {
       const req = request.method === "GET" ? { action: "snapshot" } : await boundedJson(request, 16000);
+      // Public form actions are rate limited per visitor; the visitor key is always set here, never taken from the body.
+      if (String(req?.action).startsWith("local-meals-")) req.client = await digest(`client:${request.headers.get("CF-Connecting-IP") || ""}`);
       // The event is the coordination boundary: all room reservations must see
       // one consistent inventory, including moves between rooms and hotels.
       const stub = env.WORKSPACES.getByName(env.WORKSPACE_ID);
@@ -101,7 +106,10 @@ export class HospitalityWorkspace extends DurableObject {
       `);
       if (!this.meta("stream")) this.putMeta("stream", crypto.randomUUID());
     });
-    this.meals = createMealState({ sql: ctx.storage.sql, bumpRevision: () => this.putMeta("revision", Number(this.meta("revision", "0")) + 1), configured: () => surveyConfigured(this.env), automaticDefault: this.env.MEAL_AUTOMATIC_QUESTIONS === "true" });
+    this.meals = createMealState({ sql: ctx.storage.sql, bumpRevision: () => this.putMeta("revision", Number(this.meta("revision", "0")) + 1), configured: () => surveyConfigured(this.env), automaticDefault: this.env.MEAL_AUTOMATIC_QUESTIONS === "true", extraGuests: () => this.localMeals.diners() });
+    this.localMeals = createLocalMeals({ get: this.meals.get, put: this.meals.put, remove: this.meals.remove, records: this.meals.records,
+      bumpRevision: () => this.putMeta("revision", Number(this.meta("revision", "0")) + 1), secret: () => this.env.SYNC_KEY,
+      today: () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()) });
     this.survey = createMealSurvey({ env, getGuests: () => engine.roster(tabularWorkspace(this.load())).guests,
       getSettings: () => ({ ...this.meals.settings(), automaticQuestionsEnabled: this.meals.settings().automaticQuestionsEnabled && surveyConfigured(this.env) && Date.now() - Date.parse(this.meta("lastSyncedAt")) < 10 * 60000 }),
       records: this.meals.records, get: this.meals.get, put: this.meals.put,
@@ -188,6 +196,8 @@ export class HospitalityWorkspace extends DurableObject {
         await this.schedule(100);
         return { ok: true };
       }
+      // Public form actions only touch local registrations, so they need neither the roster nor a role.
+      if (String(req.action).startsWith("local-meals-")) return await this.localMeals.handle(req, typeof req.client === "string" ? req.client : "");
       if (!this.meta("initialized")) {
         await this.synchronize();
         if (!this.meta("initialized")) throw new Error("The database is being connected to the roster. Please retry shortly.");

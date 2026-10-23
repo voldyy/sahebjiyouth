@@ -15,7 +15,8 @@
     "test:database": "vitest run --config worker/vitest.config.js",
     "build:database": "wrangler deploy --config worker/wrangler.jsonc --dry-run --outdir ../worker-dist",
     "test:database-ui": "playwright test --config playwright.database.config.js",
-    "test:sheets": "node scripts/build-apps-script.mjs && playwright test --config playwright.sheets.config.js"
+    "test:sheets": "node scripts/build-apps-script.mjs && playwright test --config playwright.sheets.config.js",
+    "test:form": "playwright test --config playwright.form.config.js"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.0",

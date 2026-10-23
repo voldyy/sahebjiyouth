@@ -6,13 +6,14 @@ const activeOn = (guest, day) => validDay(guest.arrivalDate) && validDay(guest.d
 
 // These operational records belong to SQLite. Sheet imports cannot overwrite
 // a dining correction or a received answer, and no registration fields change.
-export function createMealState({ sql, bumpRevision, configured, automaticDefault = false }) {
+export function createMealState({ sql, bumpRevision, configured, automaticDefault = false, extraGuests = () => [] }) {
   const get = (kind, id) => {
     const row = sql.exec("SELECT data FROM meal_records WHERE kind=? AND id=?", kind, id).toArray()[0];
     return row ? JSON.parse(row.data) : null;
   };
   const records = kind => sql.exec("SELECT data FROM meal_records WHERE kind=? ORDER BY id", kind).toArray().map(row => JSON.parse(row.data));
   const put = (kind, id, data) => sql.exec("INSERT INTO meal_records(kind,id,data) VALUES (?,?,?) ON CONFLICT(kind,id) DO UPDATE SET data=excluded.data", kind, id, JSON.stringify(data));
+  const remove = (kind, id) => sql.exec("DELETE FROM meal_records WHERE kind=? AND id=?", kind, id);
   const settings = () => ({ teamEditingEnabled: true, automaticQuestionsEnabled: automaticDefault, revision: "", ...get("settings", "current") });
   const augment = guests => {
     const overrides = records("override");
@@ -25,7 +26,7 @@ export function createMealState({ sql, bumpRevision, configured, automaticDefaul
     });
   };
   const snapshot = (role, guests, survey) => ({
-    settings: settings(), plans: records("plan"),
+    settings: settings(), plans: records("plan"), localDiners: augment(extraGuests()),
     ...(role === "admin" ? {
       survey: { ...survey, configured: configured(), responses: guests.filter(g => g.isManualRegistration).map(g => {
         const p = get("preference", g.sourceIdentity) || {};
@@ -58,7 +59,7 @@ export function createMealState({ sql, bumpRevision, configured, automaticDefaul
       if (!Number.isInteger(req.adjustment) || Math.abs(req.adjustment) > 5000 || !Number.isInteger(req.buffer) || req.buffer < 0 || req.buffer > 50) throw Error("Enter a whole headcount adjustment within 5,000 and a buffer from 0% to 50%.");
       next = { day: req.day, meal: req.meal, adjustment: req.adjustment, buffer: req.buffer };
     } else {
-      const matches = guests.filter(g => g.sourceIdentity === req.identity);
+      const matches = [...guests, ...extraGuests()].filter(g => g.sourceIdentity === req.identity);
       if (matches.length !== 1 || !matches[0].sourceWritable || !activeOn(matches[0], req.day)) throw Error("This attendee or their stay changed. Refresh before changing their meal.");
       if (req.included !== null && typeof req.included !== "boolean") throw Error("Choose whether this attendee is dining.");
       next = { identity: req.identity, day: req.day, meal: req.meal, included: req.included };
@@ -77,12 +78,12 @@ export function createMealState({ sql, bumpRevision, configured, automaticDefaul
   }
   function counts(guests, day) {
     if (!validDay(day)) throw Error("Choose a valid meal date.");
-    const decorated = augment(guests), plans = records("plan");
+    const decorated = augment([...guests, ...extraGuests()]), plans = records("plan");
     const counts = Object.fromEntries(Object.entries(MEAL_CUTOFFS).map(([meal, cutoff]) => {
       const plan = plans.find(p => p.day === day && p.meal === meal) || { adjustment: 0, buffer: 10 };
       return [meal, getForecast(decorated, { id: meal, cutoff }, plan, day).expected];
     }));
     return { day, counts, rosterSize: guests.length, excludedUndated: guests.filter(g => !["Cancelled", "Departed"].includes(g.status) && (!g.arrivalDate || !g.departureDate)).length };
   }
-  return { get, records, put, settings, augment, snapshot, mutate, saveAnswer, counts };
+  return { get, records, put, remove, settings, augment, snapshot, mutate, saveAnswer, counts };
 }
