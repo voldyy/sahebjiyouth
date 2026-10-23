@@ -13,7 +13,7 @@ import {
 } from "../src/lib/occupancy.js";
 import { transportGroups } from "../src/lib/transport.js";
 import { dayDisplayId, displayChangedAt } from "../src/lib/transportDisplay.js";
-import { OFFSITE_HOTELS, offsiteRoomFor } from "../src/lib/offsite.js";
+import { OFFSITE_HOTELS, defaultOffsiteRoom, offsiteRoomFor, withDefaultOffsiteRooms } from "../src/lib/offsite.js";
 import { checkoutEvents } from "../src/lib/housekeeping.js";
 export const TABLES = {
   "Transport Display": ["Journey ID", "Collapsed", "Revision", "Request ID"],
@@ -109,7 +109,8 @@ function plans(book, readOnly = false) {
   };
 }
 function hotelRooms(book, readOnly = false) {
-  return table(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
+  const stored = table(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
+  return withDefaultOffsiteRooms(stored);
 }
 function tripDisplay(book) {
   return table(book, "Transport Display", true).rows.slice(1).filter(r => r[0]).map(r => ({ id: r[0], collapsed: r[1] === "Yes", revision: r[2], updatedAt: displayChangedAt(r[2]) }));
@@ -314,16 +315,18 @@ function offsite(book, req) {
   const rooms = hotelRooms(book);
   const old = req.id ? rooms.find((r) => r.id === req.id) : null;
   if (req.id && (!old || old.revision !== req.expectedRevision)) throw new Error("This hotel room changed. Refresh before saving.");
-  const hotel = clean(req.lodging), roomNo = clean(req.roomNo), beds = Number(req.beds);
+  const preset = defaultOffsiteRoom(req.id);
+  const hotel = clean(req.lodging), roomNo = clean(req.roomNo), beds = preset?.beds || Number(req.beds);
   if (!OFFSITE_HOTELS.includes(hotel) || !Number.isInteger(beds) || beds < 1 || beds > 20) throw new Error("Choose a hotel and between 1 and 20 beds.");
   if (old && old.lodging !== hotel) throw new Error("An existing planning room cannot be moved to another hotel.");
+  if (preset && (hotel !== preset.lodging || Number(req.beds) !== preset.beds)) throw new Error("The room slot capacity is fixed at two beds and four people.");
   if (roomNo && rooms.some((r) => r.id !== old?.id && r.lodging === hotel && r.roomNo.toLowerCase() === roomNo.toLowerCase())) throw new Error("This hotel room number is already in the inventory.");
   const current = roster(book);
   const assigned = old ? current.guests.filter((g) => offsiteRoomFor(g, rooms)?.id === old.id) : [];
   if (assigned.some((g) => Number(g.roomCode.match(/B(\d+)$/)?.[1]) > beds)) throw new Error("A guest is assigned to a bed you are removing. Reassign them first.");
   if (assigned.some((g) => !g.sourceWritable)) throw new Error("Resolve duplicate attendee identities before changing this room.");
   const id = old?.id || runtime.uuid();
-  const label = old?.label || `Provisional room ${rooms.filter((r) => r.lodging === hotel).length + 1}`;
+  const label = old?.label || `Provisional room ${rooms.filter((r) => r.lodging === hotel && !defaultOffsiteRoom(r.id)).length + 1}`;
   const values = [id, hotel, roomNo, String(beds), label, runtime.uuid()];
   const { sheet, rows } = table(book, "Offsite Rooms");
   const index = rows.findIndex((r) => r[0] === id);

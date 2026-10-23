@@ -378,20 +378,18 @@ test('dragging assigns the entire stay and rejects a conflict on a later night',
   await context.close();
 });
 
-test('offsite rooms start provisional and retain guests when real numbers arrive', async ({page}) => {
+test('hotel room slots provide four guest places and retain assignments when real numbers arrive', async ({page}) => {
   const h = await openPlanner(page);
   await page.getByRole('button', {name:'Offsite',exact:true}).click();
   await expect(page.getByLabel('Offsite hotel').locator('option')).toHaveText(['Comfort Inn','Hilton Garden Inn']);
-  await expect(page.getByRole('heading',{name:'No planning rooms yet'})).toBeVisible();
-  await page.getByRole('button',{name:'Add planning room',exact:true}).first().click();
-  await page.getByLabel('Planned beds').fill('2');
-  await page.getByRole('button',{name:'Save room',exact:true}).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByRole('heading',{name:'Provisional room 1',exact:true})).toBeVisible();
+  await expect(page.locator('.stay-room-chip')).toHaveCount(15);
+  await expect(page.getByRole('heading',{name:'R01',exact:true})).toBeVisible();
+  await expect(page.getByText('Comfort Inn · 2 beds · 4 people · Hotel room number pending')).toBeVisible();
   await page.getByRole('button',{name:'Assign Chirag Mehta',exact:true}).click();
-  const hotelRoom = h.request({action:'snapshot'}).offsiteRooms[0];
+  const hotelRoom = h.request({action:'snapshot'}).offsiteRooms.find(room=>room.id==='comfort-r01');
   await page.getByLabel('Hotel planning room').selectOption(hotelRoom.id);
   await page.getByLabel('Bed number').selectOption('2');
+  await expect(page.getByLabel('Bed number').locator('option:checked')).toHaveText('Bed 1 · Guest 2');
   await page.getByRole('button',{name:'Save assignment'}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(h.rows.find(r=>r[0]==='C')[30]).toBe('');
@@ -405,12 +403,15 @@ test('offsite rooms start provisional and retain guests when real numbers arrive
   await page.getByRole('button',{name:'Offsite',exact:true}).click();
   await expect(slot(page,hotelRoom.id,'2','2026-10-25')).toContainText('Chirag Mehta');
   await page.getByRole('button',{name:'Daily view',exact:true}).click();
-  await expect(page.locator('.stay-day-beds .stay-slot')).toHaveCount(2);
+  const dailyRoom=page.getByRole('article',{name:'Room 021'});
+  await expect(dailyRoom.locator('.stay-slot')).toHaveCount(4);
+  await expect(dailyRoom.locator('.stay-bed-caption')).toHaveText(['Bed 1 · Guest 1','Bed 1 · Guest 2','Bed 2 · Guest 1','Bed 2 · Guest 2']);
   await page.getByRole('button',{name:'Guest list',exact:true}).click();
   await expect(page.locator('.sheet-room-details',{hasText:'Room 021'})).toBeVisible();
   await page.getByLabel('Offsite hotel').selectOption('Hilton Garden Inn');
   await page.getByRole('button',{name:'Weekly view',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'No planning rooms yet'})).toBeVisible();
+  await expect(page.locator('.stay-room-chip')).toHaveCount(5);
+  await expect(page.getByRole('heading',{name:'R01',exact:true})).toBeVisible();
   for (const width of [360,1440]) {
     await page.setViewportSize({width,height:1000});
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
@@ -494,8 +495,8 @@ test('day overview adds a walk-in to the chosen bed and Main displays both dates
   await page.getByRole('button',{name:'Day at a glance',exact:true}).click();
   await page.getByLabel('Choose occupancy date').fill('2026-10-28');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await expect(page.locator('.stay-overview-room')).toHaveCount(18);
-  await expect(page.locator('.stay-overview-bed')).toHaveCount(92);
+  await expect(page.locator('.stay-overview-room')).toHaveCount(38);
+  await expect(page.locator('.stay-overview-bed')).toHaveCount(172);
   await expect(page.locator('.stay-overview')).toContainText('Bela Shah');
   await expect(page.locator('.stay-overview')).not.toContainText('Amal Patel');
   await page.getByRole('button',{name:'Assign guest to room 203 bed 2',exact:true}).click();

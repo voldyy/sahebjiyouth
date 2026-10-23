@@ -48,7 +48,7 @@ export default {
     if (origin) Object.assign(headers, { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Allow-Methods": "POST, GET, OPTIONS", "Access-Control-Max-Age": "86400" });
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
     const path = new URL(request.url).pathname;
-    if (path === "/health") return Response.json({ ok: true, service: "Mandir Hospitality SQLite", version: 1 }, { headers });
+    if (path === "/health") return Response.json({ ok: true, service: "Mandir Hospitality SQLite", version: 2, release: "hotel-room-slots" }, { headers });
     if (path === "/twilio/whatsapp" && request.method === "POST") {
       try {
         if (!request.headers.get("Content-Type")?.startsWith("application/x-www-form-urlencoded")) return new Response("Form data required", { status: 415, headers });

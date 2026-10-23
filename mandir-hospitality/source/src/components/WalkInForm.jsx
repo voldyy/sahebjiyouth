@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { roomKey, roomAssignment } from "../lib/lodgingRooms";
-import { roomLabel } from "../lib/offsite";
+import { roomLabel, roomPlaceLabel } from "../lib/offsite";
 import { assignmentIssue } from "../lib/occupancy";
 import ChosenBed from "./ChosenBed";
 
@@ -31,10 +31,10 @@ export default function WalkInForm({ workspace, rooms, initial, onCancel, onSave
       </div>
       {(!initial.room || !initial.bed || editingBed) && <div className="form-grid">
         <label className="field">Room<select aria-label="Walk-in room" value={roomId} required onChange={e => { setRoomId(e.target.value); setBed(""); setError(""); }}><option value="">Choose a room</option>{rooms.map(r => <option key={roomKey(r)} value={roomKey(r)}>{r.lodging || "Samarpan"} · {roomLabel(r)}</option>)}</select></label>
-        <label className="field">Bed<select aria-label="Walk-in bed" value={bed} required disabled={!room} onChange={e => { setBed(e.target.value); setError(""); }}><option value="">Choose a bed</option>{Array.from({ length: room?.beds || 0 }, (_, i) => {
+        <label className="field">Bed / guest place<select aria-label="Walk-in bed" value={bed} required disabled={!room} onChange={e => { setBed(e.target.value); setError(""); }}><option value="">Choose a place</option>{Array.from({ length: room?.beds || 0 }, (_, i) => {
           const number = i + 1;
           const problem = form.departureDate ? assignmentIssue(workspace.guests, proposed, assignment(number), workspace.offsiteRooms) : "";
-          return <option key={number} value={number} disabled={!!problem}>Bed {number}{problem ? " · unavailable" : ""}</option>;
+          return <option key={number} value={number} disabled={!!problem}>{roomPlaceLabel(room, number)}{problem ? " · unavailable" : ""}</option>;
         })}</select></label>
       </div>}
       <label className="field">Phone <span className="optional">Optional</span><input name="phone" type="tel" value={form.phone} onChange={change} maxLength={200} /></label>

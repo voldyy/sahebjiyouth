@@ -29,6 +29,32 @@ var Hospitality = (() => {
 
   // src/lib/offsite.js
   var OFFSITE_HOTELS = ["Comfort Inn", "Hilton Garden Inn"];
+  var SLOT_COUNTS = { "Comfort Inn": 15, "Hilton Garden Inn": 5 };
+  var slotId = (hotel, number) => `${hotel === "Comfort Inn" ? "comfort" : "hilton"}-r${String(number).padStart(2, "0")}`;
+  var DEFAULT_OFFSITE_ROOMS = OFFSITE_HOTELS.flatMap(
+    (lodging) => Array.from({ length: SLOT_COUNTS[lodging] }, (_, index) => {
+      const slot = `R${String(index + 1).padStart(2, "0")}`;
+      return {
+        id: slotId(lodging, index + 1),
+        number: slotId(lodging, index + 1),
+        lodging,
+        roomNo: "",
+        beds: 4,
+        physicalBeds: 2,
+        peoplePerBed: 2,
+        label: slot,
+        revision: `default-${slot.toLowerCase()}-v1`,
+        isDefaultSlot: true
+      };
+    })
+  );
+  var defaultOffsiteRoom = (id) => DEFAULT_OFFSITE_ROOMS.find((room) => room.id === id) || null;
+  function withDefaultOffsiteRooms(rooms) {
+    const saved = new Map(rooms.map((room) => [room.id, room]));
+    const defaults = DEFAULT_OFFSITE_ROOMS.map((room) => ({ ...room, ...saved.get(room.id) || {} }));
+    const custom = rooms.filter((room) => !defaultOffsiteRoom(room.id));
+    return [...defaults, ...custom];
+  }
   var offsiteBedCode = (room, bed) => `O${room.id}B${bed}`;
   function offsiteRoomFor(guest, rooms) {
     return rooms.find((room) => room.lodging === guest.lodging && new RegExp(`^O${room.id}B[1-9]\\d*$`).test(guest.roomCode || ""));
@@ -102,6 +128,8 @@ var Hospitality = (() => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   }
   var WEEK_STARTS = Array.from({ length: 6 }, (_, i) => moveDay(FIRST_STAY_DAY, i * 7));
+  var PLANNING_START_DAY = "2026-10-25";
+  var PLANNING_WEEK_STARTS = WEEK_STARTS.filter((start) => start >= PLANNING_START_DAY);
   function needsLodging(guest) {
     return guest.stay !== "Day visitor" && !["Cancelled", "Departed"].includes(guest.status);
   }
@@ -454,7 +482,8 @@ reply({ ready: true });
       };
     }
     function hotelRooms2(book, readOnly = false) {
-      return table2(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
+      const stored = table2(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
+      return withDefaultOffsiteRooms(stored);
     }
     function tripDisplay2(book) {
       return table2(book, "Transport Display", true).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], collapsed: r[1] === "Yes", revision: r[2], updatedAt: displayChangedAt(r[2]) }));
@@ -646,16 +675,18 @@ reply({ ready: true });
       const rooms = hotelRooms2(book);
       const old = req.id ? rooms.find((r) => r.id === req.id) : null;
       if (req.id && (!old || old.revision !== req.expectedRevision)) throw new Error("This hotel room changed. Refresh before saving.");
-      const hotel = clean2(req.lodging), roomNo = clean2(req.roomNo), beds = Number(req.beds);
+      const preset = defaultOffsiteRoom(req.id);
+      const hotel = clean2(req.lodging), roomNo = clean2(req.roomNo), beds = preset?.beds || Number(req.beds);
       if (!OFFSITE_HOTELS.includes(hotel) || !Number.isInteger(beds) || beds < 1 || beds > 20) throw new Error("Choose a hotel and between 1 and 20 beds.");
       if (old && old.lodging !== hotel) throw new Error("An existing planning room cannot be moved to another hotel.");
+      if (preset && (hotel !== preset.lodging || Number(req.beds) !== preset.beds)) throw new Error("The room slot capacity is fixed at two beds and four people.");
       if (roomNo && rooms.some((r) => r.id !== old?.id && r.lodging === hotel && r.roomNo.toLowerCase() === roomNo.toLowerCase())) throw new Error("This hotel room number is already in the inventory.");
       const current = roster2(book);
       const assigned = old ? current.guests.filter((g) => offsiteRoomFor(g, rooms)?.id === old.id) : [];
       if (assigned.some((g) => Number(g.roomCode.match(/B(\d+)$/)?.[1]) > beds)) throw new Error("A guest is assigned to a bed you are removing. Reassign them first.");
       if (assigned.some((g) => !g.sourceWritable)) throw new Error("Resolve duplicate attendee identities before changing this room.");
       const id = old?.id || runtime.uuid();
-      const label = old?.label || `Provisional room ${rooms.filter((r) => r.lodging === hotel).length + 1}`;
+      const label = old?.label || `Provisional room ${rooms.filter((r) => r.lodging === hotel && !defaultOffsiteRoom(r.id)).length + 1}`;
       const values = [id, hotel, roomNo, String(beds), label, runtime.uuid()];
       const { sheet, rows } = table2(book, "Offsite Rooms");
       const index = rows.findIndex((r) => r[0] === id);
