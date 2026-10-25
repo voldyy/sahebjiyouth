@@ -28,9 +28,11 @@ var Hospitality = (() => {
   });
 
   // src/lib/offsite.js
-  var OFFSITE_HOTELS = ["Comfort Inn", "Hilton Garden Inn"];
-  var SLOT_COUNTS = { "Comfort Inn": 15, "Hilton Garden Inn": 5 };
-  var slotId = (hotel, number) => `${hotel === "Comfort Inn" ? "comfort" : "hilton"}-r${String(number).padStart(2, "0")}`;
+  var OFFSITE_HOTELS = ["Hawthorn"];
+  var LEGACY_OFFSITE_HOTELS = { "Comfort Inn": "Hawthorn", "Hilton Garden Inn": "" };
+  var normalizeOffsiteHotel = (hotel) => LEGACY_OFFSITE_HOTELS[hotel] ?? hotel;
+  var SLOT_COUNTS = { Hawthorn: 15 };
+  var slotId = (hotel, number) => `hawthorn-r${String(number).padStart(2, "0")}`;
   var DEFAULT_OFFSITE_ROOMS = OFFSITE_HOTELS.flatMap(
     (lodging) => Array.from({ length: SLOT_COUNTS[lodging] }, (_, index) => {
       const slot = `R${String(index + 1).padStart(2, "0")}`;
@@ -50,9 +52,9 @@ var Hospitality = (() => {
   );
   var defaultOffsiteRoom = (id) => DEFAULT_OFFSITE_ROOMS.find((room) => room.id === id) || null;
   function withDefaultOffsiteRooms(rooms) {
-    const saved = new Map(rooms.map((room) => [room.id, room]));
+    const saved = new Map(rooms.filter((room) => normalizeOffsiteHotel(room.lodging)).map((room) => [room.id, { ...room, lodging: normalizeOffsiteHotel(room.lodging) }]));
     const defaults = DEFAULT_OFFSITE_ROOMS.map((room) => ({ ...room, ...saved.get(room.id) || {} }));
-    const custom = rooms.filter((room) => !defaultOffsiteRoom(room.id));
+    const custom = rooms.filter((room) => !defaultOffsiteRoom(room.id) && normalizeOffsiteHotel(room.lodging)).map((room) => ({ ...room, lodging: normalizeOffsiteHotel(room.lodging) }));
     return [...defaults, ...custom];
   }
   var offsiteBedCode = (room, bed) => `O${room.id}B${bed}`;
@@ -292,7 +294,7 @@ var Hospitality = (() => {
         status: /^cancel/i.test(rsvp) ? "Cancelled" : /^(departed|checked out)$/i.test(rsvp) ? "Departed" : "Registered",
         rsvpStatus: rsvp,
         stay: lodging[0] || (/^(NO|N|FALSE)$/.test(overnight) ? "Day visitor" : "Pending lodging"),
-        lodging: lodging[0],
+        lodging: normalizeOffsiteHotel(lodging[0]),
         roomNo: lodging[1],
         roomCode: lodging[2],
         room: lodging[2] || lodging[1],
@@ -482,7 +484,7 @@ reply({ ready: true });
       };
     }
     function hotelRooms2(book, readOnly = false) {
-      const stored = table2(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: r[1], roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
+      const stored = table2(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: normalizeOffsiteHotel(r[1]), roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
       return withDefaultOffsiteRooms(stored);
     }
     function tripDisplay2(book) {
@@ -676,7 +678,7 @@ reply({ ready: true });
       const old = req.id ? rooms.find((r) => r.id === req.id) : null;
       if (req.id && (!old || old.revision !== req.expectedRevision)) throw new Error("This hotel room changed. Refresh before saving.");
       const preset = defaultOffsiteRoom(req.id);
-      const hotel = clean2(req.lodging), roomNo = clean2(req.roomNo), beds = preset?.beds || Number(req.beds);
+      const hotel = normalizeOffsiteHotel(clean2(req.lodging)), roomNo = clean2(req.roomNo), beds = preset?.beds || Number(req.beds);
       if (!OFFSITE_HOTELS.includes(hotel) || !Number.isInteger(beds) || beds < 1 || beds > 20) throw new Error("Choose a hotel and between 1 and 20 beds.");
       if (old && old.lodging !== hotel) throw new Error("An existing planning room cannot be moved to another hotel.");
       if (preset && (hotel !== preset.lodging || Number(req.beds) !== preset.beds)) throw new Error("The room slot capacity is fixed at two beds and four people.");

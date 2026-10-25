@@ -68,7 +68,7 @@ export default function Guests({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const selected = guests.find((g) => g.id === selectedId);
   const total = guests.reduce((n, g) => n + g.count, 0);
-  const stayOptions = readOnly ? ["Samarpan", "Sadhak", "Comfort Inn", "Hilton Garden Inn", "Pending lodging", "Day visitor"] : ["Samarpan", "Offsite", "Day visitor"];
+  const stayOptions = readOnly ? ["Samarpan", "Sadhak", "Hawthorn", "Pending lodging", "Day visitor"] : ["Samarpan", "Offsite", "Day visitor"];
   const visibleStatuses = readOnly ? ["All guests", "Registered", "Cancelled", "Needs room"] : statuses;
   const checked = guests
     .filter((g) => g.status === "Checked in")

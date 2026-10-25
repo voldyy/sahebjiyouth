@@ -65,8 +65,8 @@ test("a moved attendee writes only current AD:AF as RAW text and reads back conf
   const target = attendee();
   const guest = guestsFromRows([header(), target])[0];
   const google = mockGoogle(t, [header(), attendee("OTHER"), target]);
-  const result = await writeLodging(guest, { lodging: "Comfort Inn", roomNo: "021", roomCode: "CI-021" }, "synthetic-token");
-  assert.deepEqual(result, ["Comfort Inn", "021", "CI-021"]);
+  const result = await writeLodging(guest, { lodging: "Hawthorn", roomNo: "021", roomCode: "CI-021" }, "synthetic-token");
+  assert.deepEqual(result, ["Hawthorn", "021", "CI-021"]);
   assert.equal(google.writes[0].range, "'Guest''s Roster'!AD3:AF3");
   assert.match(google.writes[0].url, /valueInputOption=RAW/);
   assert.equal(google.rows[2][0], "TEST-1");
@@ -77,7 +77,7 @@ test("a moved attendee writes only current AD:AF as RAW text and reads back conf
 test("stale lodging or duplicate attendees cause no write", async (t) => {
   const target = attendee();
   const guest = guestsFromRows([header(), target])[0];
-  target[29] = "Hilton Garden Inn";
+  target[29] = "Hawthorn";
   const google = mockGoogle(t, [header(), target]);
   await assert.rejects(writeLodging(guest, { lodging: "Samarpan", roomNo: "101", roomCode: "S101B1" }, "synthetic-token"), /Someone changed/);
   google.rows.push(structuredClone(target));
@@ -96,7 +96,7 @@ test("clearing touches only the three lodging fields, and a denied write never r
 test("permission failure does not retry or change the snapshot", async (t) => {
   const target = attendee();
   const google = mockGoogle(t, [header(), target], true);
-  await assert.rejects(writeLodging(guestsFromRows([header(), target])[0], { lodging: "Hilton Garden Inn", roomNo: "007", roomCode: "H007" }, "synthetic-token"), /cannot edit/);
+  await assert.rejects(writeLodging(guestsFromRows([header(), target])[0], { lodging: "Hawthorn", roomNo: "007", roomCode: "H007" }, "synthetic-token"), /cannot edit/);
   assert.equal(google.writes.length, 1);
   assert.deepEqual(google.rows[1].slice(29), ["", "", ""]);
 });

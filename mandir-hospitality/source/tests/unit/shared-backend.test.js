@@ -30,7 +30,7 @@ test('room 203 accepts its four beds and rejects a fifth bed or overlapping stay
 test('fresh stay changes and stale lodging are rejected; row sorting uses stable identity',()=>{
   const h=createHarness([header(),row('A'),row('B')]);const [a,b]=guestsFromRows(h.rows);
   h.rows[1][12]='10/19/2026';assert.match(lodging(h,a).error,/dates changed/);
-  h.rows[2][29]='Comfort Inn';assert.match(lodging(h,b).error,/Someone changed/);
+  h.rows[2][29]='Hawthorn';assert.match(lodging(h,b).error,/Someone changed/);
   h.rows[1][12]='10/18/2026 2:00 PM';h.rows.reverse();h.rows.unshift(h.rows.pop());
   assert.equal(lodging(h,a).ok,true);assert.equal(h.rows.find(r=>r[0]==='A')[31],'S204B1');
 });

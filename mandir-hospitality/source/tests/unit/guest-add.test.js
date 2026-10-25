@@ -41,13 +41,13 @@ test('walk-in saves guest and bed together, rejects full-stay conflicts without 
 });
 test('walk-in supports provisional offsite beds and preserves the planning code', () => {
   const h=createHarness([headers]);
-  const added=h.request({action:'offsite',requestId:randomUUID(),lodging:'Comfort Inn',roomNo:'',beds:2});
+  const added=h.request({action:'offsite',requestId:randomUUID(),lodging:'Hawthorn',roomNo:'',beds:2});
   const room=added.offsiteRooms[0];
-  const assignment={lodging:'Comfort Inn',roomNo:'',roomCode:`O${room.id}B1`};
+  const assignment={lodging:'Hawthorn',roomNo:'',roomCode:`O${room.id}B1`};
   const guest={name:'Offsite Walk In',arrivalDate:'2026-10-18',departureDate:'2026-10-20',overnight:'YES'};
   const result=h.request({action:'guest',requestId:randomUUID(),guest,assignment});
   assert.equal(result.ok,true,result.error);
-  assert.deepEqual(h.rows[1].slice(29),['Comfort Inn','',assignment.roomCode]);
+  assert.deepEqual(h.rows[1].slice(29),['Hawthorn','',assignment.roomCode]);
   assert.match(h.request({action:'guest',requestId:randomUUID(),guest:{...guest,name:'Conflict'},assignment}).error,/occupied/);
   assert.equal(h.rows.length,2);
 });

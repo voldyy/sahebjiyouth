@@ -1,7 +1,7 @@
 import { FIXED_LODGINGS, fixedRoomsFor, fixedRoomCode, isFixedLodging } from "./lodgingRooms.js";
 import { allentownInstant } from "./transportDisplay.js";
 import { assignmentIssue, stayRange, needsLodging } from "./occupancy.js";
-import { OFFSITE_HOTELS } from "./offsite.js";
+import { OFFSITE_HOTELS, normalizeOffsiteHotel } from "./offsite.js";
 export const SPREADSHEET_ID = "1YvVz4DyPZYTYtKC9qiDlEXsPd7Xz4DPNJIoe3NBkYMA";
 export const SHEET_GID = 0;
 export const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit#gid=${SHEET_GID}`;
@@ -97,7 +97,7 @@ export function guestsFromRows(rows) {
       departureDate: departure.date, departureTime: departure.time, travelMethod: text(row[11]), arrivalAirport: text(row[14]), arrivalFlight: text(row[15]), departureAirport: text(row[16]), departureFlight: text(row[17]), accommodationIn: lodgingIn.date, accommodationOut: lodgingOut.date,
       status: /^cancel/i.test(rsvp) ? "Cancelled" : /^(departed|checked out)$/i.test(rsvp) ? "Departed" : "Registered", rsvpStatus: rsvp,
       stay: lodging[0] || (/^(NO|N|FALSE)$/.test(overnight) ? "Day visitor" : "Pending lodging"),
-      lodging: lodging[0], roomNo: lodging[1], roomCode: lodging[2], room: lodging[2] || lodging[1],
+      lodging: normalizeOffsiteHotel(lodging[0]), roomNo: lodging[1], roomCode: lodging[2], room: lodging[2] || lodging[1],
       transport: /^(YES|Y|TRUE)$/i.test(text(row[18])) ? "Needed" : "Not needed",
       travel: [text(row[11]), text(row[14]), text(row[15])].filter(Boolean).join(" · "),
       diet: text(row[23]), notes: [text(row[19]), text(row[23])].filter(Boolean).join("\n"), color: "sage",

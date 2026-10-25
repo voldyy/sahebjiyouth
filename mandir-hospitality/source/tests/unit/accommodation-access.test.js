@@ -23,9 +23,9 @@ test('viewers receive all dashboard data but cannot mutate it', () => {
     assert.equal(snapshot.role,'viewer');
     assert.equal(snapshot.rows,undefined);
     assert.deepEqual(snapshot.transport,{assignments:[],drivers:[],vehicles:[]});
-    assert.equal(snapshot.offsiteRooms.filter(r=>r.lodging==='Comfort Inn').length,15);
-    assert.equal(snapshot.offsiteRooms.filter(r=>r.lodging==='Hilton Garden Inn').length,5);
-    assert.deepEqual(snapshot.offsiteRooms.filter(r=>r.lodging==='Comfort Inn').map(r=>r.label),Array.from({length:15},(_,i)=>`R${String(i+1).padStart(2,'0')}`));
+    assert.equal(snapshot.offsiteRooms.filter(r=>r.lodging==='Hawthorn').length,15);
+    assert.equal(snapshot.offsiteRooms.filter(r=>r.lodging==='Hilton Garden Inn').length,0);
+    assert.deepEqual(snapshot.offsiteRooms.filter(r=>r.lodging==='Hawthorn').map(r=>r.label),Array.from({length:15},(_,i)=>`R${String(i+1).padStart(2,'0')}`));
     assert.ok(snapshot.offsiteRooms.every(r=>r.beds===4&&r.physicalBeds===2&&r.peoplePerBed===2));
     assert.deepEqual(snapshot.housekeeping,[]);
     assert.equal(snapshot.guests[0].name,'Private Guest');
@@ -46,9 +46,9 @@ test('viewers receive all dashboard data but cannot mutate it', () => {
 });
 test('hotel slots fit two guests per bed, enforce four-person capacity and survive actual numbering', () => {
   const h=createHarness([header(),row('A'),row('B'),row('D'),row('C','2026-10-14','2026-10-16')]);
-  const room=h.request({action:'snapshot'}).offsiteRooms.find(r=>r.id==='comfort-r01');
+  const room=h.request({action:'snapshot'}).offsiteRooms.find(r=>r.id==='hawthorn-r01');
   assert.deepEqual([room.label,room.physicalBeds,room.peoplePerBed,room.beds],['R01',2,2,4]);
-  const assignment={lodging:'Comfort Inn',roomNo:'',roomCode:`O${room.id}B1`};
+  const assignment={lodging:'Hawthorn',roomNo:'',roomCode:`O${room.id}B1`};
   assert.equal(assign(h,guestsFromRows(h.rows)[0],assignment).ok,true);
   assert.equal(unassignedGuest(guestsFromRows(h.rows)[0]),false);
   assert.equal(assign(h,guestsFromRows(h.rows)[1],{...assignment,roomCode:`O${room.id}B2`}).ok,true);
@@ -56,14 +56,14 @@ test('hotel slots fit two guests per bed, enforce four-person capacity and survi
   assert.equal(assign(h,guestsFromRows(h.rows)[2],{...assignment,roomCode:`O${room.id}B3`}).ok,true);
   assert.equal(assign(h,guestsFromRows(h.rows)[3],assignment).ok,true);
   assert.match(assign(h,guestsFromRows(h.rows)[2],{...assignment,roomCode:`O${room.id}B5`}).error,/valid room and bed/);
-  const updated=req(h,{action:'offsite',id:room.id,expectedRevision:room.revision,lodging:'Comfort Inn',roomNo:'021',beds:4});
+  const updated=req(h,{action:'offsite',id:room.id,expectedRevision:room.revision,lodging:'Hawthorn',roomNo:'021',beds:4});
   assert.equal(updated.ok,true);assert.equal(h.rows[1][30],'021');assert.equal(h.rows[2][30],'021');assert.equal(h.rows[3][30],'021');assert.equal(h.rows[4][30],'021');
   assert.equal(h.rows[1][31],assignment.roomCode);
   assert.match(assign(h,guestsFromRows(h.rows)[1],{...assignment,roomCode:`O${room.id}B4`}).error,/room changed/);
-  assert.match(req(h,{action:'offsite',id:room.id,expectedRevision:room.revision,lodging:'Comfort Inn',roomNo:'022',beds:4}).error,/room changed/);
-  assert.match(req(h,{action:'offsite',id:room.id,expectedRevision:updated.offsiteRooms.find(r=>r.id===room.id).revision,lodging:'Comfort Inn',roomNo:'022',beds:2}).error,/capacity is fixed/);
-  assert.match(req(h,{action:'offsite',lodging:'Comfort Inn',roomNo:'021',beds:2}).error,/already/);
-  assert.equal(req(h,{action:'offsite',lodging:'Hilton Garden Inn',roomNo:'021',beds:2}).ok,true);
+  assert.match(req(h,{action:'offsite',id:room.id,expectedRevision:room.revision,lodging:'Hawthorn',roomNo:'022',beds:4}).error,/room changed/);
+  assert.match(req(h,{action:'offsite',id:room.id,expectedRevision:updated.offsiteRooms.find(r=>r.id===room.id).revision,lodging:'Hawthorn',roomNo:'022',beds:2}).error,/capacity is fixed/);
+  assert.match(req(h,{action:'offsite',lodging:'Hawthorn',roomNo:'021',beds:2}).error,/already/);
+  assert.equal(req(h,{action:'offsite',lodging:'Hilton Garden Inn',roomNo:'021',beds:2}).ok,false);
 });
 test('checkout linen state persists, rejects stale clears, and becomes dirty on the next checkout', () => {
   const h=createHarness([header(),row('A','2026-10-11','2026-10-14','S204B1'),row('B','2026-10-14','2026-10-16','S204B1'),row('Cancelled','2026-10-11','2026-10-13','S204B2')]);

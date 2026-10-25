@@ -1,7 +1,9 @@
-export const OFFSITE_HOTELS = ["Comfort Inn", "Hilton Garden Inn"];
+export const OFFSITE_HOTELS = ["Hawthorn"];
+export const LEGACY_OFFSITE_HOTELS = { "Comfort Inn": "Hawthorn", "Hilton Garden Inn": "" };
+export const normalizeOffsiteHotel = (hotel) => LEGACY_OFFSITE_HOTELS[hotel] ?? hotel;
 
-const SLOT_COUNTS = { "Comfort Inn": 15, "Hilton Garden Inn": 5 };
-const slotId = (hotel, number) => `${hotel === "Comfort Inn" ? "comfort" : "hilton"}-r${String(number).padStart(2, "0")}`;
+const SLOT_COUNTS = { Hawthorn: 15 };
+const slotId = (hotel, number) => `hawthorn-r${String(number).padStart(2, "0")}`;
 
 export const DEFAULT_OFFSITE_ROOMS = OFFSITE_HOTELS.flatMap((lodging) =>
   Array.from({ length: SLOT_COUNTS[lodging] }, (_, index) => {
@@ -23,9 +25,9 @@ export const DEFAULT_OFFSITE_ROOMS = OFFSITE_HOTELS.flatMap((lodging) =>
 
 export const defaultOffsiteRoom = (id) => DEFAULT_OFFSITE_ROOMS.find((room) => room.id === id) || null;
 export function withDefaultOffsiteRooms(rooms) {
-  const saved = new Map(rooms.map((room) => [room.id, room]));
+  const saved = new Map(rooms.filter((room) => normalizeOffsiteHotel(room.lodging)).map((room) => [room.id, { ...room, lodging: normalizeOffsiteHotel(room.lodging) }]));
   const defaults = DEFAULT_OFFSITE_ROOMS.map((room) => ({ ...room, ...(saved.get(room.id) || {}) }));
-  const custom = rooms.filter((room) => !defaultOffsiteRoom(room.id));
+  const custom = rooms.filter((room) => !defaultOffsiteRoom(room.id) && normalizeOffsiteHotel(room.lodging)).map((room) => ({ ...room, lodging: normalizeOffsiteHotel(room.lodging) }));
   return [...defaults, ...custom];
 }
 

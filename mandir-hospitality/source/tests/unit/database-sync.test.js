@@ -18,7 +18,7 @@ test("protected Sheet synchronization preserves unrelated fields and confirms on
   assert.equal(initial.ok, true, initial.error);
   assert.match(initial.adminDigest, /^[a-f0-9]{64}$/);
   const after = structuredClone(initial.tables);
-  after.Attendees[1].splice(29, 3, "Comfort Inn", "001", "001-B1");
+  after.Attendees[1].splice(29, 3, "Hawthorn", "001", "001-B1");
   const changes = changesBetween(initial.tables, after);
   h.rows[1][7] = "New city";
   const saved = exchange([{ seq: 1, changes }]);
@@ -46,9 +46,9 @@ test("a direct edit conflict retains the batch and does not acknowledge or overw
   const initial = exchange([]);
   const after = structuredClone(initial.tables); after.Attendees[1].splice(29, 3, "Samarpan", "204", "S204B1");
   const changes = changesBetween(initial.tables, after);
-  h.rows[1][29] = "Comfort Inn";
+  h.rows[1][29] = "Hawthorn";
   const result = exchange([{ seq: 1, changes }]);
   assert.equal(result.ok, false); assert.match(result.error, /conflict/);
-  assert.equal(h.rows[1][29], "Comfort Inn");
+  assert.equal(h.rows[1][29], "Hawthorn");
   assert.equal(h.properties.get("DATABASE_SYNC_ACK"), undefined);
 });
