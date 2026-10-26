@@ -4,6 +4,12 @@ export const normalizeOffsiteHotel = (hotel) => LEGACY_OFFSITE_HOTELS[hotel] ?? 
 
 const SLOT_COUNTS = { Hawthorn: 15 };
 const slotId = (hotel, number) => `hawthorn-r${String(number).padStart(2, "0")}`;
+export const HAWTHORN_ROOM_TYPES = {
+  king: { label: "King", beds: 2, physicalBeds: 1, peoplePerBed: 2 },
+  doubleQueen: { label: "Double Queen", beds: 4, physicalBeds: 2, peoplePerBed: 2 },
+};
+export const roomTypeFor = (room) => Number(room?.beds) === HAWTHORN_ROOM_TYPES.king.beds ? "king" : "doubleQueen";
+export const roomTypeLabel = (room) => HAWTHORN_ROOM_TYPES[roomTypeFor(room)].label;
 
 export const DEFAULT_OFFSITE_ROOMS = OFFSITE_HOTELS.flatMap((lodging) =>
   Array.from({ length: SLOT_COUNTS[lodging] }, (_, index) => {
@@ -13,9 +19,7 @@ export const DEFAULT_OFFSITE_ROOMS = OFFSITE_HOTELS.flatMap((lodging) =>
       number: slotId(lodging, index + 1),
       lodging,
       roomNo: "",
-      beds: 4,
-      physicalBeds: 2,
-      peoplePerBed: 2,
+      ...HAWTHORN_ROOM_TYPES.doubleQueen,
       label: slot,
       revision: `default-${slot.toLowerCase()}-v1`,
       isDefaultSlot: true,
@@ -42,7 +46,7 @@ export const roomPlaceLabel = (room, position) => {
   return roomPeoplePerBed(room) > 1 ? `Bed ${bed} · Guest ${place}` : `Bed ${bed}`;
 };
 export const roomCapacityLabel = (room) => roomPeoplePerBed(room) > 1
-  ? `${roomBedCount(room)} beds · ${room.beds} people`
+  ? `${roomBedCount(room)} ${roomBedCount(room) === 1 ? "bed" : "beds"} · ${room.beds} people`
   : `${room.beds} beds`;
 export const offsiteBedCode = (room, bed) => `O${room.id}B${bed}`;
 export const roomLabel = (room) => OFFSITE_HOTELS.includes(room.lodging) ? (room.roomNo ? `Room ${room.roomNo}` : room.label) : `Room ${room.number}`;

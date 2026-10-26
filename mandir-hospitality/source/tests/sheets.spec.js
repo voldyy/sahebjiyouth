@@ -114,7 +114,7 @@ test("Samarpan offers only confirmed rooms with bed capacities", async ({ page }
   await page.getByRole("button", { name: "Assign lodging", exact: true }).click();
   const room = page.getByLabel("Room number (AE)");
   await expect(room).toHaveJSProperty("tagName", "SELECT");
-  await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "202 · 2 beds", "203 · 4 beds", "204 · 3 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds", "100 · 7 beds", "101 · 12 beds", "102 · 12 beds", "103 · 12 beds", "104 · 12 beds"]);
+  await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "202 · 2 beds", "203 · 4 beds", "204 · 3 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds", "100 · 7 beds", "101 · 12 beds", "102 · 14 beds", "103 · 13 beds", "104 · 15 beds"]);
   await room.selectOption("204");
   await expect(page.getByLabel("Bed number").locator("option")).toHaveCount(4);
   await page.getByLabel("Bed number").selectOption("1");
@@ -213,11 +213,11 @@ test("a hidden early guest still blocks their bed for a visible overlapping stay
   await context.close();
 });
 
-test("daily view shows all 76 beds, date-filtered unassigned guests, and saves from an empty bed", async ({ page }) => {
+test("daily view shows all 82 beds, date-filtered unassigned guests, and saves from an empty bed", async ({ page }) => {
   const { writes } = await openPlanner(page);
   await page.getByRole("button", { name: "Daily view", exact: true }).click();
   await expect(page.locator(".stay-day-room")).toHaveCount(11);
-  await expect(page.locator(".stay-day-beds .stay-slot")).toHaveCount(76);
+  await expect(page.locator(".stay-day-beds .stay-slot")).toHaveCount(82);
   await expect(page.getByRole("button", { name: "Assign Chirag Mehta", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Assign Dev Shah", exact: true })).toHaveCount(0);
   await expect(page.getByText("1 unassigned guests need stay dates")).toBeVisible();
@@ -395,6 +395,11 @@ test('hotel room slots provide four guest places and retain assignments when rea
   expect(h.rows.find(r=>r[0]==='C')[30]).toBe('');
   await expect(slot(page,hotelRoom.id,'2','2026-10-25')).toContainText('Chirag Mehta');
   await page.getByRole('button',{name:'Edit room details'}).click();
+  await page.getByLabel('Hawthorn room type').selectOption('king');
+  await page.getByRole('button',{name:'Save room',exact:true}).click();
+  await expect(page.getByText('1 bed · 2 people · Number pending')).toBeVisible();
+  await page.getByRole('button',{name:'Edit room details'}).click();
+  await page.getByLabel('Hawthorn room type').selectOption('doubleQueen');
   await page.getByLabel('Hotel room number (optional)').fill('021');
   await page.getByRole('button',{name:'Save room',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Room 021',exact:true})).toBeVisible();

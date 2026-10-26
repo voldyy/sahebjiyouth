@@ -10,7 +10,7 @@ import { allentownDay } from "../lib/housekeeping";
 import Housekeeping from "./Housekeeping";
 import { LODGING_LOCATIONS, SHEET_URL } from "../lib/sheets";
 import { samarpanRooms, sadhakRooms, fixedRoomsFor, isFixedLodging, roomKey, roomAssignment } from "../lib/lodgingRooms";
-import { OFFSITE_HOTELS, offsiteRoomFor, roomCapacityLabel, roomLabel, roomPlaceLabel } from "../lib/offsite";
+import { HAWTHORN_ROOM_TYPES, OFFSITE_HOTELS, offsiteRoomFor, roomCapacityLabel, roomLabel, roomPlaceLabel, roomTypeFor, roomTypeLabel } from "../lib/offsite";
 import { lodgingOccupancy, PLANNING_START_DAY, LAST_STAY_DAY, PLANNING_WEEK_STARTS, inPlanningWindow, moveDay, shortDay, fullDay, needsLodging, stayRange, overlaps, onDay, unassignedGuest, bedForGuest, assignmentIssue } from "../lib/occupancy";
 import "../styles/operations.css";
 import "../styles/sheets.css";
@@ -102,7 +102,7 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
     catch (failure) { setDropError(failure.message); }
   };
   const drag = { guest: dragGuest, target: dragTarget ? `${roomKey(dragTarget.room)}:${dragTarget.bed}` : "", problem: dragGuest && dragTarget ? assignmentIssue(guests, dragGuest, assignmentFor(dragTarget.room, dragTarget.bed), workspace.offsiteRooms) : "", hover: (target, bed) => { if (dragTarget?.room !== target || dragTarget?.bed !== bed) setDragTarget({ room: target, bed }); }, drop };
-  const openRoom = (existing = null) => { if (readOnly) return; setRoomError(""); setRoomDraft(existing ? { id: existing.id, expectedRevision: existing.revision, lodging: existing.lodging, roomNo: existing.roomNo, beds: existing.beds, isDefaultSlot: existing.isDefaultSlot } : { lodging: hotel, roomNo: "", beds: "" }); };
+  const openRoom = (existing = null) => { if (readOnly) return; setRoomError(""); setRoomDraft(existing ? { id: existing.id, expectedRevision: existing.revision, lodging: existing.lodging, roomNo: existing.roomNo, beds: existing.beds, roomType: roomTypeFor(existing), isDefaultSlot: existing.isDefaultSlot } : { lodging: hotel, roomNo: "", beds: "", roomType: "doubleQueen" }); };
   const saveRoom = async (event) => {
     event.preventDefault(); if (readOnly) return; setRoomError("");
     try { await workspace.saveOffsiteRoom(roomDraft); setRoomDraft(null); toast("Hotel room inventory saved."); }
@@ -190,7 +190,8 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
     </Sheet>}
     {roomDraft && !readOnly && <Sheet title={roomDraft.id ? "Edit hotel room" : "Add planning room"} subtitle={roomDraft.lodging} onClose={() => { if (!workspace.saving) setRoomDraft(null); }}><form className="op-form" onSubmit={saveRoom}>
       <label className="field">Hotel room number (optional)<input value={roomDraft.roomNo} maxLength={100} placeholder="Leave blank until confirmed" onChange={(e) => setRoomDraft({ ...roomDraft, roomNo: e.target.value })} disabled={workspace.saving} /></label>
-      {roomDraft.isDefaultSlot ? <p className="sheet-data-note"><strong>Capacity:</strong> 2 beds · 2 people per bed · 4 people total. Slot capacity is fixed.</p> : <label className="field">Guest places<input type="number" min="1" max="20" step="1" required value={roomDraft.beds} onChange={(e) => setRoomDraft({ ...roomDraft, beds: e.target.value })} disabled={workspace.saving} /></label>}
+      <label className="field">Room type<select aria-label="Hawthorn room type" value={roomDraft.roomType || "doubleQueen"} onChange={(e) => { const type = HAWTHORN_ROOM_TYPES[e.target.value]; setRoomDraft({ ...roomDraft, roomType: e.target.value, beds: type.beds }); }} disabled={workspace.saving}><option value="king">King · 2 spots</option><option value="doubleQueen">Double Queen · 4 spots</option></select></label>
+      <p className="sheet-data-note"><strong>{roomDraft.roomType === "king" ? "King" : "Double Queen"}:</strong> {roomDraft.roomType === "king" ? "1 bed · 2 people total." : "2 beds · 4 people total."} Changing type requires enough capacity for existing assignments.</p>
       <p className="sheet-data-note">Adding the actual hotel room number later preserves every guest assignment and stay date.</p>
       {roomError && <p className="op-form-error" role="alert">{roomError}</p>}<button className="button primary" disabled={workspace.saving || !workspace.connected}>{workspace.saving ? "Saving…" : "Save room"}</button>
     </form></Sheet>}

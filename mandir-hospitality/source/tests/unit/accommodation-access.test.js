@@ -61,9 +61,21 @@ test('hotel slots fit two guests per bed, enforce four-person capacity and survi
   assert.equal(h.rows[1][31],assignment.roomCode);
   assert.match(assign(h,guestsFromRows(h.rows)[1],{...assignment,roomCode:`O${room.id}B4`}).error,/room changed/);
   assert.match(req(h,{action:'offsite',id:room.id,expectedRevision:room.revision,lodging:'Hawthorn',roomNo:'022',beds:4}).error,/room changed/);
-  assert.match(req(h,{action:'offsite',id:room.id,expectedRevision:updated.offsiteRooms.find(r=>r.id===room.id).revision,lodging:'Hawthorn',roomNo:'022',beds:2}).error,/capacity is fixed/);
+  assert.match(req(h,{action:'offsite',id:room.id,expectedRevision:updated.offsiteRooms.find(r=>r.id===room.id).revision,lodging:'Hawthorn',roomNo:'022',beds:2}).error,/fixed capacity/);
   assert.match(req(h,{action:'offsite',lodging:'Hawthorn',roomNo:'021',beds:2}).error,/already/);
   assert.equal(req(h,{action:'offsite',lodging:'Hilton Garden Inn',roomNo:'021',beds:2}).ok,false);
+});
+test('Hawthorn room type changes switch a default slot between four and two spots', () => {
+  const h=createHarness([header(),row('A')]);
+  const room=h.request({action:'snapshot'}).offsiteRooms.find(r=>r.id==='hawthorn-r01');
+  assert.equal(room.beds,4); assert.equal(room.physicalBeds,2);
+  const changed=req(h,{action:'offsite',id:room.id,expectedRevision:room.revision,lodging:'Hawthorn',roomNo:'',roomType:'king',beds:2});
+  assert.equal(changed.ok,true);
+  const updated=changed.offsiteRooms.find(r=>r.id===room.id);
+  assert.deepEqual([updated.beds,updated.physicalBeds,updated.peoplePerBed],[2,1,2]);
+  const restored=req(h,{action:'offsite',id:updated.id,expectedRevision:updated.revision,lodging:'Hawthorn',roomNo:'',roomType:'doubleQueen',beds:4});
+  assert.equal(restored.ok,true);
+  assert.equal(restored.offsiteRooms.find(r=>r.id===room.id).beds,4);
 });
 test('checkout linen state persists, rejects stale clears, and becomes dirty on the next checkout', () => {
   const h=createHarness([header(),row('A','2026-10-11','2026-10-14','S204B1'),row('B','2026-10-14','2026-10-16','S204B1'),row('Cancelled','2026-10-11','2026-10-13','S204B2')]);

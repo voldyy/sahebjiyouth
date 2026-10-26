@@ -33,6 +33,10 @@ var Hospitality = (() => {
   var normalizeOffsiteHotel = (hotel) => LEGACY_OFFSITE_HOTELS[hotel] ?? hotel;
   var SLOT_COUNTS = { Hawthorn: 15 };
   var slotId = (hotel, number) => `hawthorn-r${String(number).padStart(2, "0")}`;
+  var HAWTHORN_ROOM_TYPES = {
+    king: { label: "King", beds: 2, physicalBeds: 1, peoplePerBed: 2 },
+    doubleQueen: { label: "Double Queen", beds: 4, physicalBeds: 2, peoplePerBed: 2 }
+  };
   var DEFAULT_OFFSITE_ROOMS = OFFSITE_HOTELS.flatMap(
     (lodging) => Array.from({ length: SLOT_COUNTS[lodging] }, (_, index) => {
       const slot = `R${String(index + 1).padStart(2, "0")}`;
@@ -41,9 +45,7 @@ var Hospitality = (() => {
         number: slotId(lodging, index + 1),
         lodging,
         roomNo: "",
-        beds: 4,
-        physicalBeds: 2,
-        peoplePerBed: 2,
+        ...HAWTHORN_ROOM_TYPES.doubleQueen,
         label: slot,
         revision: `default-${slot.toLowerCase()}-v1`,
         isDefaultSlot: true
@@ -72,9 +74,9 @@ var Hospitality = (() => {
     { number: "207", beds: 4 },
     { number: "100", beds: 7 },
     { number: "101", beds: 12 },
-    { number: "102", beds: 12 },
-    { number: "103", beds: 12 },
-    { number: "104", beds: 12 }
+    { number: "102", beds: 14 },
+    { number: "103", beds: 13 },
+    { number: "104", beds: 15 }
   ];
   var samarpanBedCount = samarpanRooms.reduce((sum, room) => sum + room.beds, 0);
   var sadhakRooms = [
@@ -484,7 +486,11 @@ reply({ ready: true });
       };
     }
     function hotelRooms2(book, readOnly = false) {
-      const stored = table2(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], number: r[0], lodging: normalizeOffsiteHotel(r[1]), roomNo: r[2], beds: Number(r[3]), label: r[4], revision: r[5] }));
+      const stored = table2(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => {
+        const beds = Number(r[3]);
+        const type = beds === HAWTHORN_ROOM_TYPES.king.beds ? HAWTHORN_ROOM_TYPES.king : HAWTHORN_ROOM_TYPES.doubleQueen;
+        return { id: r[0], number: r[0], lodging: normalizeOffsiteHotel(r[1]), roomNo: r[2], beds, physicalBeds: type.physicalBeds, peoplePerBed: type.peoplePerBed, label: r[4], revision: r[5] };
+      });
       return withDefaultOffsiteRooms(stored);
     }
     function tripDisplay2(book) {
@@ -678,10 +684,14 @@ reply({ ready: true });
       const old = req.id ? rooms.find((r) => r.id === req.id) : null;
       if (req.id && (!old || old.revision !== req.expectedRevision)) throw new Error("This hotel room changed. Refresh before saving.");
       const preset = defaultOffsiteRoom(req.id);
-      const hotel = normalizeOffsiteHotel(clean2(req.lodging)), roomNo = clean2(req.roomNo), beds = preset?.beds || Number(req.beds);
+      const hotel = normalizeOffsiteHotel(clean2(req.lodging)), roomNo = clean2(req.roomNo);
+      const roomType = req.roomType || (Number(req.beds) === HAWTHORN_ROOM_TYPES.king.beds ? "king" : "doubleQueen");
+      const type = HAWTHORN_ROOM_TYPES[roomType];
+      const beds = req.roomType ? type?.beds : preset?.beds || type?.beds || Number(req.beds);
       if (!OFFSITE_HOTELS.includes(hotel) || !Number.isInteger(beds) || beds < 1 || beds > 20) throw new Error("Choose a hotel and between 1 and 20 beds.");
+      if (hotel === "Hawthorn" && !type) throw new Error("Choose King or Double Queen room type.");
+      if (hotel === "Hawthorn" && beds !== type.beds) throw new Error("The selected Hawthorn room type has a fixed capacity.");
       if (old && old.lodging !== hotel) throw new Error("An existing planning room cannot be moved to another hotel.");
-      if (preset && (hotel !== preset.lodging || Number(req.beds) !== preset.beds)) throw new Error("The room slot capacity is fixed at two beds and four people.");
       if (roomNo && rooms.some((r) => r.id !== old?.id && r.lodging === hotel && r.roomNo.toLowerCase() === roomNo.toLowerCase())) throw new Error("This hotel room number is already in the inventory.");
       const current = roster2(book);
       const assigned = old ? current.guests.filter((g) => offsiteRoomFor(g, rooms)?.id === old.id) : [];
