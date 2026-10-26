@@ -28,7 +28,7 @@ Push changes to `main` to run `.github/workflows/main.yml`. GitHub Actions runs 
 
 ## Duplicates and capacity
 
-Apps Script rejects repeat registrations and stops accepting them at 100, counting a couple as 1 and a single as 0.5 (see `apps-script/README.md`). The Azure API passes those two messages through with status 409. On load, the form asks Apps Script whether registration is open and shows a closed message if not; if that check fails the form stays open and the limit is still enforced on submit.
+Apps Script rejects repeat registrations and stops accepting them at 105, counting a couple as 1 and a single as 0.5 (see `apps-script/README.md`). The Azure API passes those two messages through with status 409. On load, the form asks Apps Script whether registration is open and shows a closed message if not; if that check fails the form stays open and the limit is still enforced on submit.
 
 ## WhatsApp confirmation
 

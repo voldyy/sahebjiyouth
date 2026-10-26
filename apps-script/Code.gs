@@ -13,7 +13,7 @@ const PUJA_CONFIG = {
   SENDER_NAME: 'Anoopam Mission USA',
   LOGO_URL: 'https://sahebjiyouth.z13.web.core.windows.net/reg/HIRES_AMLOGO_color_sm.png',
   REPLY_TO: 'usayouth@anoopam.org', // Optional monitored email address.
-  MAX_REGISTRATIONS: 100, // A couple counts 1 and a single counts 0.5; new registrations are refused at this total.
+  MAX_REGISTRATIONS: 105, // A couple counts 1 and a single counts 0.5; new registrations are refused at this total.
 };
 
 const RSVP_HEADERS = [
