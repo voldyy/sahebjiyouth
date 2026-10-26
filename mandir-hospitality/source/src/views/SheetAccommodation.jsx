@@ -108,6 +108,14 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
     try { await workspace.saveOffsiteRoom(roomDraft); setRoomDraft(null); toast("Hotel room inventory saved."); }
     catch (failure) { setRoomError(failure.message); }
   };
+  const changeRoomType = async (target, roomType) => {
+    if (readOnly || workspace.saving || !workspace.connected) return;
+    setDropError("");
+    try {
+      await workspace.saveOffsiteRoom({ id: target.id, expectedRevision: target.revision, lodging: target.lodging, roomNo: target.roomNo, roomType, beds: HAWTHORN_ROOM_TYPES[roomType].beds });
+      toast(`${target.label || roomLabel(target)} changed to ${HAWTHORN_ROOM_TYPES[roomType].label}.`);
+    } catch (failure) { setDropError(failure.message); }
+  };
   // Capacity reached: assigned beds against all beds in this lodging, for the chosen day or the busiest day of the week.
   const weekly = view === "weekly";
   const occupancy = lodgingOccupancy(guests, lodging, rooms, weekly ? Array.from({ length: 7 }, (_, i) => moveDay(week, i)) : [day], workspace.offsiteRooms);
@@ -135,7 +143,7 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
       {dropError && <p className="op-form-error stay-drop-error" role="alert">{dropError}</p>}
       {dragGuest && <p className="stay-drag-status" role="status">{drag.problem || `Place ${dragGuest.name} · ${stayLabel(dragGuest)}`}</p>}
       {view === "weekly" && <>
-        {!!rooms.length && <RoomStrip selected={room ? roomKey(room) : ""} onSelect={setRoomNo} rooms={rooms} lodging={lodging} />}
+        {!!rooms.length && <RoomStrip selected={room ? roomKey(room) : ""} onSelect={setRoomNo} rooms={rooms} lodging={lodging} onRoomTypeChange={!readOnly && section === "Offsite" ? changeRoomType : undefined} saving={workspace.saving || !workspace.connected} />}
         <div className="stay-date-toolbar"><div><span className="stay-kicker">WEEK {weekIndex + 1} OF {PLANNING_WEEK_STARTS.length}</span><h2 aria-live="polite">{shortDay(week)} – {shortDay(moveDay(week, 6))}, 2026</h2></div><div className="stay-date-controls"><button className="stay-arrow" aria-label="Previous week" disabled={weekIndex === 0} onClick={() => changeWeek(weekIndex - 1)}><ChevronLeft size={20} /></button><select aria-label="Choose occupancy week" value={weekIndex} onChange={(e) => changeWeek(Number(e.target.value))}>{PLANNING_WEEK_STARTS.map((start, index) => <option key={start} value={index}>{shortDay(start)} – {shortDay(moveDay(start, 6))}</option>)}</select><button className="stay-arrow" aria-label="Next week" disabled={weekIndex === PLANNING_WEEK_STARTS.length - 1} onClick={() => changeWeek(weekIndex + 1)}><ChevronRight size={20} /></button></div></div>
         {queuePanel}
         {room && <WeeklyRooms guests={guests} room={room} week={week} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} rooms={workspace.offsiteRooms} drag={readOnly ? null : drag} readOnly={readOnly} onChooseDay={(next) => { selectDay(next); setView("daily"); }} />}

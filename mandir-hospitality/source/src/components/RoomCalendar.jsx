@@ -2,18 +2,23 @@ import { useRef } from "react";
 import WhatsAppSent from "./WhatsAppSent";
 import { BedDouble, ChevronLeft, ChevronRight, Plus, AlertCircle } from "lucide-react";
 import { samarpanRooms, roomAssignment, roomKey } from "../lib/lodgingRooms";
-import { roomCapacityLabel, roomLabel, roomPeoplePerBed, roomPlaceLabel, OFFSITE_HOTELS } from "../lib/offsite";
+import { roomCapacityLabel, roomLabel, roomPeoplePerBed, roomPlaceLabel, roomTypeFor, OFFSITE_HOTELS } from "../lib/offsite";
 import { bedState, moveDay, shortDay, fullDay, localDay, onDay } from "../lib/occupancy";
 
 const roomPlaceAria = (room, position) => OFFSITE_HOTELS.includes(room.lodging)
   ? `${roomLabel(room)} ${roomPlaceLabel(room, position)}`
   : `${room.lodging === "Sadhak" ? "Sadhak " : ""}room ${room.number} bed ${position}`;
 
-export function RoomStrip({ selected, onSelect, rooms = samarpanRooms, lodging = "Samarpan" }) {
+export function RoomStrip({ selected, onSelect, rooms = samarpanRooms, lodging = "Samarpan", onRoomTypeChange, saving = false }) {
   const strip = useRef(null);
   return <section className="stay-room-selector" aria-label={`Choose a ${lodging} room`}>
     <button className="stay-arrow" aria-label="Scroll rooms left" onClick={() => strip.current?.scrollBy({ left: -300, behavior: "smooth" })}><ChevronLeft size={18} /></button>
-    <div className="stay-room-strip" ref={strip}>{rooms.map((room) => <button key={roomKey(room)} className={`stay-room-chip ${selected === roomKey(room) ? "is-selected" : ""}`} aria-pressed={selected === roomKey(room)} onClick={() => onSelect(roomKey(room))}><BedDouble size={20} /><span><strong>{roomLabel(room)}</strong><small>{roomCapacityLabel(room)}{OFFSITE_HOTELS.includes(room.lodging) && !room.roomNo ? " · Number pending" : ""}</small></span></button>)}</div>
+    <div className="stay-room-strip" ref={strip}>{rooms.map((room) => <div className="stay-room-choice" key={roomKey(room)}>
+      <button className={`stay-room-chip ${selected === roomKey(room) ? "is-selected" : ""}`} aria-pressed={selected === roomKey(room)} onClick={() => onSelect(roomKey(room))}><BedDouble size={20} /><span><strong>{roomLabel(room)}</strong><small>{roomCapacityLabel(room)}{OFFSITE_HOTELS.includes(room.lodging) && !room.roomNo ? " · Number pending" : ""}</small></span></button>
+      {onRoomTypeChange && room.lodging === "Hawthorn" && <div className="stay-room-type-switch" role="group" aria-label={`${room.label || roomLabel(room)} room type`}>
+        {[{ value: "king", label: "King", spots: 2 }, { value: "doubleQueen", label: "Double Queen", spots: 4 }].map(type => <button key={type.value} type="button" aria-pressed={roomTypeFor(room) === type.value} disabled={saving} onClick={() => { if (roomTypeFor(room) !== type.value) onRoomTypeChange(room, type.value); }}>{type.label}<small>{type.spots} spots</small></button>)}
+      </div>}
+    </div>)}</div>
     <button className="stay-arrow" aria-label="Scroll rooms right" onClick={() => strip.current?.scrollBy({ left: 300, behavior: "smooth" })}><ChevronRight size={18} /></button>
   </section>;
 }
