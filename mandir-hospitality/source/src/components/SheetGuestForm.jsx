@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 export default function SheetGuestForm({ onSave, onCancel, saving }) {
-  const [form, setForm] = useState({ name: "", primaryContact: "", relationship: "", city: "", phone: "", arrivalDate: "", arrivalTime: "", departureDate: "", departureTime: "", overnight: "", travelMethod: "", airportTransport: "", notes: "" });
+  const [form, setForm] = useState({ name: "", primaryContact: "", relationship: "", city: "", phone: "", arrivalDate: "", arrivalTime: "", departureDate: "", departureTime: "", overnight: "", travelMethod: "", airportPickup: "", airportDropoff: "", notes: "" });
   const [requestId] = useState(() => crypto.randomUUID());
   const [error, setError] = useState("");
   const change = (event) => setForm({ ...form, [event.target.name]: event.target.value });
@@ -22,7 +22,7 @@ export default function SheetGuestForm({ onSave, onCancel, saving }) {
         <label className="field">Overnight accommodation needed<select name="overnight" value={form.overnight} onChange={change}><option value="">To be confirmed</option><option value="YES">Yes</option><option value="NO">No — day visitor</option></select></label>
         <label className="field">Travel mode<select name="travelMethod" value={form.travelMethod} onChange={change}><option value="">To be confirmed</option>{["CAR", "FLIGHT", "BUS", "Bus (arrival)"].map(value => <option key={value}>{value}</option>)}</select></label>
       </div>
-      <label className="field">Airport pickup / drop-off needed<select name="airportTransport" value={form.airportTransport} onChange={change}><option value="">To be confirmed</option><option value="YES">Yes</option><option value="NO">No</option></select></label>
+      <div className="form-grid">{[{name:"airportPickup",label:"Airport pickup needed"},{name:"airportDropoff",label:"Departure dropoff needed"}].map(({name,label}) => <label className="field" key={name}>{label}<select name={name} value={form[name]} onChange={change}><option value="">To be confirmed</option><option value="YES">Yes</option><option value="NO">No</option></select></label>)}</div>
       <label className="field">Notes <span className="optional">Optional</span><textarea name="notes" value={form.notes} onChange={change} rows={3} maxLength={1000} /></label>
     </fieldset>
     {error && <p role="alert">{error}</p>}

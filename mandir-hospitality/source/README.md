@@ -1,5 +1,11 @@
 # Mandir Hospitality
 
+## Separate airport pickup and departure dropoff
+
+Column S is **Airport Pickup Needed?**; column AG is **Departure Dropoff Needed?**. On October 28, 2026, all 153 existing rows had S copied into AG (32 YES, 111 NO, 10 blank). AD–AF lodging columns retain their existing positions. Admins can edit S and AG independently in the source Sheet. Visible dashboards import those changes automatically; a NO removes that passenger from only the corresponding transport leg and suppresses notifications for that leg. Existing trip plans remain attached to their stable trip IDs when other passengers still need that trip.
+
+Older registrations and new rows from the existing registration form inherit pickup for dropoff until an explicit dropoff choice is saved. The dashboard's Add guest form offers the two choices separately. Lodging updates only write AD–AF and preserve AG.
+
 Transport and lodging WhatsApp notifications run in the existing Azure backend. Accommodations includes an admin-only **Send room details** preview/send action, with one message per attendee. See [notification setup and operations](notifications/HOSPITALITY.md).
 
 A responsive hospitality dashboard for Allentown Shri Swaminarayan Mandirji, backed by SQLite with background Google Sheets synchronization. Admins have Main, Transport, Accommodations, and Yogi Prasad. Anyone with a dashboard link can edit shared dining lists and meal counts when shared meal editing is enabled; other assignments remain admin-only. The interface uses the supplied Anoopam Mission logo, sky blue, and soft orange.

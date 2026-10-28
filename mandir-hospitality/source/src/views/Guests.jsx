@@ -756,7 +756,9 @@ export default function Guests({
                   <span>
                     Transport
                     <strong>
-                      {selected.transport === "Needed"
+                      {selected.airportPickup !== undefined
+                        ? `Pickup: ${selected.airportPickup === "Needed" ? "Yes" : selected.airportPickup === "Not needed" ? "No" : "To be confirmed"} · Dropoff: ${selected.airportDropoff === "Needed" ? "Yes" : selected.airportDropoff === "Not needed" ? "No" : "To be confirmed"}`
+                        : selected.transport === "Needed"
                         ? "Pickup needed"
                         : selected.transport === "Assigned"
                           ? "Vehicle assigned"
@@ -769,7 +771,7 @@ export default function Guests({
                           onNavigate("transport");
                         }}
                       >
-                        {viewOnly ? "View transport" : "Coordinate pickup"}
+                        {viewOnly ? "View transport" : "Coordinate transport"}
                         <ArrowRight size={14} />
                       </button>
                     )}

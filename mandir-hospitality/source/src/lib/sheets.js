@@ -9,6 +9,7 @@ export const LODGING_LOCATIONS = [...FIXED_LODGINGS, ...OFFSITE_HOTELS];
 const API = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`;
 const HEADERS = { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" };
 const text = (value) => String(value ?? "").trim();
+const transportChoice = value => /^(YES|Y|TRUE)$/i.test(text(value)) ? "Needed" : /^(NO|N|FALSE)$/i.test(text(value)) ? "Not needed" : "Unknown";
 
 export function validateHeaders(headers) {
   for (const [index, expected] of Object.entries(HEADERS)) {
@@ -81,6 +82,10 @@ export function guestsFromRows(rows) {
     const name = text(row[8]);
     const overnight = text(row[20]).toUpperCase();
     const rsvp = text(row[24]);
+    const airportPickup = transportChoice(row[18]);
+    // Older registrations and newly appended legacy-form rows inherit pickup
+    // until a separate dropoff choice is recorded. Explicit NO never inherits.
+    const airportDropoff = transportChoice(text(row[32]) || row[18]);
     return {
       id: counts.get(identity) === 1 ? identity : `${identity}:${index}`, sourceIdentity: identity, registrationId: text(row[0]),
       sourceWritable: counts.get(identity) === 1, sourceLodging: lodging,
@@ -98,7 +103,8 @@ export function guestsFromRows(rows) {
       status: /^cancel/i.test(rsvp) ? "Cancelled" : /^(departed|checked out)$/i.test(rsvp) ? "Departed" : "Registered", rsvpStatus: rsvp,
       stay: lodging[0] || (/^(NO|N|FALSE)$/.test(overnight) ? "Day visitor" : "Pending lodging"),
       lodging: normalizeOffsiteHotel(lodging[0]), roomNo: lodging[1], roomCode: lodging[2], room: lodging[2] || lodging[1],
-      transport: /^(YES|Y|TRUE)$/i.test(text(row[18])) ? "Needed" : "Not needed",
+      airportPickup, airportDropoff,
+      transport: [airportPickup, airportDropoff].includes("Needed") ? "Needed" : "Not needed",
       travel: [text(row[11]), text(row[14]), text(row[15])].filter(Boolean).join(" · "),
       diet: text(row[23]), notes: [text(row[19]), text(row[23])].filter(Boolean).join("\n"), color: "sage",
     };
@@ -164,7 +170,7 @@ export async function readAuthorizedRows(token) {
   const title = `'${sheet.properties.title.replaceAll("'", "''")}'`;
   // Display values preserve identifiers formatted with leading zeroes. Date parsing
   // accepts ISO and the source's verified US date layout without timezone conversion.
-  const result = await sheetsRequest(`/values/${encodeURIComponent(`${title}!A1:AF`)}?valueRenderOption=FORMATTED_VALUE`, token);
+  const result = await sheetsRequest(`/values/${encodeURIComponent(`${title}!A1:AG`)}?valueRenderOption=FORMATTED_VALUE`, token);
   return { rows: result.values || [], title };
 }
 

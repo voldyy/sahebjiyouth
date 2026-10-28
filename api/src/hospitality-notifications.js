@@ -151,7 +151,9 @@ function guestsFromRows(rows) {
       roomNo: lodging[1],
       roomCode: lodging[2],
       room: lodging[2] || lodging[1],
-      transport: /^(YES|Y|TRUE)$/i.test(text(row[18])) ? "Needed" : "Not needed",
+      airportPickup: transportChoice(row[18]),
+      airportDropoff: transportChoice(text(row[32]) || row[18]),
+      transport: [transportChoice(row[18]), transportChoice(text(row[32]) || row[18])].includes("Needed") ? "Needed" : "Not needed",
       travel: [text(row[11]), text(row[14]), text(row[15])].filter(Boolean).join(" \xB7 "),
       diet: text(row[23]),
       notes: [text(row[19]), text(row[23])].filter(Boolean).join("\n"),
@@ -250,16 +252,19 @@ var hospitality_templates_default = {
 var import_node_crypto = require("node:crypto");
 
 // src/lib/transport.js
+function transportChoice(value) { return /^(YES|Y|TRUE)$/i.test(text(value)) ? "Needed" : /^(NO|N|FALSE)$/i.test(text(value)) ? "Not needed" : "Unknown"; }
+function transportForLeg(guest, direction) { return (direction === "Arrivals" ? guest.airportPickup : guest.airportDropoff) ?? guest.transport; }
 function transportGroups(guests, direction) {
   const groups = /* @__PURE__ */ new Map();
   for (const guest of guests) {
     if (guest.status === "Cancelled") continue;
+    if (transportForLeg(guest, direction) === "Not needed") continue;
     const arrival = direction === "Arrivals";
     const method = !arrival && /bus\s*\(arrival\)/i.test(guest.travelMethod || "") ? "" : guest.travelMethod || "";
     const isBus = /bus/i.test(method);
     const flight = isBus ? "" : (arrival ? guest.arrivalFlight : guest.departureFlight)?.trim().toUpperCase().replace(/\s+/g, "") || "";
     const airport = (arrival ? guest.arrivalAirport : guest.departureAirport)?.trim().toUpperCase() || "";
-    if (!/flight|air|bus/i.test(method) && !flight && guest.transport !== "Needed")
+    if (!/flight|air|bus/i.test(method) && !flight && transportForLeg(guest, direction) !== "Needed")
       continue;
     const day = (arrival ? guest.arrivalDate : guest.departureDate) || "";
     const time = (arrival ? guest.arrivalTime : guest.departureTime) || "";
@@ -295,7 +300,7 @@ function transportGroups(guests, direction) {
         g.arrivalTime,
         g.departureDate,
         g.departureTime,
-        g.transport
+        transportForLeg(g, direction)
       ]).sort((a, b) => a[0].localeCompare(b[0]))
     ),
     timeMismatch: new Set(
@@ -468,7 +473,7 @@ function tripParties(snapshot, group) {
   const registrations = [...new Set(group.guests.map((g) => g.registrationId))];
   return registrations.flatMap((registrationId) => {
     if (!hasData(registrationId) || snapshot.incompleteTransportRegistrations?.has(registrationId)) return [];
-    const family = snapshot.guests.filter((g) => g.registrationId === registrationId && !["Cancelled", "Departed"].includes(g.status));
+    const family = snapshot.guests.filter((g) => g.registrationId === registrationId && !["Cancelled", "Departed"].includes(g.status) && transportForLeg(g, group.direction) !== "Not needed");
     const primaries = family.filter((g) => g.isPrimaryContact);
     if (primaries.length !== 1 || !primaries[0].sourceWritable) return [];
     if (family.some((g) => !completeTravelData(g, arrival))) return [];

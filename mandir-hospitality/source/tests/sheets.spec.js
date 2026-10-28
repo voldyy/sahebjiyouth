@@ -31,6 +31,20 @@ test('view-only accommodation page does not offer WhatsApp sending', async ({pag
 });
 
 const TODAY = new Date("2026-10-25T16:00:00Z"); // first planning day, so tests do not depend on the real date
+test('transport follows pickup and dropoff Sheet choices independently after refresh', async ({page}) => {
+  const rows=[['Both Legs','YES','YES'],['Pickup Only','YES','NO'],['Dropoff Only','NO','YES'],['Neither Leg','NO','NO']].map(([name,pickup,dropoff],i)=>{
+    const r=plannerGuest(`LEG-${i}`,name,'2026-10-28 14:30','2026-10-30 16:00');
+    Object.assign(r,{11:'FLIGHT',14:'ABE',15:'AA123',16:'EWR',17:'UA456',18:pickup,32:dropoff});return r;
+  });
+  const h=await setup(page,'ok',rows);h.rows[0][18]='Airport Pickup Needed?';h.rows[0][32]='Departure Dropoff Needed?';
+  await page.goto('/#transport');await page.reload();
+  const arrival=page.locator('.transport-journey').filter({hasText:'AA123'}),departure=page.locator('.transport-journey').filter({hasText:'UA456'});
+  await expect(arrival).toContainText('Both Legs');await expect(arrival).toContainText('Pickup Only');await expect(arrival).not.toContainText('Dropoff Only');
+  await expect(departure).toContainText('Both Legs');await expect(departure).toContainText('Dropoff Only');await expect(departure).not.toContainText('Pickup Only');
+  await expect(page.locator('.shared-transport')).not.toContainText('Neither Leg');
+  h.rows[1][32]='NO';await page.reload();
+  await expect(arrival).toContainText('Both Legs');await expect(departure).not.toContainText('Both Legs');
+});
 async function setup(page, mode = "ok", attendeeRows = null, today = TODAY) {
   if (today) await page.clock.install({ time: today });
   const headers = Array(32).fill("");

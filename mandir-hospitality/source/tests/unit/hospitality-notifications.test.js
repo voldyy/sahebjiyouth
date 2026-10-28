@@ -23,6 +23,14 @@ function memoryTable() {
 }
 const accepted = { sid: "MM" + "a".repeat(32), status: "queued" };
 
+test('a declined leg cannot generate passenger or driver notifications for that leg',()=>{
+  const s=snapshot();for(const g of s.guests){g.airportPickup='Not needed';g.airportDropoff='Needed';}
+  const trips=assignedTrips(s);assert.equal(trips.length,1);assert.equal(trips[0].direction,'Departures');
+  const party=tripParties(s,trips[0])[0];assert.ok(party);
+  assert.deepEqual(tripReminders(party,party.at-8*HOUR).map(m=>m.type),['passenger_departure','driver_dropoff']);
+  for(const g of s.guests)g.airportDropoff='Not needed';assert.equal(assignedTrips(s).length,0);
+});
+
 test("phone validation handles North American and explicit international numbers", () => {
   assert.equal(phoneAddress("(202) 555-0123"), "whatsapp:+12025550123");
   assert.equal(phoneAddress("+44 20 7946 0123"), "whatsapp:+442079460123");

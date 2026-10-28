@@ -32,23 +32,78 @@ __export(hospitality_service_exports, {
 });
 module.exports = __toCommonJS(hospitality_service_exports);
 
+// src/lib/offsite.js
+var OFFSITE_HOTELS = ["Hawthorn"];
+var LEGACY_OFFSITE_HOTELS = { "Comfort Inn": "Hawthorn", "Hilton Garden Inn": "" };
+var normalizeOffsiteHotel = (hotel) => LEGACY_OFFSITE_HOTELS[hotel] ?? hotel;
+var SLOT_COUNTS = { Hawthorn: 15 };
+var slotId = (hotel, number) => `hawthorn-r${String(number).padStart(2, "0")}`;
+var HAWTHORN_ROOM_TYPES = {
+  king: { label: "King", beds: 2, physicalBeds: 1, peoplePerBed: 2 },
+  doubleQueen: { label: "Double Queen", beds: 4, physicalBeds: 2, peoplePerBed: 2 }
+};
+var DEFAULT_OFFSITE_ROOMS = OFFSITE_HOTELS.flatMap(
+  (lodging) => Array.from({ length: SLOT_COUNTS[lodging] }, (_, index) => {
+    const slot = `R${String(index + 1).padStart(2, "0")}`;
+    return {
+      id: slotId(lodging, index + 1),
+      number: slotId(lodging, index + 1),
+      lodging,
+      roomNo: "",
+      ...HAWTHORN_ROOM_TYPES.doubleQueen,
+      label: slot,
+      revision: `default-${slot.toLowerCase()}-v1`,
+      isDefaultSlot: true
+    };
+  })
+);
+
 // src/lib/lodgingRooms.js
 var samarpanRooms = [
+  { number: "201", beds: 2 },
+  { number: "202", beds: 2 },
   { number: "203", beds: 4 },
-  { number: "204", beds: 3 },
+  { number: "204", beds: 4 },
   { number: "205", beds: 4 },
   { number: "206", beds: 4 },
   { number: "207", beds: 4 },
   { number: "100", beds: 7 },
   { number: "101", beds: 12 },
-  { number: "102", beds: 12 },
-  { number: "103", beds: 12 },
-  { number: "104", beds: 12 }
+  { number: "102", beds: 14 },
+  { number: "103", beds: 13 },
+  { number: "104", beds: 15 }
 ];
 var samarpanBedCount = samarpanRooms.reduce((sum, room) => sum + room.beds, 0);
+var sadhakRooms = [
+  { number: "101", beds: 3 },
+  { number: "102", beds: 3 },
+  { number: "104", beds: 2 },
+  { number: "201", beds: 1 },
+  { number: "202", beds: 3 },
+  { number: "203", beds: 2 },
+  { number: "204", beds: 2 }
+].map((room) => ({ ...room, lodging: "Sadhak" }));
+var FIXED_LODGINGS = ["Samarpan", "Sadhak"];
 
-// src/lib/offsite.js
-var OFFSITE_HOTELS = ["Comfort Inn", "Hilton Garden Inn"];
+// src/lib/transportDisplay.js
+var HOUR = 60 * 60 * 1e3;
+var formatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+var parts = (instant) => Object.fromEntries(formatter.formatToParts(new Date(instant)).map((p) => [p.type, p.value]));
+var dayOf = (p) => `${p.year}-${p.month}-${p.day}`;
+function allentownInstant(day, time) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day || "") || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time || "")) return null;
+  const wall = Date.parse(`${day}T${time}:00Z`);
+  if (!Number.isFinite(wall) || new Date(wall).toISOString().slice(0, 10) !== day) return null;
+  const candidates = [-24, 0, 24].map((hours) => {
+    const probe = wall + hours * HOUR, p = parts(probe);
+    const offset = Date.parse(`${dayOf(p)}T${p.hour}:${p.minute}:00Z`) - probe;
+    return wall - offset;
+  }).filter((instant) => {
+    const p = parts(instant);
+    return dayOf(p) === day && `${p.hour}:${p.minute}` === time;
+  });
+  return candidates.length ? Math.max(...candidates) : null;
+}
 
 // src/lib/occupancy.js
 var FIRST_STAY_DAY = "2026-10-11";
@@ -59,15 +114,18 @@ function moveDay(iso, days) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 var WEEK_STARTS = Array.from({ length: 6 }, (_, i) => moveDay(FIRST_STAY_DAY, i * 7));
+var PLANNING_START_DAY = "2026-10-25";
+var PLANNING_WEEK_STARTS = WEEK_STARTS.filter((start) => start >= PLANNING_START_DAY);
 
 // src/lib/sheets.js
 var SPREADSHEET_ID = "1YvVz4DyPZYTYtKC9qiDlEXsPd7Xz4DPNJIoe3NBkYMA";
 var SHEET_GID = 0;
 var SHEET_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit#gid=${SHEET_GID}`;
-var LODGING_LOCATIONS = ["Samarpan", ...OFFSITE_HOTELS];
+var LODGING_LOCATIONS = [...FIXED_LODGINGS, ...OFFSITE_HOTELS];
 var API = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`;
 var HEADERS = { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" };
 var text = (value) => String(value ?? "").trim();
+var transportChoice = (value) => /^(YES|Y|TRUE)$/i.test(text(value)) ? "Needed" : /^(NO|N|FALSE)$/i.test(text(value)) ? "Not needed" : "Unknown";
 function validateHeaders(headers2) {
   for (const [index, expected] of Object.entries(HEADERS)) {
     if (text(headers2[index]).toLowerCase() !== expected.toLowerCase()) {
@@ -101,6 +159,18 @@ function sheetDate(value) {
   const pad = (n) => String(n).padStart(2, "0");
   return { date: `${year}-${pad(month)}-${pad(day)}`, time: `${pad(hours)}:${pad(minutes)}` };
 }
+function registrationTime(value) {
+  const raw = text(value);
+  if (/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw)) {
+    const instant2 = Date.parse(raw);
+    return Number.isFinite(instant2) ? instant2 : null;
+  }
+  const { date, time } = sheetDate(value);
+  const instant = allentownInstant(date, time);
+  if (instant === null) return null;
+  const seconds = typeof value === "number" ? Math.round(value * 86400) % 60 : Number(raw.match(/\d{1,2}:\d{2}:(\d{2})/)?.[1] || raw.match(/^Date\(\d+,\d+,\d+,\d+,\d+,(\d+)\)/)?.[1] || 0);
+  return seconds < 60 ? instant + seconds * 1e3 : null;
+}
 function guestsFromRows(rows) {
   validateHeaders(rows[0] || []);
   const attendees = rows.slice(1).filter((row) => text(row[0]) && text(row[8]));
@@ -116,12 +186,16 @@ function guestsFromRows(rows) {
     const name = text(row[8]);
     const overnight = text(row[20]).toUpperCase();
     const rsvp = text(row[24]);
+    const airportPickup = transportChoice(row[18]);
+    const airportDropoff = transportChoice(text(row[32]) || row[18]);
     return {
       id: counts.get(identity) === 1 ? identity : `${identity}:${index}`,
       sourceIdentity: identity,
       registrationId: text(row[0]),
       sourceWritable: counts.get(identity) === 1,
       sourceLodging: lodging,
+      registeredAt: registrationTime(row[1]),
+      registrationOrder: index,
       name,
       initials: name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase(),
       group: "Individual",
@@ -131,6 +205,9 @@ function guestsFromRows(rows) {
       city: text(row[7]),
       phone: text(row[5]),
       count: 1,
+      // Manual registrations have at least one of the normal online-form
+      // identifiers missing. Keep the raw email and ZIP out of dashboard data.
+      isManualRegistration: !text(row[4]) || !text(row[6]),
       arrivalDate: arrival.date,
       arrivalTime: arrival.time,
       arrivalTimeKnown: typeof row[12] === "number" ? row[12] % 1 !== 0 : /(?:[T ]\d{1,2}:\d{2}|^Date\(\d+,\d+,\d+,\d+,\d+)/.test(text(row[12])),
@@ -147,11 +224,13 @@ function guestsFromRows(rows) {
       status: /^cancel/i.test(rsvp) ? "Cancelled" : /^(departed|checked out)$/i.test(rsvp) ? "Departed" : "Registered",
       rsvpStatus: rsvp,
       stay: lodging[0] || (/^(NO|N|FALSE)$/.test(overnight) ? "Day visitor" : "Pending lodging"),
-      lodging: lodging[0],
+      lodging: normalizeOffsiteHotel(lodging[0]),
       roomNo: lodging[1],
       roomCode: lodging[2],
       room: lodging[2] || lodging[1],
-      transport: /^(YES|Y|TRUE)$/i.test(text(row[18])) ? "Needed" : "Not needed",
+      airportPickup,
+      airportDropoff,
+      transport: [airportPickup, airportDropoff].includes("Needed") ? "Needed" : "Not needed",
       travel: [text(row[11]), text(row[14]), text(row[15])].filter(Boolean).join(" \xB7 "),
       diet: text(row[23]),
       notes: [text(row[19]), text(row[23])].filter(Boolean).join("\n"),
@@ -250,16 +329,18 @@ var hospitality_templates_default = {
 var import_node_crypto = require("node:crypto");
 
 // src/lib/transport.js
+var transportForLeg = (guest, direction) => (direction === "Arrivals" ? guest.airportPickup : guest.airportDropoff) ?? guest.transport;
 function transportGroups(guests, direction) {
   const groups = /* @__PURE__ */ new Map();
   for (const guest of guests) {
     if (guest.status === "Cancelled") continue;
+    if (transportForLeg(guest, direction) === "Not needed") continue;
     const arrival = direction === "Arrivals";
     const method = !arrival && /bus\s*\(arrival\)/i.test(guest.travelMethod || "") ? "" : guest.travelMethod || "";
     const isBus = /bus/i.test(method);
     const flight = isBus ? "" : (arrival ? guest.arrivalFlight : guest.departureFlight)?.trim().toUpperCase().replace(/\s+/g, "") || "";
     const airport = (arrival ? guest.arrivalAirport : guest.departureAirport)?.trim().toUpperCase() || "";
-    if (!/flight|air|bus/i.test(method) && !flight && guest.transport !== "Needed")
+    if (!/flight|air|bus/i.test(method) && !flight && transportForLeg(guest, direction) !== "Needed")
       continue;
     const day = (arrival ? guest.arrivalDate : guest.departureDate) || "";
     const time = (arrival ? guest.arrivalTime : guest.departureTime) || "";
@@ -288,6 +369,8 @@ function transportGroups(guests, direction) {
   }
   return [...groups.values()].map((group) => ({
     ...group,
+    timeKnown: group.guests.every((g) => (direction === "Arrivals" ? g.arrivalTimeKnown : g.departureTimeKnown) !== false),
+    latestTime: group.guests.map((g) => direction === "Arrivals" ? g.arrivalTime : g.departureTime).filter(Boolean).sort().at(-1) || "",
     signature: JSON.stringify(
       group.guests.map((g) => [
         g.sourceIdentity,
@@ -295,7 +378,7 @@ function transportGroups(guests, direction) {
         g.arrivalTime,
         g.departureDate,
         g.departureTime,
-        g.transport
+        transportForLeg(g, direction)
       ]).sort((a, b) => a[0].localeCompare(b[0]))
     ),
     timeMismatch: new Set(
@@ -384,7 +467,7 @@ function airlineForFlight(flight) {
 
 // notifications/hospitality-model.js
 var ZONE = "America/New_York";
-var HOUR = 36e5;
+var HOUR2 = 36e5;
 var easternAirports = /* @__PURE__ */ new Set(["ABE", "EWR", "JFK", "PHL"]);
 var digest = (value) => (0, import_node_crypto.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
 var oneLine = (value) => String(value ?? "").replace(/[\r\n\t]+/g, " ").replace(/ {2,}/g, " ").trim();
@@ -429,8 +512,8 @@ function easternInstant(day, time) {
   }
   const p = Object.fromEntries(format.formatToParts(new Date(instant)).map((p2) => [p2.type, p2.value]));
   if (`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}` !== `${day}T${time}`) return null;
-  const earlier = Object.fromEntries(format.formatToParts(new Date(instant - HOUR)).map((p2) => [p2.type, p2.value]));
-  const later = Object.fromEntries(format.formatToParts(new Date(instant + HOUR)).map((p2) => [p2.type, p2.value]));
+  const earlier = Object.fromEntries(format.formatToParts(new Date(instant - HOUR2)).map((p2) => [p2.type, p2.value]));
+  const later = Object.fromEntries(format.formatToParts(new Date(instant + HOUR2)).map((p2) => [p2.type, p2.value]));
   if ([earlier, later].some((q) => `${q.year}-${q.month}-${q.day}T${q.hour}:${q.minute}` === `${day}T${time}`)) return null;
   return instant;
 }
@@ -468,7 +551,7 @@ function tripParties(snapshot, group) {
   const registrations = [...new Set(group.guests.map((g) => g.registrationId))];
   return registrations.flatMap((registrationId) => {
     if (!hasData(registrationId) || snapshot.incompleteTransportRegistrations?.has(registrationId)) return [];
-    const family = snapshot.guests.filter((g) => g.registrationId === registrationId && !["Cancelled", "Departed"].includes(g.status));
+    const family = snapshot.guests.filter((g) => g.registrationId === registrationId && !["Cancelled", "Departed"].includes(g.status) && transportForLeg(g, group.direction) !== "Not needed");
     const primaries = family.filter((g) => g.isPrimaryContact);
     if (primaries.length !== 1 || !primaries[0].sourceWritable) return [];
     if (family.some((g) => !completeTravelData(g, arrival))) return [];
@@ -494,7 +577,7 @@ function driverAssignment(party, epoch) {
 }
 function tripReminders(party, now) {
   const p = party, result = [];
-  if (p.group.method !== "Flight" || now >= p.at || now < p.at - 18 * HOUR) return result;
+  if (p.group.method !== "Flight" || now >= p.at || now < p.at - 18 * HOUR2) return result;
   result.push(candidate(
     p.arrival ? "passenger_arrival" : "passenger_departure",
     p.identity,
@@ -502,7 +585,7 @@ function tripReminders(party, now) {
     [p.primary.name, p.flight, p.group.airport, formatWhen(p.at), p.driver.name, displayPhone(p.driver.phone)],
     { trip: digest(p.group.id), event: "18-hour passenger reminder" }
   ));
-  if (!p.arrival && now >= p.at - 8 * HOUR) result.push(candidate(
+  if (!p.arrival && now >= p.at - 8 * HOUR2) result.push(candidate(
     "driver_dropoff",
     p.identity,
     p.driver.phone,
@@ -534,7 +617,7 @@ function lodgingCandidates(snapshot, now, manual = false) {
     const recipient = phoneAddress(g.phone);
     if (!recipient) return [];
     const at = g.arrivalTimeKnown ? easternInstant(g.arrivalDate, g.arrivalTime) : null;
-    if (!manual && (at === null || now >= at || now < at - 24 * HOUR)) return [];
+    if (!manual && (at === null || now >= at || now < at - 24 * HOUR2)) return [];
     return [candidate(
       "accommodation",
       [g.sourceIdentity, g.arrivalDate, g.arrivalTime],
@@ -700,8 +783,6 @@ function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now =
       }));
       await create(table, { partitionKey: STATE, rowKey: "initialized", initializedAt: new Date(started).toISOString() });
     }
-    // LODGING_AUTO_NOTIFICATIONS_ENABLED=false pauses only the timed room-assignment message. Driver and passenger messages
-    // and the admin "Send room details" button are unaffected; an unset value keeps the automatic message on.
     const candidates = env.LODGING_AUTO_NOTIFICATIONS_ENABLED === "false" ? [] : lodgingCandidates(snapshot, started), issues = [];
     for (const group of groups) {
       if (now() - started > 65e3) break;
@@ -720,7 +801,7 @@ function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now =
         }
         await table.upsertEntity({ partitionKey: STATE, rowKey, binding, epoch }, "Replace");
       }
-      if (group.method === "Flight" && parties.some((p) => p.arrival && started >= p.at - 24 * HOUR && started <= p.at + 6 * HOUR)) {
+      if (group.method === "Flight" && parties.some((p) => p.arrival && started >= p.at - 24 * HOUR2 && started <= p.at + 6 * HOUR2)) {
         try {
           const flight = await departureFlightCheck(table, group, started, readFlight);
           for (const party of parties) {

@@ -39,20 +39,45 @@ __export(yogi_prasad_exports, {
 module.exports = __toCommonJS(yogi_prasad_exports);
 
 // src/lib/offsite.js
-var OFFSITE_HOTELS = ["Comfort Inn", "Hilton Garden Inn"];
+var OFFSITE_HOTELS = ["Hawthorn"];
+var LEGACY_OFFSITE_HOTELS = { "Comfort Inn": "Hawthorn", "Hilton Garden Inn": "" };
+var normalizeOffsiteHotel = (hotel) => LEGACY_OFFSITE_HOTELS[hotel] ?? hotel;
+var SLOT_COUNTS = { Hawthorn: 15 };
+var slotId = (hotel, number) => `hawthorn-r${String(number).padStart(2, "0")}`;
+var HAWTHORN_ROOM_TYPES = {
+  king: { label: "King", beds: 2, physicalBeds: 1, peoplePerBed: 2 },
+  doubleQueen: { label: "Double Queen", beds: 4, physicalBeds: 2, peoplePerBed: 2 }
+};
+var DEFAULT_OFFSITE_ROOMS = OFFSITE_HOTELS.flatMap(
+  (lodging) => Array.from({ length: SLOT_COUNTS[lodging] }, (_, index) => {
+    const slot = `R${String(index + 1).padStart(2, "0")}`;
+    return {
+      id: slotId(lodging, index + 1),
+      number: slotId(lodging, index + 1),
+      lodging,
+      roomNo: "",
+      ...HAWTHORN_ROOM_TYPES.doubleQueen,
+      label: slot,
+      revision: `default-${slot.toLowerCase()}-v1`,
+      isDefaultSlot: true
+    };
+  })
+);
 
 // src/lib/lodgingRooms.js
 var samarpanRooms = [
+  { number: "201", beds: 2 },
+  { number: "202", beds: 2 },
   { number: "203", beds: 4 },
-  { number: "204", beds: 3 },
+  { number: "204", beds: 4 },
   { number: "205", beds: 4 },
   { number: "206", beds: 4 },
   { number: "207", beds: 4 },
   { number: "100", beds: 7 },
   { number: "101", beds: 12 },
-  { number: "102", beds: 12 },
-  { number: "103", beds: 12 },
-  { number: "104", beds: 12 }
+  { number: "102", beds: 14 },
+  { number: "103", beds: 13 },
+  { number: "104", beds: 15 }
 ];
 var samarpanBedCount = samarpanRooms.reduce((sum, room) => sum + room.beds, 0);
 var sadhakRooms = [
@@ -95,6 +120,8 @@ function moveDay(iso, days) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 var WEEK_STARTS = Array.from({ length: 6 }, (_, i) => moveDay(FIRST_STAY_DAY, i * 7));
+var PLANNING_START_DAY = "2026-10-25";
+var PLANNING_WEEK_STARTS = WEEK_STARTS.filter((start) => start >= PLANNING_START_DAY);
 
 // src/lib/sheets.js
 var SPREADSHEET_ID = "1YvVz4DyPZYTYtKC9qiDlEXsPd7Xz4DPNJIoe3NBkYMA";
@@ -104,6 +131,7 @@ var LODGING_LOCATIONS = [...FIXED_LODGINGS, ...OFFSITE_HOTELS];
 var API = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`;
 var HEADERS = { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" };
 var text = (value) => String(value ?? "").trim();
+var transportChoice = (value) => /^(YES|Y|TRUE)$/i.test(text(value)) ? "Needed" : /^(NO|N|FALSE)$/i.test(text(value)) ? "Not needed" : "Unknown";
 function validateHeaders(headers) {
   for (const [index, expected] of Object.entries(HEADERS)) {
     if (text(headers[index]).toLowerCase() !== expected.toLowerCase()) {
@@ -164,6 +192,8 @@ function guestsFromRows(rows) {
     const name = text(row[8]);
     const overnight = text(row[20]).toUpperCase();
     const rsvp = text(row[24]);
+    const airportPickup = transportChoice(row[18]);
+    const airportDropoff = transportChoice(text(row[32]) || row[18]);
     return {
       id: counts.get(identity) === 1 ? identity : `${identity}:${index}`,
       sourceIdentity: identity,
@@ -200,11 +230,13 @@ function guestsFromRows(rows) {
       status: /^cancel/i.test(rsvp) ? "Cancelled" : /^(departed|checked out)$/i.test(rsvp) ? "Departed" : "Registered",
       rsvpStatus: rsvp,
       stay: lodging[0] || (/^(NO|N|FALSE)$/.test(overnight) ? "Day visitor" : "Pending lodging"),
-      lodging: lodging[0],
+      lodging: normalizeOffsiteHotel(lodging[0]),
       roomNo: lodging[1],
       roomCode: lodging[2],
       room: lodging[2] || lodging[1],
-      transport: /^(YES|Y|TRUE)$/i.test(text(row[18])) ? "Needed" : "Not needed",
+      airportPickup,
+      airportDropoff,
+      transport: [airportPickup, airportDropoff].includes("Needed") ? "Needed" : "Not needed",
       travel: [text(row[11]), text(row[14]), text(row[15])].filter(Boolean).join(" \xB7 "),
       diet: text(row[23]),
       notes: [text(row[19]), text(row[23])].filter(Boolean).join("\n"),

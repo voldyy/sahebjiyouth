@@ -201,6 +201,7 @@ var Hospitality = (() => {
   var API = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`;
   var HEADERS = { 0: "Registration ID", 8: "Attendee Full Name", 29: "Lodging", 30: "Room No.", 31: "Room Code" };
   var text = (value) => String(value ?? "").trim();
+  var transportChoice = (value) => /^(YES|Y|TRUE)$/i.test(text(value)) ? "Needed" : /^(NO|N|FALSE)$/i.test(text(value)) ? "Not needed" : "Unknown";
   function validateHeaders(headers) {
     for (const [index, expected] of Object.entries(HEADERS)) {
       if (text(headers[index]).toLowerCase() !== expected.toLowerCase()) {
@@ -261,6 +262,8 @@ var Hospitality = (() => {
       const name = text(row[8]);
       const overnight = text(row[20]).toUpperCase();
       const rsvp = text(row[24]);
+      const airportPickup = transportChoice(row[18]);
+      const airportDropoff = transportChoice(text(row[32]) || row[18]);
       return {
         id: counts.get(identity) === 1 ? identity : `${identity}:${index}`,
         sourceIdentity: identity,
@@ -301,7 +304,9 @@ var Hospitality = (() => {
         roomNo: lodging[1],
         roomCode: lodging[2],
         room: lodging[2] || lodging[1],
-        transport: /^(YES|Y|TRUE)$/i.test(text(row[18])) ? "Needed" : "Not needed",
+        airportPickup,
+        airportDropoff,
+        transport: [airportPickup, airportDropoff].includes("Needed") ? "Needed" : "Not needed",
         travel: [text(row[11]), text(row[14]), text(row[15])].filter(Boolean).join(" \xB7 "),
         diet: text(row[23]),
         notes: [text(row[19]), text(row[23])].filter(Boolean).join("\n"),
@@ -324,16 +329,18 @@ var Hospitality = (() => {
   }
 
   // src/lib/transport.js
+  var transportForLeg = (guest, direction) => (direction === "Arrivals" ? guest.airportPickup : guest.airportDropoff) ?? guest.transport;
   function transportGroups(guests, direction) {
     const groups = /* @__PURE__ */ new Map();
     for (const guest of guests) {
       if (guest.status === "Cancelled") continue;
+      if (transportForLeg(guest, direction) === "Not needed") continue;
       const arrival = direction === "Arrivals";
       const method = !arrival && /bus\s*\(arrival\)/i.test(guest.travelMethod || "") ? "" : guest.travelMethod || "";
       const isBus = /bus/i.test(method);
       const flight = isBus ? "" : (arrival ? guest.arrivalFlight : guest.departureFlight)?.trim().toUpperCase().replace(/\s+/g, "") || "";
       const airport = (arrival ? guest.arrivalAirport : guest.departureAirport)?.trim().toUpperCase() || "";
-      if (!/flight|air|bus/i.test(method) && !flight && guest.transport !== "Needed")
+      if (!/flight|air|bus/i.test(method) && !flight && transportForLeg(guest, direction) !== "Needed")
         continue;
       const day = (arrival ? guest.arrivalDate : guest.departureDate) || "";
       const time = (arrival ? guest.arrivalTime : guest.departureTime) || "";
@@ -371,7 +378,7 @@ var Hospitality = (() => {
           g.arrivalTime,
           g.departureDate,
           g.departureTime,
-          g.transport
+          transportForLeg(g, direction)
         ]).sort((a, b) => a[0].localeCompare(b[0]))
       ),
       timeMismatch: new Set(
@@ -466,7 +473,7 @@ reply({ ready: true });
     function roster2(book) {
       const sheet = book.getSheets().find((s) => s.getSheetId() === 0);
       if (!sheet) throw new Error("The attendee tab (gid 0) is missing.");
-      const rows = sheet.getRange(1, 1, Math.max(1, sheet.getLastRow()), 32).getDisplayValues();
+      const rows = sheet.getRange(1, 1, Math.max(1, sheet.getLastRow()), Math.min(33, Math.max(32, sheet.getDataRange().getDisplayValues()[0].length))).getDisplayValues();
       return { sheet, rows, guests: guestsFromRows(rows) };
     }
     function plans2(book, readOnly = false) {
@@ -638,8 +645,8 @@ reply({ ready: true });
         if (value && (!day || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value))) throw new Error("Enter a valid time and its date, or leave the time blank.");
         return value ? `${day} ${value}` : day;
       };
-      const overnight = field("overnight"), transport2 = field("airportTransport"), mode = field("travelMethod");
-      if (!["", "YES", "NO"].includes(overnight) || !["", "YES", "NO"].includes(transport2) || !["", "CAR", "FLIGHT", "BUS", "Bus (arrival)"].includes(mode)) throw new Error("Choose valid accommodation and transport options.");
+      const overnight = field("overnight"), transport2 = field("airportPickup") || field("airportTransport"), dropoff = form.airportDropoff === void 0 ? transport2 : field("airportDropoff"), mode = field("travelMethod");
+      if (!["", "YES", "NO"].includes(overnight) || !["", "YES", "NO"].includes(transport2) || !["", "YES", "NO"].includes(dropoff) || !["", "CAR", "FLIGHT", "BUS", "Bus (arrival)"].includes(mode)) throw new Error("Choose valid accommodation and transport options.");
       if (overnight === "YES" && start && end && start === end) throw new Error("An overnight stay needs a checkout date after check-in.");
       const notes = text2(form.notes);
       if (notes.length > 1e3 || /\x00/.test(notes)) throw new Error("Notes must be up to 1,000 characters.");
@@ -649,8 +656,9 @@ reply({ ready: true });
       if (existing.length > 1) throw new Error("Duplicate guest entry found. Refresh and review the sheet.");
       if (existing.length === 1) return;
       const primary = field("primaryContact") || name;
-      const row = Array(32).fill("");
+      const row = Array(current.rows[0].length >= 33 ? 33 : 32).fill("");
       Object.assign(row, { 0: id, 1: (/* @__PURE__ */ new Date()).toISOString(), 2: primary === name ? "YES" : "NO", 3: primary, 5: field("phone"), 7: field("city"), 8: name, 9: field("relationship") || (primary === name ? "Self (Primary)" : ""), 11: mode, 12: time("arrivalTime", start), 13: time("departureTime", end), 18: transport2, 20: overnight, 21: start, 22: end, 23: notes });
+      if (row.length >= 33) row[32] = dropoff;
       if (req.assignment) {
         const values = validateAssignment(req.assignment);
         const proposed = guestsFromRows([current.rows[0], row])[0];

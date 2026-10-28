@@ -83,7 +83,7 @@ function roster(book) {
   const sheet = book.getSheets().find((s) => s.getSheetId() === 0);
   if (!sheet) throw new Error("The attendee tab (gid 0) is missing.");
   const rows = sheet
-    .getRange(1, 1, Math.max(1, sheet.getLastRow()), 32)
+    .getRange(1, 1, Math.max(1, sheet.getLastRow()), Math.min(33, Math.max(32, sheet.getDataRange().getDisplayValues()[0].length)))
     .getDisplayValues();
   return { sheet, rows, guests: guestsFromRows(rows) };
 }
@@ -269,8 +269,8 @@ function guest(book, req) {
     if (value && (!day || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value))) throw new Error("Enter a valid time and its date, or leave the time blank.");
     return value ? `${day} ${value}` : day;
   };
-  const overnight = field("overnight"), transport = field("airportTransport"), mode = field("travelMethod");
-  if (!["", "YES", "NO"].includes(overnight) || !["", "YES", "NO"].includes(transport) || !["", "CAR", "FLIGHT", "BUS", "Bus (arrival)"].includes(mode)) throw new Error("Choose valid accommodation and transport options.");
+  const overnight = field("overnight"), transport = field("airportPickup") || field("airportTransport"), dropoff = form.airportDropoff === undefined ? transport : field("airportDropoff"), mode = field("travelMethod");
+  if (!["", "YES", "NO"].includes(overnight) || !["", "YES", "NO"].includes(transport) || !["", "YES", "NO"].includes(dropoff) || !["", "CAR", "FLIGHT", "BUS", "Bus (arrival)"].includes(mode)) throw new Error("Choose valid accommodation and transport options.");
   if (overnight === "YES" && start && end && start === end) throw new Error("An overnight stay needs a checkout date after check-in.");
   const notes = text(form.notes);
   if (notes.length > 1000 || /\x00/.test(notes)) throw new Error("Notes must be up to 1,000 characters.");
@@ -282,8 +282,9 @@ function guest(book, req) {
   if (existing.length > 1) throw new Error("Duplicate guest entry found. Refresh and review the sheet.");
   if (existing.length === 1) return;
   const primary = field("primaryContact") || name;
-  const row = Array(32).fill("");
+  const row = Array(current.rows[0].length >= 33 ? 33 : 32).fill("");
   Object.assign(row, { 0: id, 1: new Date().toISOString(), 2: primary === name ? "YES" : "NO", 3: primary, 5: field("phone"), 7: field("city"), 8: name, 9: field("relationship") || (primary === name ? "Self (Primary)" : ""), 11: mode, 12: time("arrivalTime", start), 13: time("departureTime", end), 18: transport, 20: overnight, 21: start, 22: end, 23: notes });
+  if (row.length >= 33) row[32] = dropoff;
   if (req.assignment) {
     const values = validateAssignment(req.assignment);
     const proposed = guestsFromRows([current.rows[0], row])[0];

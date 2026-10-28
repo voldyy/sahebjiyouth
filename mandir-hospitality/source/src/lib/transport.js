@@ -1,10 +1,12 @@
 // One attendee per roster row. Group flight/bus services by day and direction.
 export const EMPTY_TRANSPORT = { assignments: [], drivers: [], vehicles: [] };
 export { tripCollapsed } from "./transportDisplay.js";
+export const transportForLeg = (guest, direction) => (direction === "Arrivals" ? guest.airportPickup : guest.airportDropoff) ?? guest.transport;
 export function transportGroups(guests, direction) {
   const groups = new Map();
   for (const guest of guests) {
     if (guest.status === "Cancelled") continue;
+    if (transportForLeg(guest, direction) === "Not needed") continue;
     const arrival = direction === "Arrivals";
     const method = !arrival && /bus\s*\(arrival\)/i.test(guest.travelMethod || "") ? "" : guest.travelMethod || "";
     const isBus = /bus/i.test(method);
@@ -20,7 +22,7 @@ export function transportGroups(guests, direction) {
     if (
       !/flight|air|bus/i.test(method) &&
       !flight &&
-      guest.transport !== "Needed"
+      transportForLeg(guest, direction) !== "Needed"
     )
       continue;
     const day = (arrival ? guest.arrivalDate : guest.departureDate) || "";
@@ -66,7 +68,7 @@ export function transportGroups(guests, direction) {
             g.arrivalTime,
             g.departureDate,
             g.departureTime,
-            g.transport,
+            transportForLeg(g, direction),
           ])
           .sort((a, b) => a[0].localeCompare(b[0])),
       ),

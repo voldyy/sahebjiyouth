@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { transportGroups, transportWithPlans } from "../src/lib/transport.js";
+import { transportGroups, transportWithPlans, transportForLeg } from "../src/lib/transport.js";
 import { airlineForFlight } from "../src/lib/airlines.js";
 
 export const ZONE = "America/New_York";
@@ -92,7 +92,7 @@ export function tripParties(snapshot, group) {
   const registrations = [...new Set(group.guests.map(g => g.registrationId))];
   return registrations.flatMap(registrationId => {
     if (!hasData(registrationId) || snapshot.incompleteTransportRegistrations?.has(registrationId)) return [];
-    const family = snapshot.guests.filter(g => g.registrationId === registrationId && !["Cancelled", "Departed"].includes(g.status));
+    const family = snapshot.guests.filter(g => g.registrationId === registrationId && !["Cancelled", "Departed"].includes(g.status) && transportForLeg(g, group.direction) !== "Not needed");
     const primaries = family.filter(g => g.isPrimaryContact);
     if (primaries.length !== 1 || !primaries[0].sourceWritable) return [];
     if (family.some(g => !completeTravelData(g, arrival))) return [];
