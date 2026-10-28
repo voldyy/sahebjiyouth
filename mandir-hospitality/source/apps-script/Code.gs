@@ -66,9 +66,10 @@ var Hospitality = (() => {
 
   // src/lib/lodgingRooms.js
   var samarpanRooms = [
+    { number: "201", beds: 2 },
     { number: "202", beds: 2 },
     { number: "203", beds: 4 },
-    { number: "204", beds: 3 },
+    { number: "204", beds: 4 },
     { number: "205", beds: 4 },
     { number: "206", beds: 4 },
     { number: "207", beds: 4 },

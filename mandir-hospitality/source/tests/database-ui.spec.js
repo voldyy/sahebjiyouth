@@ -328,15 +328,15 @@ test('Accommodations shows how much of Samarpan is filled for the day or the bus
   await page.reload();
   await page.goto('/#rooms');
   const meter=page.getByLabel('Samarpan capacity',{exact:true});
-  await expect(meter).toContainText('5% reached');                       // 4 of 76 beds on the busiest day
-  await expect(meter).toContainText('4 of 76 beds');
+  await expect(meter).toContainText('5% reached');                       // 4 of 85 beds on the busiest day
+  await expect(meter).toContainText('4 of 85 beds');
   await expect(meter).toContainText('busiest Oct 28');
   await expect(meter).toContainText('1 without a bed');
   await expect(meter.getByRole('progressbar')).toHaveAttribute('aria-valuenow','5');
   await page.getByRole('button',{name:'Daily view',exact:true}).click();
   await page.getByLabel('Choose occupancy date').fill('2026-10-26');
   await expect(meter).toContainText('3% reached');                       // two beds that day
-  await expect(meter).toContainText('2 of 76 beds · Oct 26');
+  await expect(meter).toContainText('2 of 85 beds · Oct 26');
   await page.getByRole('button',{name:'Sadhak',exact:true}).click();
   await expect(page.getByLabel('Sadhak capacity',{exact:true})).toContainText('0% reached');
 });

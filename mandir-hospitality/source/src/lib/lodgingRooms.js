@@ -2,17 +2,18 @@ import { offsiteBedCode } from "./offsite.js";
 
 // Confirmed on-site inventory; hotels use separately managed planning rooms.
 export const samarpanRooms = [
+  { number: "201", beds: 2 },
   { number: "202", beds: 2 },
   { number: "203", beds: 4 },
-  { number: "204", beds: 3 },
+  { number: "204", beds: 4 },
   { number: "205", beds: 4 },
   { number: "206", beds: 4 },
   { number: "207", beds: 4 },
   { number: "100", beds: 7 },
   { number: "101", beds: 12 },
-  { number: "102", beds: 12 },
-  { number: "103", beds: 12 },
-  { number: "104", beds: 12 },
+  { number: "102", beds: 14 },
+  { number: "103", beds: 13 },
+  { number: "104", beds: 15 },
 ];
 export const samarpanBedCount = samarpanRooms.reduce((sum, room) => sum + room.beds, 0);
 

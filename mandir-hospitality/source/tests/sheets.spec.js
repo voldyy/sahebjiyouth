@@ -114,9 +114,9 @@ test("Samarpan offers only confirmed rooms with bed capacities", async ({ page }
   await page.getByRole("button", { name: "Assign lodging", exact: true }).click();
   const room = page.getByLabel("Room number (AE)");
   await expect(room).toHaveJSProperty("tagName", "SELECT");
-  await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "202 · 2 beds", "203 · 4 beds", "204 · 3 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds", "100 · 7 beds", "101 · 12 beds", "102 · 14 beds", "103 · 13 beds", "104 · 15 beds"]);
+  await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "201 · 2 beds", "202 · 2 beds", "203 · 4 beds", "204 · 4 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds", "100 · 7 beds", "101 · 12 beds", "102 · 14 beds", "103 · 13 beds", "104 · 15 beds"]);
   await room.selectOption("204");
-  await expect(page.getByLabel("Bed number").locator("option")).toHaveCount(4);
+  await expect(page.getByLabel("Bed number").locator("option")).toHaveCount(5);
   await page.getByLabel("Bed number").selectOption("1");
   await expect(page.getByLabel("Custom room code (AF)")).toHaveValue("S204B1");
   await expect(page.getByLabel("Custom room code (AF)")).toHaveAttribute("readonly", "");
@@ -213,11 +213,11 @@ test("a hidden early guest still blocks their bed for a visible overlapping stay
   await context.close();
 });
 
-test("daily view shows all 82 beds, date-filtered unassigned guests, and saves from an empty bed", async ({ page }) => {
+test("daily view shows all 85 beds, date-filtered unassigned guests, and saves from an empty bed", async ({ page }) => {
   const { writes } = await openPlanner(page);
   await page.getByRole("button", { name: "Daily view", exact: true }).click();
-  await expect(page.locator(".stay-day-room")).toHaveCount(11);
-  await expect(page.locator(".stay-day-beds .stay-slot")).toHaveCount(82);
+  await expect(page.locator(".stay-day-room")).toHaveCount(12);
+  await expect(page.locator(".stay-day-beds .stay-slot")).toHaveCount(85);
   await expect(page.getByRole("button", { name: "Assign Chirag Mehta", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Assign Dev Shah", exact: true })).toHaveCount(0);
   await expect(page.getByText("1 unassigned guests need stay dates")).toBeVisible();
@@ -506,8 +506,8 @@ test('day overview adds a walk-in to the chosen bed and Main displays both dates
   await page.getByRole('button',{name:'Day at a glance',exact:true}).click();
   await page.getByLabel('Choose occupancy date').fill('2026-10-28');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await expect(page.locator('.stay-overview-room')).toHaveCount(38);
-  await expect(page.locator('.stay-overview-bed')).toHaveCount(172);
+  await expect(page.locator('.stay-overview-room')).toHaveCount(34);
+  await expect(page.locator('.stay-overview-bed')).toHaveCount(161);
   await expect(page.locator('.stay-overview')).toContainText('Bela Shah');
   await expect(page.locator('.stay-overview')).not.toContainText('Amal Patel');
   await page.getByRole('button',{name:'Assign guest to room 203 bed 2',exact:true}).click();

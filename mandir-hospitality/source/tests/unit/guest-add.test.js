@@ -35,7 +35,7 @@ test('walk-in saves guest and bed together, rejects full-stay conflicts without 
   const conflict=h.request({...request,requestId:randomUUID(),guest:{...request.guest,name:'Overlapping',arrivalDate:'2026-10-19'}});
   assert.match(conflict.error,/occupied/);assert.equal(h.rows.length,2);
   assert.equal(h.request({...request,requestId:randomUUID(),guest:{...request.guest,name:'Next Guest',arrivalDate:'2026-10-20',departureDate:'2026-10-21'}}).ok,true);
-  const invalid=h.request({...request,requestId:randomUUID(),assignment:{...assignment,roomCode:'S204B4'}});
+  const invalid=h.request({...request,requestId:randomUUID(),assignment:{...assignment,roomCode:'S204B5'}});
   assert.match(invalid.error,/valid bed/);assert.equal(h.rows.length,3);
   assert.equal(h.request({...request,requestId:randomUUID(),accessKey:''}).ok,false);
 });
