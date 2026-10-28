@@ -11,7 +11,7 @@ import Housekeeping from "./Housekeeping";
 import { LODGING_LOCATIONS, SHEET_URL } from "../lib/sheets";
 import { samarpanRooms, sadhakRooms, fixedRoomsFor, isFixedLodging, roomKey, roomAssignment } from "../lib/lodgingRooms";
 import { HAWTHORN_ROOM_TYPES, OFFSITE_HOTELS, offsiteRoomFor, roomCapacityLabel, roomLabel, roomPlaceLabel, roomTypeFor, roomTypeLabel } from "../lib/offsite";
-import { lodgingOccupancy, PLANNING_START_DAY, LAST_STAY_DAY, PLANNING_WEEK_STARTS, inPlanningWindow, moveDay, shortDay, fullDay, needsLodging, stayRange, overlaps, onDay, unassignedGuest, bedForGuest, assignmentIssue } from "../lib/occupancy";
+import { isChildUnder12, isAdultBedOccupant, bedState, lodgingOccupancy, PLANNING_START_DAY, LAST_STAY_DAY, PLANNING_WEEK_STARTS, inPlanningWindow, moveDay, shortDay, fullDay, needsLodging, stayRange, overlaps, onDay, unassignedGuest, bedForGuest, assignmentIssue } from "../lib/occupancy";
 import "../styles/operations.css";
 import "../styles/sheets.css";
 import "../styles/accommodation-calendar.css";
@@ -60,7 +60,7 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
     .sort((a, b) => Number(unassignedGuest(b)) - Number(unassignedGuest(a)));
   const undated = guests.filter((g) => unassignedGuest(g) && !stayRange(g));
   const review = guests.filter((g) => g.lodging === lodging && (g.roomNo || g.roomCode) && (!bedForGuest(g, workspace.offsiteRooms) || !stayRange(g)));
-  const candidates = guests.filter((g) => unassignedGuest(g) && (!assignment?.day || onDay(g, assignment.day)));
+  const candidates = guests.filter((g) => (assignment?.childOnly ? isChildUnder12(g) : unassignedGuest(g)) && (!assignment?.day || onDay(g, assignment.day)));
   const issue = selected && draft.roomCode ? assignmentIssue(workspace.guests, selected, draft, workspace.offsiteRooms) : "";
   const selectDay = (next) => { if (next < PLANNING_START_DAY || next > LAST_STAY_DAY) return; setDay(next); setWeekIndex(PLANNING_WEEK_STARTS.findLastIndex((start) => start <= next)); };
   const changeWeek = (next) => { setWeekIndex(next); setDay(PLANNING_WEEK_STARTS[next]); };
@@ -74,11 +74,11 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
     setBedNo(String(bedForGuest(guest, workspace.offsiteRooms) || ""));
     setAssignment({ day: null, guestFirst: true });
   };
-  const openBed = (number, bed, date) => {
+  const openBed = (number, bed, date, childOnly = false) => {
     if (readOnly) return;
     const target = allRooms.find((r) => roomKey(r) === number);
     resetForm(); setDraft(assignmentFor(target, bed)); setHotelRoomId(target.id || "");
-    setBedNo(String(bed)); setAssignment({ day: date, guestFirst: false });
+    setBedNo(String(bed)); setAssignment({ day: date, guestFirst: false, childOnly });
   };
   const openAssign = () => { if (readOnly) return; resetForm(); setDraft({ lodging, roomNo: isFixedLodging(lodging) ? room.number : "", roomCode: "" }); setAssignment({ day: null, guestFirst: false }); };
   const save = async (event, clear = false) => {
@@ -180,14 +180,15 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
         <p>{selected?.roomCode || "Bed not assigned"}</p>
       </div> : <form className="op-form" onSubmit={save}>
         {assignment.day && !editingBed && selectedRoom && <ChosenBed room={selectedRoom} bed={bedNo} disabled={workspace.saving} onChange={() => setEditingBed(true)} />}
-        {!assignment.guestFirst && <><label className="field">Guest<select aria-label="Guest to assign" value={selected?.id || ""} required disabled={workspace.saving} onChange={(e) => { setSelected(candidates.find((g) => g.id === e.target.value)); setError(""); }}><option value="" disabled>Select an unassigned guest</option>{candidates.map((g) => <option key={g.id} value={g.id} disabled={!g.sourceWritable}>{g.name} · {stayLabel(g)}</option>)}</select>{!candidates.length && <small>No unassigned guests have a stay on this date.</small>}</label><button type="button" className="stay-walkin-link" disabled={workspace.saving} onClick={() => openWalkIn(selectedRoom ? roomKey(selectedRoom) : "", bedNo, assignment.day || allentownDay())}><Plus size={16} />New walk-in guest</button></>}
+        {!assignment.guestFirst && <><label className="field">{assignment.childOnly ? "Child under 12" : "Guest"}<select aria-label="Guest to assign" value={selected?.id || ""} required disabled={workspace.saving} onChange={(e) => { setSelected(candidates.find((g) => g.id === e.target.value)); setError(""); }}><option value="" disabled>{assignment.childOnly ? "Select a child under 12" : "Select an unassigned guest"}</option>{candidates.map((g) => <option key={g.id} value={g.id} disabled={!g.sourceWritable}>{g.name} · {stayLabel(g)}</option>)}</select>{!candidates.length && <small>{assignment.childOnly ? 'No unassigned guests marked “Child (under 12)” are staying on this date.' : "No unassigned guests have a stay on this date."}</small>}</label>{!assignment.childOnly && <button type="button" className="stay-walkin-link" disabled={workspace.saving} onClick={() => openWalkIn(selectedRoom ? roomKey(selectedRoom) : "", bedNo, assignment.day || allentownDay())}><Plus size={16} />New walk-in guest</button>}</>}
+        {(assignment.childOnly || isChildUnder12(selected)) && <p className="sheet-data-note">A guest marked “Child (under 12)” in column J may share an adult’s bed. The adult must have this bed reserved for the child’s full stay.</p>}
         {selected && <div className="stay-assignment-dates"><CalendarDays size={18} /><div><strong>{stayLabel(selected)}</strong><span>{stayRange(selected) ? "Reserves the full stay · Checkout day is free" : "Add valid stay dates in the source sheet first"}</span></div></div>}
         {(!assignment.day || editingBed) && <>
         <label className="field">Lodging location (AD)<select value={draft.lodging} disabled={workspace.saving} onChange={(e) => { setDraft({ lodging: e.target.value, roomNo: "", roomCode: "" }); setBedNo(""); setHotelRoomId(""); setError(""); }} required><option value="" disabled>Select lodging</option>{!LODGING_LOCATIONS.includes(draft.lodging) && <option disabled>{draft.lodging}</option>}{LODGING_LOCATIONS.map((name) => <option key={name}>{name}</option>)}</select></label>
         <label className="field">{isFixedLodging(draft.lodging) ? "Room number (AE)" : "Hotel room slot"}<select aria-label={isFixedLodging(draft.lodging) ? "Room number (AE)" : "Hotel planning room"} value={isFixedLodging(draft.lodging) ? draft.roomNo : hotelRoomId} disabled={workspace.saving} onChange={(e) => { const target = draftRooms.find((r) => r.number === e.target.value); setDraft({ ...draft, roomNo: target && !isFixedLodging(draft.lodging) ? target.roomNo : e.target.value, roomCode: "" }); setHotelRoomId(target?.id || ""); setBedNo(""); setError(""); }} required><option value="" disabled>{isFixedLodging(draft.lodging) ? `Choose a ${draft.lodging} room` : "Choose a hotel room slot"}</option>{draftRooms.map((r) => <option key={r.number} value={r.number}>{isFixedLodging(draft.lodging) ? r.number : roomLabel(r)} · {roomCapacityLabel(r)}</option>)}</select></label>
         {!isFixedLodging(draft.lodging) && !draftRooms.length && <p className="sheet-data-note">Add a planning room in Offsite before assigning a guest to this hotel.</p>}
         {selectedRoom && !isFixedLodging(draft.lodging) && !selectedRoom.roomNo && <p className="sheet-data-note">The hotel room number is pending. Column AE stays blank; this provisional bed code keeps the assignment in place.</p>}
-        <label className="field">Bed / guest place<select aria-label="Bed number" value={bedNo} disabled={workspace.saving || !selectedRoom} required onChange={(e) => { setBedNo(e.target.value); setDraft(assignmentFor(selectedRoom, e.target.value)); setError(""); }}><option value="" disabled>Choose a place</option>{Array.from({ length: selectedRoom?.beds || 0 }, (_, i) => { const number = i + 1; const problem = selected ? assignmentIssue(guests, selected, assignmentFor(selectedRoom, number), workspace.offsiteRooms) : ""; return <option key={number} value={number} disabled={!!problem}>{selectedRoom ? roomPlaceLabel(selectedRoom, number) : `Bed ${number}`}{problem ? " · unavailable for this stay" : ""}</option>; })}</select></label>
+        <label className="field">Bed / guest place<select aria-label="Bed number" value={bedNo} disabled={workspace.saving || !selectedRoom} required onChange={(e) => { setBedNo(e.target.value); setDraft(assignmentFor(selectedRoom, e.target.value)); setError(""); }}><option value="" disabled>Choose a place</option>{Array.from({ length: selectedRoom?.beds || 0 }, (_, i) => { const number = i + 1; const value=assignmentFor(selectedRoom,number); const problem = selected ? assignmentIssue(workspace.guests, selected, value, workspace.offsiteRooms) : ""; const adults = selected && isChildUnder12(selected) && stayRange(selected) ? bedState(workspace.guests, selectedRoom.id || selectedRoom.number, number, stayRange(selected), selected, selectedRoom.lodging || 'Samarpan', workspace.offsiteRooms).occupants.filter(isAdultBedOccupant) : []; return <option key={number} value={number} disabled={!!problem}>{selectedRoom ? roomPlaceLabel(selectedRoom, number) : `Bed ${number}`}{problem ? " · unavailable for this stay" : adults.length ? ` · share with ${adults.map(g=>g.name).join(', ')}` : ""}</option>; })}</select></label>
         <label className="field">Custom room code (AF)<input value={draft.roomCode} readOnly disabled={workspace.saving} required placeholder="Generated from room and bed" /></label>
         </>}
         {selected && !stayRange(selected) && <a className="button secondary" href={SHEET_URL} target="_blank" rel="noreferrer">Open source sheet to add dates</a>}

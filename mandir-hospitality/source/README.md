@@ -1,5 +1,11 @@
 # Mandir Hospitality
 
+## Children sharing an adult's bed
+
+A guest classified **Child (under 12)** in column J can share a bed already reserved by an adult. Use **+ Share with child** on an occupied bed in the weekly/daily calendar or day overview, or select the child first and choose an adult's bed from the assignment form. The adult reservation must cover the child's complete stay. A generic **Child** classification does not enable this exception.
+
+Shared beds show **Adult + child sharing**, retain separate attendee records with the same room and bed code, and count as one occupied bed/place in capacity totals. Normal overlapping adult assignments remain blocked. The backend checks the current column J classification and reservations each time an assignment is saved.
+
 ## Separate airport pickup and departure dropoff
 
 Column S is **Airport Pickup Needed?**; column AG is **Departure Dropoff Needed?**. On October 28, 2026, all 153 existing rows had S copied into AG (32 YES, 111 NO, 10 blank). AD–AF lodging columns retain their existing positions. Admins can edit S and AG independently in the source Sheet. Visible dashboards import those changes automatically; a NO removes that passenger from only the corresponding transport leg and suppresses notifications for that leg. Existing trip plans remain attached to their stable trip IDs when other passengers still need that trip.

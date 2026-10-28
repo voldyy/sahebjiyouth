@@ -3,7 +3,7 @@ import WhatsAppSent from "./WhatsAppSent";
 import { BedDouble, ChevronLeft, ChevronRight, Plus, AlertCircle } from "lucide-react";
 import { samarpanRooms, roomAssignment, roomKey } from "../lib/lodgingRooms";
 import { roomCapacityLabel, roomLabel, roomPeoplePerBed, roomPlaceLabel, roomTypeFor, OFFSITE_HOTELS } from "../lib/offsite";
-import { bedState, moveDay, shortDay, fullDay, localDay, onDay } from "../lib/occupancy";
+import { bedState, isAdultBedOccupant, moveDay, shortDay, fullDay, localDay, onDay } from "../lib/occupancy";
 
 const roomPlaceAria = (room, position) => OFFSITE_HOTELS.includes(room.lodging)
   ? `${roomLabel(room)} ${roomPlaceLabel(room, position)}`
@@ -29,11 +29,13 @@ export function RoomOverview({ guests, day, rooms, onAssign, onEdit, saving, rea
     const free = places.filter(b => b.state.free).length;
     return <article className="stay-overview-room" key={roomKey(room)}>
       <header><div><small>{room.lodging || "Samarpan"}</small><h2>{roomLabel(room)}</h2></div><span>{room.beds - free}/{room.beds} occupied</span></header>
-      <div className="stay-overview-beds">{places.map(({ number, state }) => <div className={`stay-overview-bed ${state.free ? "is-free" : state.uncertain.length || state.occupants.length > 1 ? "needs-review" : ""}`} key={number}>
+      <div className="stay-overview-beds">{places.map(({ number, state }) => <div className={`stay-overview-bed ${state.free ? "is-free" : state.uncertain.length || state.conflict ? "needs-review" : ""}`} key={number}>
         <span className="stay-overview-number">{roomPeoplePerBed(room) > 1 ? roomPlaceLabel(room, number).replace("Bed ", "B").replace(" · Guest ", ".") : number}</span><div>
           {state.occupants.map(guest => <button key={guest.id} disabled={saving} onClick={() => onEdit(guest)}>{guest.name}<WhatsAppSent guest={guest} /></button>)}
           {state.uncertain.map(guest => <button key={guest.id} disabled={saving} onClick={() => onEdit(guest)}>{guest.name} · review</button>)}
-          {state.occupants.length > 1 && <small>Double booking</small>}
+          {state.conflict && <small>Double booking</small>}
+          {state.shared && <small className="stay-shared-label">Adult + child sharing</small>}
+          {!readOnly && !state.conflict && !state.uncertain.length && state.occupants.some(isAdultBedOccupant) && <button className="stay-share-child" disabled={saving} onClick={()=>onAssign(roomKey(room),number,day,true)} aria-label={`Assign child to share ${roomPlaceAria(room,number)}`}>+ Share with child</button>}
           {state.free && (readOnly ? <span>Empty</span> : <button disabled={saving} onClick={() => onAssign(roomKey(room), number, day)} aria-label={`Assign existing guest to ${roomPlaceAria(room, number)}`}>Empty</button>)}
         </div>
         {state.free && !readOnly && <button className="stay-overview-assign" disabled={saving} onClick={() => onAssign(roomKey(room), number, day)} aria-label={`Assign guest to ${roomPlaceAria(room, number)}`}><Plus size={15} /></button>}
@@ -45,7 +47,7 @@ export function RoomOverview({ guests, day, rooms, onAssign, onEdit, saving, rea
 function BedSlot({ guests, room, bed, day, onAssign, onEdit, saving, compact = false, rooms = [], drag, readOnly = false }) {
   const state = bedState(guests, room.number, bed, { start: day, end: moveDay(day, 1) }, null, room.lodging || "Samarpan", rooms);
   const emptyLabel = roomPeoplePerBed(room) > 1 ? "Empty place" : "Empty bed";
-  const conflict = state.occupants.length > 1;
+  const conflict = state.conflict;
   const hovered = drag?.target === `${roomKey(room)}:${bed}`;
   const preview = hovered && drag?.guest && onDay(drag.guest, day);
   const problem = hovered && drag?.problem;
@@ -56,8 +58,10 @@ function BedSlot({ guests, room, bed, day, onAssign, onEdit, saving, compact = f
     {preview && <span className="stay-drop-label">{problem ? "Stay conflicts" : drag.guest.name}</span>}
     {state.free ? (readOnly ? <div className="stay-empty">{emptyLabel}</div> : <button className="stay-empty" disabled={saving} onClick={() => onAssign(roomKey(room), bed, day)} aria-label={`Assign ${roomPlaceAria(room, bed)} on ${fullDay(day)}`}><Plus size={15} /><span>{emptyLabel}</span></button>) : <>
       {conflict && <span className="stay-conflict"><AlertCircle size={12} /> Double booking</span>}
+      {state.shared && <span className="stay-shared-label">Adult + child sharing</span>}
       {state.occupants.map((guest) => <button className="stay-occupant" key={guest.id} disabled={saving} onClick={() => onEdit(guest)} aria-label={`${readOnly ? "View" : "Edit"} ${guest.name}, ${roomPlaceAria(room, bed)}, ${shortDay(day)}`}><span className="stay-guest-initials">{guest.initials}</span><span>{guest.name}<WhatsAppSent guest={guest} /></span></button>)}
       {state.uncertain.length > 0 && <div className="stay-uncertain"><span>Needs review</span>{state.uncertain.map((guest) => <button key={guest.id} onClick={() => onEdit(guest)} disabled={saving}>{guest.name}</button>)}</div>}
+      {!readOnly && !conflict && !state.uncertain.length && state.occupants.some(isAdultBedOccupant) && <button className="stay-share-child" disabled={saving} onClick={()=>onAssign(roomKey(room),bed,day,true)} aria-label={`Assign child to share ${roomPlaceAria(room,bed)} on ${fullDay(day)}`}>+ Share with child</button>}
     </>}
   </div>;
 }

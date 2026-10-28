@@ -164,6 +164,31 @@ async function openPlanner(page) {
 }
 const slot = (page, room, bed, day) => page.locator(`.stay-slot[data-room="${room}"][data-bed="${bed}"][data-day="${day}"]`);
 
+test('a child under 12 shares an occupied adult bed, persists after reload, and leaves adult conflicts intact',async({page,browser})=>{
+  const parent=plannerGuest('SHARE-P','Sharing Parent','2026-10-25','2026-10-31','204','1');parent[9]='Parent';
+  const child=plannerGuest('SHARE-C','Sharing Child','2026-10-26','2026-10-30','201','1');child[9]='Child (under 12)';
+  const other=plannerGuest('SHARE-A','Other Adult','2026-10-26','2026-10-30');
+  const generic=plannerGuest('SHARE-G','Generic Child','2026-10-26','2026-10-30');generic[9]='Child';
+  const h=await setup(page,'ok',[parent,child,other,generic]);
+  await page.goto('/#rooms');await page.getByRole('button',{name:'Room 204 4 beds',exact:true}).click();
+  await expect(page.getByLabel('Samarpan capacity',{exact:true})).toContainText('2 of 85 beds');
+  await slot(page,'204','1','2026-10-26').getByRole('button',{name:/Assign child to share/}).click();
+  await expect(page.getByLabel('Guest to assign').locator('option')).toHaveCount(2);
+  await expect(page.getByLabel('Guest to assign')).not.toContainText('Other Adult');await expect(page.getByLabel('Guest to assign')).not.toContainText('Generic Child');
+  await page.getByLabel('Guest to assign').selectOption({label:'Sharing Child · Oct 26 – Oct 30'});
+  await page.getByRole('button',{name:'Save assignment',exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(h.rows.find(r=>r[0]==='SHARE-C').slice(29,32)).toEqual(['Samarpan','204','S204B1']);
+  expect(h.rows.find(r=>r[0]==='SHARE-P').slice(29,32)).toEqual(['Samarpan','204','S204B1']);
+  const bed=slot(page,'204','1','2026-10-26');await expect(bed).toContainText('Sharing Parent');await expect(bed).toContainText('Sharing Child');await expect(bed).toContainText('Adult + child sharing');await expect(bed.locator('.stay-conflict')).toHaveCount(0);
+  await expect(page.getByLabel('Samarpan capacity',{exact:true})).toContainText('1 of 85 beds');
+  await page.reload();await page.getByRole('button',{name:'Room 204 4 beds',exact:true}).click();await expect(bed).toContainText('Adult + child sharing');
+  await page.getByRole('button',{name:'Assign Other Adult',exact:true}).click();
+  await page.getByLabel('Room number (AE)').selectOption('204');await expect(page.getByLabel('Bed number').locator('option[value="1"]')).toHaveJSProperty('disabled',true);
+  await page.getByRole('button',{name:'Close dialog',exact:true}).click();
+  const viewerContext=await browser.newContext({viewport:{width:390,height:900}});await viewerContext.clock.install({time:TODAY});await mockBridge(viewerContext,h,false);
+  const viewer=await viewerContext.newPage();await viewer.goto('http://localhost:5175/#rooms');await viewer.getByRole('button',{name:'Room 204 4 beds',exact:true}).click();await expect(slot(viewer,'204','1','2026-10-26')).toContainText('Adult + child sharing');await expect(viewer.locator('.stay-share-child')).toHaveCount(0);await viewerContext.close();
+});
+
 test("weekly calendar has four bounded planning weeks, correct room beds, and checkout-day handoffs", async ({ page }) => {
   await openPlanner(page);
   await expect(page.getByRole("button", { name: "Weekly view" })).toHaveAttribute("aria-pressed", "true");

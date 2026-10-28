@@ -157,6 +157,25 @@ var Hospitality = (() => {
     return bed && fixedRoomCode(guest.lodging, guest.roomNo, bed) === guest.roomCode ? Number(bed) : null;
   }
   var sameGuest = (a, b) => (a.sourceIdentity || a.id) === (b.sourceIdentity || b.id);
+  var isChildUnder12 = (guest) => /^child\s*\(\s*under\s*12\s*\)\s*[:.]?$/i.test(String(guest?.relationship || "").trim());
+  var isAdultBedOccupant = (guest) => !/\b(child|minor|teen)\b/i.test(String(guest?.relationship || ""));
+  function bedSharingState(occupants) {
+    const adults = occupants.filter(isAdultBedOccupant);
+    const children = occupants.filter(isChildUnder12);
+    const shared = adults.length === 1 && children.length > 0 && adults.length + children.length === occupants.length;
+    return { shared, conflict: occupants.length > 1 && !shared };
+  }
+  function adultCoversStay(occupants, range) {
+    const adults = occupants.filter(isAdultBedOccupant).map(stayRange).filter(Boolean).sort((a, b) => a.start.localeCompare(b.start));
+    let through = range.start;
+    for (let i = 0; i < adults.length; i++) {
+      const stay = adults[i];
+      if (i && overlaps(adults[i - 1], stay)) return false;
+      if (stay.start > through) return false;
+      if (stay.end > through) through = stay.end;
+    }
+    return through >= range.end;
+  }
   function bedState(guests, roomNo, bedNo, range, exceptGuest = null, lodging = "Samarpan", rooms = []) {
     const occupants = [];
     const uncertain = [];
@@ -176,7 +195,7 @@ var Hospitality = (() => {
       if (!stay || bed === null) uncertain.push(guest);
       else occupants.push(guest);
     }
-    return { occupants, uncertain, free: occupants.length === 0 && uncertain.length === 0 };
+    return { occupants, uncertain, free: occupants.length === 0 && uncertain.length === 0, ...bedSharingState(occupants) };
   }
   function assignmentIssue(guests, guest, assignment, rooms = []) {
     if (!isFixedLodging(assignment.lodging) && !OFFSITE_HOTELS.includes(assignment.lodging)) return "";
@@ -189,7 +208,17 @@ var Hospitality = (() => {
     if (hotelRoom && (assignment.roomNo !== hotelRoom.roomNo || assignment.roomCode !== offsiteBedCode(hotelRoom, bed))) return "The hotel room changed. Refresh before assigning.";
     const state = bedState(guests, hotelRoom?.id || assignment.roomNo, bed, range, guest, assignment.lodging, rooms);
     if (state.uncertain.length) return `Room ${assignment.roomNo} has an assignment with missing dates or an unrecognized bed code. Review it before assigning this bed.`;
-    if (state.occupants.length) return `${assignment.roomCode} is occupied during this guest\u2019s stay. Choose another bed.`;
+    if (state.occupants.length) {
+      if (isChildUnder12(guest)) {
+        if (state.occupants.every((g) => isAdultBedOccupant(g) || isChildUnder12(g)) && adultCoversStay(state.occupants, range)) return "";
+        return "An adult must be assigned to this bed for the child\u2019s full stay. Choose another bed or review the stay dates.";
+      }
+      if (isAdultBedOccupant(guest) && guest.lodging === assignment.lodging && guest.roomCode === assignment.roomCode && state.occupants.every(isChildUnder12) && state.occupants.every((g) => {
+        const s = stayRange(g);
+        return s && s.start >= range.start && s.end <= range.end;
+      })) return "";
+      return `${assignment.roomCode} is occupied during this guest\u2019s stay. Choose another bed.`;
+    }
     return "";
   }
 

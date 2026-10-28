@@ -48,6 +48,9 @@
 .stay-room-type-switch button[aria-pressed="true"] { background: #ffe5ce; color: #743d22; }
 .stay-room-type-switch button small { display: block; font-size: 10px; font-weight: 500; }
 .stay-room-type-switch button:disabled { opacity: .55; cursor: wait; }
+.stay-shared-label { display: block; padding: 3px 5px; font-size: 10px; font-weight: 650; color: #236449; background: #e7f6ed; border-radius: 5px; }
+.stay-share-child { display: block; width: 100%; min-height: 34px; margin-top: 4px; padding: 5px; border: 1px dashed #7db8a1; border-radius: 6px; background: #f3fbf7; color: #236449; font: inherit; font-size: 11px; cursor: pointer; }
+.stay-share-child:disabled { opacity: .55; cursor: wait; }
 .stay-arrow { display: inline-flex; align-items: center; justify-content: center; min-width: 38px; height: 40px; border: 1px solid #9ac7e2; border-radius: 9px; background: white; color: #326681; }
 .stay-date-toolbar, .stay-date-controls { display: flex; align-items: center; gap: 12px; }
 .stay-date-toolbar { justify-content: space-between; flex-wrap: wrap; }
