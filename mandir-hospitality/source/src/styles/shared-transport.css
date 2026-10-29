@@ -565,3 +565,8 @@
   margin: 0;
   accent-color: #985127;
 }
+.transport-plan > .transport-crew-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; grid-column: 1 / -1; }
+.transport-crew-pair + .transport-crew-pair { border-top: 1px solid var(--border, #e1e6e2); padding-top: 12px; }
+.transport-add-driver, .transport-remove-driver { justify-self: start; font-size: 12px; gap: 4px; }
+.transport-remove-driver { grid-column: 1 / -1; }
+.transport-plan > .transport-add-driver { grid-column: 1 / -1; }

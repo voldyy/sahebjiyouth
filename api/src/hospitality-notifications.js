@@ -458,9 +458,32 @@ function driverDirectory(rows) {
 function candidate(type, identity, recipient, values, detail) {
   return { type, key: digest([type, identity, recipient, values]), recipient, variables: Object.fromEntries(values.map((v, i) => [String(i + 1), oneLine(v)])), detail };
 }
+var crewForPlan = (plan = {}) => [
+  { driver: plan.driver || "", vehicle: plan.vehicle || "" },
+  ...plan.additionalDrivers || []
+];
+function readAdditionalDrivers(value) {
+  if (!value) return [];
+  const crew = JSON.parse(value);
+  if (!Array.isArray(crew) || crew.some((pair) => !pair || typeof pair.driver !== "string" || typeof pair.vehicle !== "string")) throw new Error("Invalid additional driver assignments. Review Transport Crew.");
+  return crew;
+}
+function tripsForCrew(groups) {
+  return groups.flatMap((group) => {
+    const crew = crewForPlan(group.plan);
+    return crew.map((pair, index) => ({
+      ...group,
+      ...index ? { id: JSON.stringify([group.id, "driver", pair.driver.toLowerCase()]), sourceTripId: group.id } : {},
+      crew,
+      secondaryDriver: index > 0,
+      plan: { ...group.plan, ...pair }
+    })).filter((g, index) => index === 0 || g.plan.driver);
+  });
+}
+
 function assignedTrips(snapshot) {
   const groups = ["Arrivals", "Departures"].flatMap((direction) => transportWithPlans(transportGroups(snapshot.guests, direction), snapshot.assignments));
-  return groups.filter((g) => g.guests.every((a) => a.status !== "Departed"));
+  return tripsForCrew(groups.filter((g) => g.guests.every((a) => a.status !== "Departed")));
 }
 function tripParties(snapshot, group) {
   const driver = snapshot.drivers.get(oneLine(group.plan.driver).toLowerCase());
@@ -484,7 +507,8 @@ function tripParties(snapshot, group) {
     const companions = travelers.filter((g) => !g.isPrimaryContact).length;
     const name = primary.name + (primary.city ? ` (${primary.city})` : "");
     const summary = name + (companions ? `, with ${companions} accompanying passenger${companions === 1 ? "" : "s"}` : "");
-    return [{ group, driver, primary, passengerPhone, companions, summary, name, flight, at, arrival, identity: [group.id, registrationId, driver.name, driver.phone] }];
+    const crewDrivers = (group.crew || [{ driver: group.plan.driver }]).map((pair) => snapshot.drivers.get(oneLine(pair.driver).toLowerCase())).filter((d) => d?.phone && hasData(d.name));
+    return [{ group, driver, crewDrivers, primary, passengerPhone, companions, summary, name, flight, at, arrival, identity: [group.id, registrationId, driver.name, driver.phone] }];
   });
 }
 function driverAssignment(party, epoch) {
@@ -500,11 +524,12 @@ function driverAssignment(party, epoch) {
 function tripReminders(party, now) {
   const p = party, result = [];
   if (p.group.method !== "Flight" || now >= p.at || now < p.at - 18 * HOUR) return result;
-  result.push(candidate(
+  const contacts = p.crewDrivers?.length ? p.crewDrivers : [p.driver];
+  if (p.driver.name === contacts[0].name) result.push(candidate(
     p.arrival ? "passenger_arrival" : "passenger_departure",
     p.identity,
     p.passengerPhone,
-    [p.primary.name, p.flight, p.group.airport, formatWhen(p.at), p.driver.name, displayPhone(p.driver.phone)],
+    [p.primary.name, p.flight, p.group.airport, formatWhen(p.at), contacts.map((d) => d.name).join(" / "), contacts.length === 1 ? displayPhone(contacts[0].phone) : contacts.map((d) => `${d.name}: ${displayPhone(d.phone)}`).join("; ")],
     { trip: digest(p.group.id), event: "18-hour passenger reminder" }
   ));
   if (!p.arrival && now >= p.at - 8 * HOUR) result.push(candidate(
@@ -557,6 +582,7 @@ var CLAIMS = "hospitality-notifications";
 var STATE = "hospitality-notification-state";
 var OUTBOX = "hospitality-notification-outbox";
 var headers = {
+  "Transport Crew": ["Journey ID", "Additional drivers"],
   "Transport Resources": ["Type", "Name", "Active", "Updated at", "Phone number"],
   "Transport Assignments": ["Journey ID", "Direction", "Date", "Flight / service", "Airport", "Attendees", "Driver", "Vehicle", "Pickup / mandir departure", "Status", "Notes", "Revision", "Updated at", "Request ID"]
 };
@@ -584,14 +610,17 @@ async function readTable(name, fetchImpl) {
   }))];
 }
 async function loadSnapshot(fetchImpl = fetch) {
-  const [rows, resources, assignments] = await Promise.all(["Sheet1", "Transport Resources", "Transport Assignments"].map((name) => readTable(name, fetchImpl)));
+  const [rows, resources, assignments, crew] = await Promise.all(["Sheet1", "Transport Resources", "Transport Assignments", "Transport Crew"].map((name) => readTable(name, fetchImpl)));
+  const crewRows = crew.slice(1).filter((r) => r[0]);
+  if (new Set(crewRows.map((r) => r[0])).size !== crewRows.length) throw Error("Duplicate transport crew; notifications paused");
+  const additional = new Map(crewRows.map((r) => [r[0], readAdditionalDrivers(r[1])]));
   const validAssignments = assignments.slice(1).filter((r) => r[0]);
   if (new Set(validAssignments.map((r) => r[0])).size !== validAssignments.length) throw Error("Duplicate transport assignments; notifications paused");
   return {
     incompleteTransportRegistrations: new Set(rows.slice(1).filter((r) => hasData(r[0]) && (!hasData(r[8]) || !/^(YES|NO|Y|N|TRUE|FALSE)$/i.test(String(r[2]).trim()))).map((r) => String(r[0]).trim())),
     guests: guestsFromRows(rows),
     drivers: driverDirectory(resources),
-    assignments: validAssignments.map((r) => ({ id: r[0], driver: r[6], vehicle: r[7], pickup: r[8], status: r[9], notes: r[10], revision: r[11] }))
+    assignments: validAssignments.map((r) => ({ id: r[0], driver: r[6], vehicle: r[7], pickup: r[8], status: r[9], notes: r[10], revision: r[11], additionalDrivers: additional.get(r[0]) || [] }))
   };
 }
 async function scriptRequest(body, fetchImpl = fetch) {
@@ -667,7 +696,7 @@ async function sendOnce(table, candidate2, send, now = Date.now) {
   }
 }
 async function departureFlightCheck(table, group, now, readFlight) {
-  const id = digest(group.id);
+  const id = digest(group.sourceTripId || group.id);
   async function stage(name) {
     const rowKey = `flight-once-${name}-${id}`;
     const existing = await get(table, STATE, rowKey);
@@ -693,20 +722,22 @@ async function departureFlightCheck(table, group, now, readFlight) {
   if (departure === null || now < departure + 15 * 6e4) return null;
   return stage("departure");
 }
-function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now = Date.now, send, readFlight = async (group) => (await scriptRequest({ action: "notification-flight", tripId: group.id })).flight }) {
+function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now = Date.now, send, readFlight = async (group) => (await scriptRequest({ action: "notification-flight", tripId: group.sourceTripId || group.id })).flight }) {
   return async (_timer, context) => {
     if (env.HOSPITALITY_NOTIFICATIONS_ENABLED !== "true") return { status: "disabled" };
     const started = now(), snapshot = await getSnapshot(), groups = assignedTrips(snapshot);
+    const activeTrips = new Set(groups.map((g) => g.id));
+    for await (const row of table.listEntities({ queryOptions: { filter: `PartitionKey eq '${STATE}' and additionalDriver eq true` } })) {
+      if (row.additionalDriver && row.binding && !activeTrips.has(row.tripId)) await table.updateEntity({ partitionKey: STATE, rowKey: row.rowKey, binding: "" }, "Merge");
+    }
     const initialized = await get(table, STATE, "initialized");
     if (!initialized) {
       await Promise.all(groups.map((group) => {
         const driver = snapshot.drivers.get(group.plan.driver?.trim().toLowerCase());
-        return create(table, { partitionKey: STATE, rowKey: "trip-" + digest(group.id), binding: driver?.phone ? digest([driver.name, driver.phone]) : "", epoch: 1 });
+        return create(table, { partitionKey: STATE, rowKey: "trip-" + digest(group.id), binding: driver?.phone ? digest([driver.name, driver.phone]) : "", epoch: 1, ...group.secondaryDriver ? { additionalDriver: true, tripId: group.id } : {} });
       }));
       await create(table, { partitionKey: STATE, rowKey: "initialized", initializedAt: new Date(started).toISOString() });
     }
-    // LODGING_AUTO_NOTIFICATIONS_ENABLED=false pauses only the timed room-assignment message. Driver and passenger messages
-    // and the admin "Send room details" button are unaffected; an unset value keeps the automatic message on.
     const candidates = env.LODGING_AUTO_NOTIFICATIONS_ENABLED === "false" ? [] : lodgingCandidates(snapshot, started), issues = [];
     for (const group of groups) {
       if (now() - started > 65e3) break;
@@ -723,7 +754,7 @@ function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now =
         for (const candidate2 of candidates.filter((c) => c.type === "driver_assignment" && c.detail.trip === digest(group.id))) {
           await create(table, { partitionKey: OUTBOX, rowKey: candidate2.key, status: "pending", candidateJson: JSON.stringify(candidate2), tripId: group.id, binding, createdAt: new Date(started).toISOString() });
         }
-        await table.upsertEntity({ partitionKey: STATE, rowKey, binding, epoch }, "Replace");
+        await table.upsertEntity({ partitionKey: STATE, rowKey, binding, epoch, ...group.secondaryDriver ? { additionalDriver: true, tripId: group.id } : {} }, "Replace");
       }
       if (group.method === "Flight" && parties.some((p) => p.arrival && started >= p.at - 24 * HOUR && started <= p.at + 6 * HOUR)) {
         try {

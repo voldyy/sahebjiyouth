@@ -31,6 +31,37 @@ test('view-only accommodation page does not offer WhatsApp sending', async ({pag
 });
 
 const TODAY = new Date("2026-10-25T16:00:00Z"); // first planning day, so tests do not depend on the real date
+test('multiple pickup drivers save, reload, filter, remove and remain visible to viewers',async({page})=>{
+  const row=plannerGuest('CREW','Synthetic Traveller','2026-11-01 14:30','2026-11-03 15:00');
+  Object.assign(row,{11:'Flight',14:'PHL',15:'AA123',16:'EWR',17:'UA456',18:'YES'});
+  const h=await setup(page,'ok',[row]);
+  for(const [type,names] of [['Driver',['First Driver','Second Driver','Third Driver']],['Vehicle',['Van','Car','SUV']]])for(const name of names)h.request({action:'resource',type,name,active:true,requestId:crypto.randomUUID()});
+  await page.goto('/#transport');await page.reload();
+  const trip=page.locator('.transport-journey').filter({hasText:'AA123'});
+  const select=(label)=>trip.getByRole('combobox',{name:new RegExp(`^${label} for`)});
+  await select('Sevak driver').selectOption('First Driver');await expect(select('Sevak driver')).toBeEnabled();
+  await select('Vehicle').selectOption('Van');await expect(select('Vehicle')).toBeEnabled();
+  await expect(select('Sevak driver 2')).toHaveCount(0);
+  await trip.getByRole('button',{name:'Add driver',exact:true}).click();
+  await select('Sevak driver 2').selectOption('Second Driver');await expect(select('Sevak driver 2')).toBeEnabled();
+  await select('Vehicle 2').selectOption('Car');await expect(select('Vehicle 2')).toBeEnabled();
+  await expect(trip.locator('.transport-status')).toHaveText('Assigned');
+  await page.reload();await expect(select('Sevak driver 2')).toHaveValue('Second Driver');await expect(select('Vehicle 2')).toHaveValue('Car');
+  await trip.getByRole('button',{name:'Add driver',exact:true}).click();
+  await select('Sevak driver 3').selectOption('Third Driver');await expect(select('Sevak driver 3')).toBeEnabled();
+  await select('Vehicle 3').selectOption('SUV');await expect(select('Vehicle 3')).toBeEnabled();
+  await expect(select('Sevak driver 3').getByRole('option',{name:'First Driver',exact:true})).toHaveJSProperty('disabled',true);
+  await page.getByRole('combobox',{name:/^Driver filter/}).selectOption('Second Driver');await expect(page.locator('.transport-journey')).toHaveCount(1);
+  await page.screenshot({path:test.info().outputPath('multiple-drivers-mobile.png'),fullPage:true});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.goto('/#transport?team=yogi-prasad');await page.reload();
+  await expect(trip).toContainText('Second Driver');await expect(trip).toContainText('Car');
+  await expect(page.getByRole('button',{name:'Add driver',exact:true})).toHaveCount(0);await expect(trip.getByRole('combobox')).toHaveCount(0);
+  await page.goto('/#transport');await page.reload();
+  await trip.getByRole('button',{name:/^Remove driver 2 for/}).click();await expect(select('Sevak driver 2')).toHaveValue('Third Driver');await expect(select('Sevak driver 2')).toBeEnabled();
+  await page.reload();await expect(select('Sevak driver 2')).toHaveValue('Third Driver');await expect(select('Vehicle 2')).toHaveValue('SUV');
+  await expect(select('Sevak driver 3')).toHaveCount(0);
+});
 test('transport follows pickup and dropoff Sheet choices independently after refresh', async ({page}) => {
   const rows=[['Both Legs','YES','YES'],['Pickup Only','YES','NO'],['Dropoff Only','NO','YES'],['Neither Leg','NO','NO']].map(([name,pickup,dropoff],i)=>{
     const r=plannerGuest(`LEG-${i}`,name,'2026-10-28 14:30','2026-10-30 16:00');

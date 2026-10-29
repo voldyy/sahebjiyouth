@@ -443,8 +443,21 @@ reply({ ready: true });
 <\/script></body></html>
 `;
 
+  // src/lib/transportCrew.js
+  var crewForPlan = (plan = {}) => [
+    { driver: plan.driver || "", vehicle: plan.vehicle || "" },
+    ...plan.additionalDrivers || []
+  ];
+  function readAdditionalDrivers(value) {
+    if (!value) return [];
+    const crew = JSON.parse(value);
+    if (!Array.isArray(crew) || crew.some((pair) => !pair || typeof pair.driver !== "string" || typeof pair.vehicle !== "string")) throw new Error("Invalid additional driver assignments. Review Transport Crew.");
+    return crew;
+  }
+
   // shared/workspace-engine.js
   var TABLES = {
+    "Transport Crew": ["Journey ID", "Additional drivers"],
     "Transport Display": ["Journey ID", "Collapsed", "Revision", "Request ID"],
     "Offsite Rooms": ["ID", "Hotel", "Room number", "Beds", "Planning label", "Revision"],
     "Housekeeping": ["Checkout ID", "Room", "Bed", "Bed code", "Guest", "Checkout date", "Linens refreshed at", "Request ID", "State"],
@@ -506,6 +519,9 @@ reply({ ready: true });
       return { sheet, rows, guests: guestsFromRows(rows) };
     }
     function plans2(book, readOnly = false) {
+      const crewRows = table2(book, "Transport Crew", true).rows.slice(1).filter((r) => r[0]);
+      if (new Set(crewRows.map((r) => r[0])).size !== crewRows.length) throw new Error("Duplicate journeys in Transport Crew. Review the sheet.");
+      const crew = new Map(crewRows.map((r) => [r[0], readAdditionalDrivers(r[1])]));
       const rows = table2(book, "Transport Assignments", readOnly).rows.slice(1).filter((r) => r[0]);
       const resources = table2(book, "Transport Resources", readOnly).rows.slice(1).filter((r) => r[2] === "Yes");
       return {
@@ -516,7 +532,8 @@ reply({ ready: true });
           pickup: r[8],
           status: r[9],
           notes: r[10],
-          revision: r[11]
+          revision: r[11],
+          additionalDrivers: crew.get(r[0]) || []
         })),
         drivers: resources.filter((r) => r[0] === "Driver").map((r) => r[1]),
         vehicles: resources.filter((r) => r[0] === "Vehicle").map((r) => r[1])
@@ -783,14 +800,24 @@ reply({ ready: true });
         [req.expectedPlan.driver, req.expectedPlan.vehicle, req.expectedPlan.pickup, req.expectedPlan.status, req.expectedPlan.notes]
       )) throw new Error("Someone edited this journey in the sheet. Refresh before saving.");
       const data = plans2(book);
+      const previousCrew = data.assignments.find((p) => p.id === group.id)?.additionalDrivers || [];
+      if (req.expectedPlan && !equal(previousCrew, req.expectedPlan.additionalDrivers || [])) throw new Error("Someone edited this journey in the sheet. Refresh before saving.");
+      const submittedCrew = req.plan.additionalDrivers ?? previousCrew;
+      if (!Array.isArray(submittedCrew) || submittedCrew.length > 19) throw new Error("Choose at most 20 drivers for a journey.");
+      const additionalDrivers = submittedCrew.map((pair) => ({ driver: clean2(pair?.driver), vehicle: clean2(pair?.vehicle) })).filter((pair) => pair.driver || pair.vehicle);
       const driver = clean2(req.plan.driver), vehicle = clean2(req.plan.vehicle), pickup = clean2(req.plan.pickup), notes = clean2(req.plan.notes, 500), status = clean2(req.plan.status);
-      if (driver && !data.drivers.includes(driver))
+      const crew = [{ driver, vehicle }, ...additionalDrivers];
+      if (crew.some((pair) => pair.driver && !data.drivers.includes(pair.driver)))
         throw new Error("Choose an active driver.");
-      if (vehicle && !data.vehicles.includes(vehicle))
+      if (crew.some((pair) => pair.vehicle && !data.vehicles.includes(pair.vehicle)))
         throw new Error("Choose an active vehicle.");
+      for (const field of ["driver", "vehicle"]) {
+        const values2 = crew.map((pair) => pair[field].toLowerCase()).filter(Boolean);
+        if (new Set(values2).size !== values2.length) throw new Error(`Choose a different ${field} for each assignment.`);
+      }
       if (!["Planned", "Dispatched", "Completed"].includes(status))
         throw new Error("Choose a valid journey status.");
-      if (status !== "Planned" && (!driver || !vehicle))
+      if (status !== "Planned" && crew.some((pair) => !pair.driver || !pair.vehicle))
         throw new Error("Assign both a driver and vehicle before dispatching.");
       if (pickup && (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(pickup) || Number.isNaN(Date.parse(pickup))))
         throw new Error("Enter a valid pickup date and time.");
@@ -819,7 +846,14 @@ reply({ ready: true });
         throw new Error(
           "Journey save could not be confirmed. Refresh before retrying."
         );
-      history(book, req, group.id, match?.row || [], values);
+      const crewTable = table2(book, "Transport Crew");
+      const crewIndex = crewTable.rows.findIndex((r, i) => i > 0 && r[0] === group.id);
+      const crewValues = [group.id, JSON.stringify(additionalDrivers)];
+      writeRow(crewTable.sheet, crewIndex < 0 ? crewTable.sheet.getLastRow() + 1 : crewIndex + 1, crewValues);
+      runtime.flush();
+      const confirmedCrew = table2(book, "Transport Crew").rows.find((r) => r[0] === group.id);
+      if (!equal(confirmedCrew, crewValues)) throw new Error("Driver assignments could not be confirmed. Refresh before retrying.");
+      history(book, req, group.id, { plan: match?.row || [], additionalDrivers: previousCrew }, { plan: values, additionalDrivers });
     }
     function resource(book, req) {
       if (!["Driver", "Vehicle"].includes(req.type))
@@ -830,7 +864,7 @@ reply({ ready: true });
       if (!active) {
         const data = plans2(book);
         if (data.assignments.some(
-          (p) => (req.type === "Driver" ? p.driver : p.vehicle) === name && p.status !== "Completed"
+          (p) => crewForPlan(p).some((pair) => (req.type === "Driver" ? pair.driver : pair.vehicle) === name) && p.status !== "Completed"
         ))
           throw new Error(
             "This resource is assigned to an active journey. Clear those assignments before removing it."

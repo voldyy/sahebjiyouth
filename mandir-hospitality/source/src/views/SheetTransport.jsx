@@ -15,6 +15,7 @@ import Sheet from "../components/Sheet";
 import AirlineLabel from "../components/AirlineLabel";
 import FlightStatus, { FlightTime, LiveFlightProvider } from "../components/FlightStatus";
 import { transportGroups, transportWithPlans, tripCollapsed } from "../lib/transport";
+import { crewForPlan } from "../lib/transportCrew";
 import { dayCollapsed, dayCollapseAt, dayDisplayId } from "../lib/transportDisplay";
 import { driverFromUrl, driverUrl } from "../lib/driverLinks";
 import { fullDay } from "../lib/occupancy";
@@ -33,6 +34,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
   const [newDriver, setNewDriver] = useState(""),
     [newVehicle, setNewVehicle] = useState("");
   const [displaySaving, setDisplaySaving] = useState("");
+  const [extraRows, setExtraRows] = useState({});
   const [now, setNow] = useState(Date.now);
   useEffect(() => {
     const tick = () => { if (!document.hidden) setNow(Date.now()); };
@@ -88,13 +90,14 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
       (!date || g.day === date) &&
       (driver === "All" ||
         (driver === "Unassigned"
-          ? !g.plan.driver
-          : g.plan.driver.toLowerCase() === driver.toLowerCase())) &&
+          ? !crewForPlan(g.plan).some(pair => pair.driver)
+          : crewForPlan(g.plan).some(pair => pair.driver.toLowerCase() === driver.toLowerCase()))) &&
       [
         g.flight,
         g.airport,
         g.plan.driver,
         g.plan.vehicle,
+        ...crewForPlan(g.plan).flatMap(pair => [pair.driver, pair.vehicle]),
         ...g.guests.map((g) => g.name),
       ]
         .join(" ")
@@ -105,7 +108,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
   const filtered = showPast || date ? matching : matching.filter((g) => !isPast(g));
   const days = [...new Set(filtered.map((g) => g.day))];
   const assigned = filtered.filter(
-    (g) => g.plan.driver && g.plan.vehicle,
+    (g) => crewForPlan(g.plan).every(pair => pair.driver && pair.vehicle),
   ).length;
   useEffect(() => {
     const sync = () => setDriver(driverFromUrl(location.href));
@@ -143,10 +146,12 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
       setError(error.message);
     }
   };
-  const saveInline = async (group, field, value) => {
+  const saveInline = async (group, field, value, index = 0) => {
     if (readOnly) return;
-    const plan = { ...group.plan, [field]: value };
-    if (!plan.driver || !plan.vehicle) plan.status = "Planned";
+    const plan = field === "additionalDrivers" ? { ...group.plan, additionalDrivers: value } : index === 0
+      ? { ...group.plan, [field]: value }
+      : { ...group.plan, additionalDrivers: Array.from({ length: Math.max(index, group.plan.additionalDrivers?.length || 0) }, (_, i) => ({ driver: "", vehicle: "", ...group.plan.additionalDrivers?.[i], ...(i === index - 1 ? { [field]: value } : {}) })) };
+    if (crewForPlan(plan).some(pair => !pair.driver || !pair.vehicle)) plan.status = "Planned";
     setInlineDraft({ id: group.id, plan });
     setSaveState({ id: group.id, message: "Saving…" });
     try {
@@ -303,6 +308,11 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
           {!minimized && trips
             .map((group) => {
               const collapsed = tripCollapsed(group, workspace.tripDisplay || [], now);
+              const plan = inlineDraft?.id === group.id ? inlineDraft.plan : group.plan;
+              const crew = crewForPlan(plan);
+              const pairs = readOnly ? crew : Array.from({ length: Math.max(crew.length, (extraRows[group.id] || 0) + 1) }, (_, i) => crew[i] || { driver: "", vehicle: "" });
+              const disabled = !workspace.connected || workspace.saving || inlineDraft !== null || !group.day || group.guests.some(guest => !guest.sourceWritable);
+              const assigned = crew.every(pair => pair.driver && pair.vehicle);
               return (
               <LiveFlightProvider key={group.id} group={group} workspace={workspace}>
               <article className={`card transport-journey${group.method === "Flight" ? " transport-journey--flight" : ""}`}>
@@ -322,9 +332,9 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                     {group.guests.length > 1 && <span className="transport-guest-count">{group.guests.length} guests</span>}
                   </div>
                   <span
-                    className={`transport-status ${group.plan.driver && group.plan.vehicle ? "assigned" : ""}`}
+                    className={`transport-status ${assigned ? "assigned" : ""}`}
                   >
-                    {group.plan.driver && group.plan.vehicle
+                    {assigned
                       ? "Assigned"
                       : "Unassigned"}
                   </span>
@@ -360,6 +370,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                     {group.method === "Flight" && group.flight && <FlightStatus group={group} />}
                   </div>
                   <div className="transport-plan">
+                    {pairs.map((pair, index) => <div className="transport-crew-pair" key={index}>
                     {[
                       {
                         field: "driver",
@@ -373,36 +384,34 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                       },
                     ].map(({ field, label, options }) => (
                       <label className="field" key={field}>
-                        {label}
-                        {readOnly ? <span className="transport-read-value">{group.plan[field] || "Not assigned"}</span> : <select
-                          aria-label={`${label} for ${group.flight || group.method} ${group.direction} ${group.day}`}
-                          value={
-                            inlineDraft?.id === group.id
-                              ? inlineDraft.plan[field]
-                              : group.plan[field]
-                          }
-                          disabled={
-                            !workspace.connected ||
-                            workspace.saving ||
-                            !group.day ||
-                            group.guests.some((guest) => !guest.sourceWritable)
-                          }
+                        {label}{index > 0 ? ` ${index + 1}` : ""}
+                        {readOnly ? <span className="transport-read-value">{pair[field] || "Not assigned"}</span> : <select
+                          aria-label={`${label}${index > 0 ? ` ${index + 1}` : ""} for ${group.flight || group.method} ${group.direction} ${group.day}`}
+                          value={pair[field]}
+                          disabled={disabled}
                           onChange={(event) =>
-                            saveInline(group, field, event.target.value)
+                            saveInline(group, field, event.target.value, index)
                           }
                         >
                           <option value="">Not assigned</option>
                           {[
                             ...new Set([
                               ...options,
-                              ...(group.plan[field] ? [group.plan[field]] : []),
+                              ...(pair[field] ? [pair[field]] : []),
                             ]),
                           ].map((name) => (
-                            <option key={name}>{name}</option>
+                            <option key={name} disabled={pairs.some((p, i) => i !== index && p[field] === name)}>{name}</option>
                           ))}
                         </select>}
                       </label>
                     ))}
+                    {index > 0 && !readOnly && <button className="text-button transport-remove-driver" aria-label={`Remove driver ${index + 1} for ${group.flight || group.method} ${group.direction} ${group.day}`} disabled={disabled} onClick={() => {
+                      const remaining = (plan.additionalDrivers || []).filter((_, i) => i !== index - 1);
+                      setExtraRows(current => ({ ...current, [group.id]: Math.max(0, pairs.length - 2) }));
+                      if (index < crew.length) saveInline(group, "additionalDrivers", remaining);
+                    }}><Trash2 size={13} /> Remove driver</button>}
+                    </div>)}
+                    {!readOnly && pairs.length < 20 && <button className="text-button transport-add-driver" disabled={disabled} onClick={() => setExtraRows(current => ({ ...current, [group.id]: pairs.length }))}><Plus size={14} /> Add driver</button>}
                     {saveState?.id === group.id && (
                       <small
                         role={saveState.error ? "alert" : "status"}

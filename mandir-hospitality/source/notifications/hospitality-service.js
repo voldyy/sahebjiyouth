@@ -1,4 +1,5 @@
 import { SPREADSHEET_ID, guestsFromRows } from "../src/lib/sheets.js";
+import { readAdditionalDrivers } from "../src/lib/transportCrew.js";
 import templates from "./hospitality-templates.json" with { type: "json" };
 import { HOUR, digest, driverDirectory, assignedTrips, tripParties, driverAssignment, tripReminders, airborneMessage, lodgingCandidates, phoneAddress, utcInstant, hasData, completeLodgingData } from "./hospitality-model.js";
 
@@ -6,6 +7,7 @@ export const SCHEDULE = "0 * * * * *";
 export const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYBR2sIywbufmytSNLiQvGRy2oYg_tsMTEqdUj855z1LX8OJcDf6rTI0gR14kzdzpGog/exec";
 const CLAIMS = "hospitality-notifications", STATE = "hospitality-notification-state", OUTBOX = "hospitality-notification-outbox";
 const headers = {
+  "Transport Crew": ["Journey ID", "Additional drivers"],
   "Transport Resources": ["Type", "Name", "Active", "Updated at", "Phone number"],
   "Transport Assignments": ["Journey ID", "Direction", "Date", "Flight / service", "Airport", "Attendees", "Driver", "Vehicle", "Pickup / mandir departure", "Status", "Notes", "Revision", "Updated at", "Request ID"],
 };
@@ -29,14 +31,17 @@ async function readTable(name, fetchImpl) {
   }))];
 }
 export async function loadSnapshot(fetchImpl = fetch) {
-  const [rows, resources, assignments] = await Promise.all(["Sheet1", "Transport Resources", "Transport Assignments"].map(name => readTable(name, fetchImpl)));
+  const [rows, resources, assignments, crew] = await Promise.all(["Sheet1", "Transport Resources", "Transport Assignments", "Transport Crew"].map(name => readTable(name, fetchImpl)));
+  const crewRows = crew.slice(1).filter(r => r[0]);
+  if (new Set(crewRows.map(r => r[0])).size !== crewRows.length) throw Error("Duplicate transport crew; notifications paused");
+  const additional = new Map(crewRows.map(r => [r[0], readAdditionalDrivers(r[1])]));
   const validAssignments = assignments.slice(1).filter(r => r[0]);
   if (new Set(validAssignments.map(r => r[0])).size !== validAssignments.length) throw Error("Duplicate transport assignments; notifications paused");
   return {
     incompleteTransportRegistrations: new Set(rows.slice(1).filter(r => hasData(r[0]) &&
       (!hasData(r[8]) || !/^(YES|NO|Y|N|TRUE|FALSE)$/i.test(String(r[2]).trim()))).map(r => String(r[0]).trim())),
     guests: guestsFromRows(rows), drivers: driverDirectory(resources),
-    assignments: validAssignments.map(r => ({ id: r[0], driver: r[6], vehicle: r[7], pickup: r[8], status: r[9], notes: r[10], revision: r[11] })),
+    assignments: validAssignments.map(r => ({ id: r[0], driver: r[6], vehicle: r[7], pickup: r[8], status: r[9], notes: r[10], revision: r[11], additionalDrivers: additional.get(r[0]) || [] })),
   };
 }
 async function scriptRequest(body, fetchImpl = fetch) {
@@ -90,7 +95,7 @@ export async function sendOnce(table, candidate, send, now = Date.now) {
 }
 // Two durable, one-shot stages per flight. Failures are not polled or retried.
 export async function departureFlightCheck(table, group, now, readFlight) {
-  const id = digest(group.id);
+  const id = digest(group.sourceTripId || group.id);
   async function stage(name) {
     const rowKey = `flight-once-${name}-${id}`;
     const existing = await get(table, STATE, rowKey);
@@ -115,17 +120,23 @@ export async function departureFlightCheck(table, group, now, readFlight) {
   return stage("departure");
 }
 
-export function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now = Date.now, send, readFlight = async group => (await scriptRequest({ action: "notification-flight", tripId: group.id })).flight }) {
+export function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now = Date.now, send, readFlight = async group => (await scriptRequest({ action: "notification-flight", tripId: group.sourceTripId || group.id })).flight }) {
   return async (_timer, context) => {
     if (env.HOSPITALITY_NOTIFICATIONS_ENABLED !== "true") return { status: "disabled" };
     const started = now(), snapshot = await getSnapshot(), groups = assignedTrips(snapshot);
+    const activeTrips = new Set(groups.map(g => g.id));
+    // Removal resets the additional driver's state so a later reassignment
+    // sends a new notice, while queued notices to removed drivers go stale.
+    for await (const row of table.listEntities({ queryOptions: { filter: `PartitionKey eq '${STATE}' and additionalDriver eq true` } })) {
+      if (row.additionalDriver && row.binding && !activeTrips.has(row.tripId)) await table.updateEntity({ partitionKey: STATE, rowKey: row.rowKey, binding: "" }, "Merge");
+    }
     const initialized = await get(table, STATE, "initialized");
     if (!initialized) {
       // Record all pre-existing assignments before sending assignment-change alerts.
       // Atomic creates make an interrupted bootstrap safe to repeat.
       await Promise.all(groups.map(group => {
         const driver = snapshot.drivers.get(group.plan.driver?.trim().toLowerCase());
-        return create(table, { partitionKey: STATE, rowKey: "trip-" + digest(group.id), binding: driver?.phone ? digest([driver.name, driver.phone]) : "", epoch: 1 });
+        return create(table, { partitionKey: STATE, rowKey: "trip-" + digest(group.id), binding: driver?.phone ? digest([driver.name, driver.phone]) : "", epoch: 1, ...(group.secondaryDriver ? { additionalDriver: true, tripId: group.id } : {}) });
       }));
       await create(table, { partitionKey: STATE, rowKey: "initialized", initializedAt: new Date(started).toISOString() });
     }
@@ -148,7 +159,7 @@ export function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot
         for (const candidate of candidates.filter(c => c.type === "driver_assignment" && c.detail.trip === digest(group.id))) {
           await create(table, { partitionKey: OUTBOX, rowKey: candidate.key, status: "pending", candidateJson: JSON.stringify(candidate), tripId: group.id, binding, createdAt: new Date(started).toISOString() });
         }
-        await table.upsertEntity({ partitionKey: STATE, rowKey, binding, epoch }, "Replace");
+        await table.upsertEntity({ partitionKey: STATE, rowKey, binding, epoch, ...(group.secondaryDriver ? { additionalDriver: true, tripId: group.id } : {}) }, "Replace");
       }
       if (group.method === "Flight" && parties.some(p => p.arrival && started >= p.at - 24 * HOUR && started <= p.at + 6 * HOUR)) {
         try {

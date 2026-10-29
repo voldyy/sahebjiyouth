@@ -85,6 +85,21 @@ test("retries are idempotent, changed request bodies cannot reuse an ID, and tra
   expect((await request(trip)).ok).toBe(true);
   expect((await request(trip)).error).toMatch(/Another admin/);
 });
+test('multiple drivers persist atomically across SQLite reload and sheet synchronization',async()=>{
+  await request({action:'snapshot'});
+  for(const [type,names] of [['Driver',['First','Second']],['Vehicle',['Van','Car']]])for(const name of names)expect((await request({action:'resource',type,name,active:true})).ok).toBe(true);
+  const group=transportGroups(guestsFromRows(sheet.Attendees),'Arrivals')[0];
+  const plan={driver:'First',vehicle:'Van',status:'Planned',pickup:'',notes:'',additionalDrivers:[{driver:'Second',vehicle:'Car'}]};
+  const req={action:'transport',id:group.id,direction:group.direction,signature:group.signature,expectedRevision:'',plan};
+  const result=await request(req);expect(result.ok).toBe(true);
+  await runInDurableObject(stub(),instance=>{instance.tables=null;});
+  const saved=(await request({action:'snapshot'})).transport.assignments[0];expect(saved.additionalDrivers).toEqual(plan.additionalDrivers);
+  expect((await request({...req,expectedRevision:saved.revision,expectedPlan:saved,plan:{...saved,additionalDrivers:[{driver:'First',vehicle:'Car'}]}})).ok).toBe(false);
+  expect((await request({action:'snapshot'})).transport.assignments[0]).toEqual(saved);
+  await runDurableObjectAlarm(stub());expect((await request({action:'snapshot'})).sync.pending).toBe(0);
+  expect(JSON.parse(sheet['Transport Crew'][1][1])).toEqual(plan.additionalDrivers);
+  expect(sheet['Transport Assignments'][1].slice(6,8)).toEqual(['First','Van']);
+});
 
 test("a save during synchronization survives the incoming snapshot, then mirrors on the next alarm", async () => {
   const initial = await request({ action: "snapshot" });

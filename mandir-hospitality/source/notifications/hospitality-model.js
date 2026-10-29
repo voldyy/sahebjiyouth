@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { transportGroups, transportWithPlans, transportForLeg } from "../src/lib/transport.js";
 import { airlineForFlight } from "../src/lib/airlines.js";
+import { tripsForCrew } from "../src/lib/transportCrew.js";
 
 export const ZONE = "America/New_York";
 export const HOUR = 3600000;
@@ -79,7 +80,7 @@ function candidate(type, identity, recipient, values, detail) {
 }
 export function assignedTrips(snapshot) {
   const groups = ["Arrivals", "Departures"].flatMap(direction => transportWithPlans(transportGroups(snapshot.guests, direction), snapshot.assignments));
-  return groups.filter(g => g.guests.every(a => a.status !== "Departed"));
+  return tripsForCrew(groups.filter(g => g.guests.every(a => a.status !== "Departed")));
 }
 export function tripParties(snapshot, group) {
   const driver = snapshot.drivers.get(oneLine(group.plan.driver).toLowerCase());
@@ -104,7 +105,8 @@ export function tripParties(snapshot, group) {
     const companions = travelers.filter(g => !g.isPrimaryContact).length;
     const name = primary.name + (primary.city ? ` (${primary.city})` : "");
     const summary = name + (companions ? `, with ${companions} accompanying passenger${companions === 1 ? "" : "s"}` : "");
-    return [{ group, driver, primary, passengerPhone, companions, summary, name, flight, at, arrival, identity: [group.id, registrationId, driver.name, driver.phone] }];
+    const crewDrivers = (group.crew || [{ driver: group.plan.driver }]).map(pair => snapshot.drivers.get(oneLine(pair.driver).toLowerCase())).filter(d => d?.phone && hasData(d.name));
+    return [{ group, driver, crewDrivers, primary, passengerPhone, companions, summary, name, flight, at, arrival, identity: [group.id, registrationId, driver.name, driver.phone] }];
   });
 }
 export function driverAssignment(party, epoch) {
@@ -116,8 +118,9 @@ export function driverAssignment(party, epoch) {
 export function tripReminders(party, now) {
   const p = party, result = [];
   if (p.group.method !== "Flight" || now >= p.at || now < p.at - 18 * HOUR) return result;
-  result.push(candidate(p.arrival ? "passenger_arrival" : "passenger_departure", p.identity, p.passengerPhone,
-    [p.primary.name, p.flight, p.group.airport, formatWhen(p.at), p.driver.name, displayPhone(p.driver.phone)], { trip: digest(p.group.id), event: "18-hour passenger reminder" }));
+  const contacts = p.crewDrivers?.length ? p.crewDrivers : [p.driver];
+  if (p.driver.name === contacts[0].name) result.push(candidate(p.arrival ? "passenger_arrival" : "passenger_departure", p.identity, p.passengerPhone,
+    [p.primary.name, p.flight, p.group.airport, formatWhen(p.at), contacts.map(d => d.name).join(" / "), contacts.length === 1 ? displayPhone(contacts[0].phone) : contacts.map(d => `${d.name}: ${displayPhone(d.phone)}`).join("; ")], { trip: digest(p.group.id), event: "18-hour passenger reminder" }));
   if (!p.arrival && now >= p.at - 8 * HOUR) result.push(candidate("driver_dropoff", p.identity, p.driver.phone,
     [p.driver.name, p.name, displayPhone(p.passengerPhone), p.flight, formatWhen(p.at), p.group.airport], { trip: digest(p.group.id), event: "8-hour driver reminder" }));
   return result;

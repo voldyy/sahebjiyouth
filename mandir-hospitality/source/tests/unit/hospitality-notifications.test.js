@@ -18,7 +18,7 @@ function memoryTable() {
     async createEntity(e) { const k = key(e.partitionKey, e.rowKey); if (rows.has(k)) throw { statusCode: 409 }; rows.set(k, { ...e }); },
     async updateEntity(e) { const k = key(e.partitionKey, e.rowKey); if (!rows.has(k)) throw { statusCode: 404 }; rows.set(k, { ...rows.get(k), ...e }); },
     async upsertEntity(e) { rows.set(key(e.partitionKey, e.rowKey), { ...e }); },
-    async *listEntities() { for (const e of [...rows.values()]) if (e.partitionKey === "hospitality-notification-outbox" && e.status === "pending") yield { ...e }; },
+    async *listEntities(options) { for (const e of [...rows.values()]) if (options?.queryOptions?.filter?.includes('additionalDriver eq true') ? e.partitionKey === 'hospitality-notification-state' && e.additionalDriver : e.partitionKey === "hospitality-notification-outbox" && e.status === "pending") yield { ...e }; },
   };
 }
 const accepted = { sid: "MM" + "a".repeat(32), status: "queued" };
@@ -113,6 +113,33 @@ test("worker seeds existing assignments, detects changes, and ignores vehicle-on
   await worker(); assert.equal(sent.filter(c => c.type === "driver_assignment").length, 1);
   s.assignments[0].vehicle = "Car"; await worker(); assert.equal(sent.length, 1);
   s.assignments[0].driver = ""; await worker(); s.assignments[0].driver = "Mira"; await worker(); assert.equal(sent.length, 2);
+});
+test('adding a driver notifies only the new driver and removal invalidates their notices',async()=>{
+  const s=snapshot(),table=memoryTable(),sent=[];
+  const worker=createHospitalityWorker({table,env:{HOSPITALITY_NOTIFICATIONS_ENABLED:'true'},getSnapshot:async()=>s,now:()=>easternInstant('2026-10-16','12:00'),send:async c=>{sent.push(c);return accepted;}});
+  await worker();assert.equal(sent.length,0);
+  s.assignments[0].additionalDrivers=[{driver:'Mira',vehicle:'Car'}];
+  await worker();await worker();
+  assert.equal(sent.length,1);assert.equal(sent[0].recipient,'whatsapp:+12025550125');
+  s.assignments[0].additionalDrivers=[];await worker();assert.equal(sent.length,1);
+  s.assignments[0].additionalDrivers=[{driver:'Mira',vehicle:'Car'}];await worker();await worker();assert.equal(sent.length,2);
+});
+test('multiple drivers share one flight lookup and passengers receive one reminder listing both contacts',async()=>{
+  const {departureFlightCheck}=await import('../../notifications/hospitality-service.js');
+  const s=snapshot();s.assignments[0].additionalDrivers=[{driver:'Mira',vehicle:'Car'}];
+  const groups=assignedTrips(s).filter(g=>g.direction==='Arrivals');assert.equal(groups.length,2);
+  const parties=groups.flatMap(g=>tripParties(s,g));assert.equal(parties.length,2);
+  assert.equal(new Set(parties.map(p=>driverAssignment(p,1).recipient)).size,2);
+  const reminders=parties.flatMap(p=>tripReminders(p,p.at-18*HOUR));
+  assert.equal(reminders.length,1);assert.equal(reminders[0].variables['5'],'Raj / Mira');
+  assert.match(reminders[0].variables['6'],/Raj: \+12025550124; Mira: \+12025550125/);
+  const table=memoryTable();let calls=0;
+  for(const g of groups)await departureFlightCheck(table,g,parties[0].at-20*HOUR,async()=>{calls++;return {available:false};});
+  assert.equal(calls,1);
+  s.assignments[0].driver='';
+  const remaining=assignedTrips(s).filter(g=>g.direction==='Arrivals').flatMap(g=>tripParties(s,g));
+  const remainingReminders=remaining.flatMap(p=>tripReminders(p,p.at-18*HOUR));
+  assert.equal(remainingReminders.length,1);assert.equal(remainingReminders[0].variables['5'],'Mira');
 });
 test("bulk sending verifies admin access, previews every attendee, rejects stale lists and queues without sending", async () => {
   const table = memoryTable(), s = snapshot(); let reads = 0;

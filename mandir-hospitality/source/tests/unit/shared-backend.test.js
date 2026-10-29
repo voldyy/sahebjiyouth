@@ -80,6 +80,26 @@ test('transport saves survive new snapshots, reject stale versions, and protect 
   assert.match(request(h,{action:'resource',type:'Driver',name:'Test Driver',active:false}).error,/active journey/);
   h.rows[1][12]='10/19/2026';assert.match(request(h,req).error,/travel details/);
 });
+test('multiple driver pairs persist, validate resources, protect secondary resources and detect sheet edits',()=>{
+  const h=createHarness([header(),row('A')]);
+  for (const [type,names] of [['Driver',['First','Second','Third']],['Vehicle',['Van','Car','SUV']]]) for (const name of names) assert.equal(request(h,{action:'resource',type,name,active:true}).ok,true);
+  const g=transportGroups(guestsFromRows(h.rows),'Arrivals')[0];
+  const req={action:'transport',id:g.id,direction:g.direction,signature:g.signature,expectedRevision:'',plan:{driver:'First',vehicle:'Van',status:'Planned',pickup:'',notes:'',additionalDrivers:[{driver:'Second',vehicle:'Car'},{driver:'Third',vehicle:'SUV'}]}};
+  const result=request(h,req);assert.equal(result.ok,true,result.error);
+  let plan=h.request({action:'snapshot'}).transport.assignments[0];
+  assert.deepEqual(plan.additionalDrivers,req.plan.additionalDrivers);
+  for(const [type,name] of [['Driver','Second'],['Vehicle','SUV']]) assert.match(request(h,{action:'resource',type,name,active:false}).error,/active journey/);
+  for(const additionalDrivers of [[{driver:'First',vehicle:'Car'}],[{driver:'Second',vehicle:'Van'}],[{driver:'Inactive',vehicle:'Car'}],[{driver:'Second',vehicle:'Missing'}]]) {
+    const denied=request(h,{...req,expectedRevision:plan.revision,expectedPlan:plan,plan:{...plan,additionalDrivers}});
+    assert.equal(denied.ok,false);assert.deepEqual(h.request({action:'snapshot'}).transport.assignments[0],plan);
+  }
+  const crewRow=h.sheets.get('Transport Crew').rows[1];
+  const old=crewRow[1];crewRow[1]=JSON.stringify([{driver:'Third',vehicle:'SUV'}]);
+  assert.match(request(h,{...req,expectedRevision:plan.revision,expectedPlan:plan}).error,/edited this journey/);crewRow[1]=old;
+  const removed=request(h,{...req,expectedRevision:plan.revision,expectedPlan:plan,plan:{...plan,additionalDrivers:[]}});
+  assert.equal(removed.ok,true);assert.deepEqual(removed.transport.assignments[0].additionalDrivers,[]);
+  assert.equal(request(h,{action:'resource',type:'Driver',name:'Second',active:false}).ok,true);
+});
 test('retry identifiers do not duplicate mutations and formula-like fields remain literal text',()=>{
   const h=createHarness([header(),row('A')]); const req={action:'resource',type:'Vehicle',name:'=1+1',active:true,requestId:randomUUID()};
   assert.equal(h.request(req).ok,true);assert.equal(h.request(req).ok,true);
