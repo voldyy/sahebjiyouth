@@ -195,3 +195,18 @@ test('Sadhak assignments validate and mirror, with submission times available to
   expect(viewer.guests[0].roomCode).toBe('SD104B2');
   expect(viewer.sync.pending).toBe(0);
 });
+
+test("a request restarts synchronization whose alarm is missing, and a failing alarm still arms the next run", async () => {
+  expect((await request({ action: "snapshot" })).ok).toBe(true);
+  const alarm = () => runInDurableObject(stub(), (_instance, state) => state.storage.getAlarm());
+  await runInDurableObject(stub(), (_instance, state) => state.storage.deleteAlarm());
+  expect(await alarm()).toBeNull();
+  await stub().request({ action: "snapshot" });
+  expect(await alarm()).not.toBeNull();
+  await runInDurableObject(stub(), async (instance, state) => {
+    await state.storage.deleteAlarm();
+    instance.synchronize = async () => { throw new Error("Durable Object reads are blocked"); };
+    await instance.alarm();
+    expect(await state.storage.getAlarm()).toBeGreaterThan(Date.now());
+  });
+});

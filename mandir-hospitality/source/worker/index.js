@@ -7,6 +7,7 @@ import { createMealSurvey } from "./meal-survey.js";
 import { createLocalMeals } from "./local-meals.js";
 import { verifyTwilioSignature, signTwilioRequest } from "./twilio-webhook.js";
 import { withLodgingNotices } from "../src/lib/lodgingNotifications.js";
+import { alarmStopped, shouldSetAlarm } from "./alarm-schedule.js";
 
 const engine = createWorkspaceEngine({ uuid: () => crypto.randomUUID(), today: () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()), flush: () => {} });
 const encoder = new TextEncoder();
@@ -179,7 +180,15 @@ export class HospitalityWorkspace extends DurableObject {
   async schedule(delay = 1000) {
     const due = Date.now() + delay;
     const existing = await this.ctx.storage.getAlarm();
-    if (!existing || due < existing) await this.ctx.storage.setAlarm(due);
+    if (shouldSetAlarm(existing, due)) await this.ctx.storage.setAlarm(due);
+  }
+  // Any request restarts synchronization whose alarm is missing or was abandoned. A pending alarm is left as is.
+  async resume() {
+    if (this.syncing) return;
+    const existing = await this.ctx.storage.getAlarm();
+    if (!alarmStopped(existing)) return;
+    if (existing) console.warn(JSON.stringify({ event: "stale_alarm_replaced", overdueMinutes: Math.round((Date.now() - existing) / 60000) }));
+    await this.ctx.storage.setAlarm(Date.now() + 1000);
   }
   async remote(payload) {
     if (!this.env.SYNC_KEY) throw new Error("Sheet synchronization is not configured.");
@@ -191,6 +200,7 @@ export class HospitalityWorkspace extends DurableObject {
   async request(req) {
     try {
       if (!req || JSON.stringify(req).length > 16000) throw new Error("Invalid request.");
+      await this.resume();
       if (req.action === "sync-wake") {
         if (!await matchesDigest(req.syncKey, await digest(this.env.SYNC_KEY || crypto.randomUUID()))) throw new Error("Synchronization authorization required.");
         await this.schedule(100);
@@ -303,9 +313,13 @@ export class HospitalityWorkspace extends DurableObject {
     }
   }
   async alarm() {
-    await this.synchronize();
-    await this.refreshLodgingNotices();
-    try { this.meals.put("survey-config", "last-run", { ...await this.survey.process(), at: new Date().toISOString() }); }
-    catch (_) { this.meals.put("survey-config", "last-run", { status: "attention", at: new Date().toISOString() }); console.error(JSON.stringify({ event: "meal_survey_attention" })); }
+    // A failure here must not end the loop: Cloudflare abandons an alarm whose handler keeps failing.
+    try {
+      await this.synchronize();
+      await this.refreshLodgingNotices();
+      try { this.meals.put("survey-config", "last-run", { ...await this.survey.process(), at: new Date().toISOString() }); }
+      catch (_) { this.meals.put("survey-config", "last-run", { status: "attention", at: new Date().toISOString() }); console.error(JSON.stringify({ event: "meal_survey_attention" })); }
+    } catch (_) { console.error(JSON.stringify({ event: "workspace_alarm_failed" })); }
+    await this.schedule(60000);
   }
 }
