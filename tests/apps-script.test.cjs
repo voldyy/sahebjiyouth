@@ -19,7 +19,7 @@ function setup({mailFails=false}={}) {
     Utilities:{getUuid:()=> 'test-registration-id'},
     ContentService:{MimeType:{JSON:'json'},createTextOutput(body){return {body,setMimeType(){return this;}};}},
   });
-  vm.runInContext(source,context);vm.runInContext('PUJA_CONFIG.SPREADSHEET_ID="test-sheet"',context);
+  vm.runInContext(source,context);vm.runInContext('PUJA_CONFIG.SPREADSHEET_ID="test-sheet";PUJA_CONFIG.REGISTRATION_PAUSED=false',context);
   return {context,rows,emails,get released(){return released;},get quotaCalls(){return quotaCalls;},
     post(data){context.event={postData:{contents:JSON.stringify(data)}};return JSON.parse(vm.runInContext('doPost(event)',context).body);}};
 }
@@ -104,5 +104,10 @@ test('singles count half toward the limit and couples count one',()=>{
  assert.equal(app.post(single('6100000003','Third Person')).ok,true);    // 2.0
  const full=app.post({...registration,phone:'6100000004',name:'Fourth Person'});
  assert.equal(full.code,'full');assert.equal(app.rows.length,4);
+ assert.deepEqual(JSON.parse(vm.runInContext('doGet({parameter:{action:"status"}})',app.context).body),{ok:true,open:false});
+});
+test('a paused registration is refused without writing and reports closed',()=>{
+ const app=setup();vm.runInContext('PUJA_CONFIG.REGISTRATION_PAUSED=true',app.context);
+ const result=app.post(registration);assert.equal(result.ok,false);assert.equal(result.code,'paused');assert.equal(app.rows.length,0);assert.equal(app.emails.length,0);
  assert.deepEqual(JSON.parse(vm.runInContext('doGet({parameter:{action:"status"}})',app.context).body),{ok:true,open:false});
 });

@@ -13,6 +13,7 @@ const PUJA_CONFIG = {
   SENDER_NAME: 'Anoopam Mission USA',
   LOGO_URL: 'https://sahebjiyouth.z13.web.core.windows.net/reg/HIRES_AMLOGO_color_sm.png',
   REPLY_TO: 'usayouth@anoopam.org', // Optional monitored email address.
+  REGISTRATION_PAUSED: true, // Set to false to reopen registration (then redeploy a new version).
   MAX_REGISTRATIONS: 105, // A couple counts 1 and a single counts 0.5; new registrations are refused at this total.
 };
 
@@ -39,6 +40,7 @@ function authorizeGoogleAppsScript() {
 function doGet(e) {
   if (e && e.parameter && e.parameter.action === 'status') {
     try {
+      if (PUJA_CONFIG.REGISTRATION_PAUSED) return jsonResponse_({ ok: true, open: false });
       return jsonResponse_({ ok: true, open: countRegistrations_(readRegistrations_(getRegistrationSheet_())) < PUJA_CONFIG.MAX_REGISTRATIONS });
     } catch (_) {
       return jsonResponse_({ ok: false, error: 'Registration status is unavailable.' });
@@ -69,6 +71,9 @@ function doPost(e) {
       return jsonResponse_({ ok: false, error: 'Registration is busy. Please try again shortly.' });
     }
     try {
+      if (PUJA_CONFIG.REGISTRATION_PAUSED) {
+        return jsonResponse_({ ok: false, code: 'paused', error: 'Registration for ' + PUJA_CONFIG.EVENT_NAME + ' is closed. For questions, please email ' + PUJA_CONFIG.REPLY_TO + '.' });
+      }
       sheet = getRegistrationSheet_();
       // Checked under the lock so simultaneous submissions cannot both pass.
       const existing = readRegistrations_(sheet);

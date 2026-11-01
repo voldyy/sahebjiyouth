@@ -164,7 +164,7 @@ function App() {
       setSuggestions([]);
       setSuggestOpen(false);
     } catch (error) {
-      if (error.code === "full") setRegistrationClosed(true);
+      if (error.code === "full" || error.code === "paused") setRegistrationClosed(true);
       setSubmitState("error");
       setSubmitMessage(error.message);
     }
@@ -219,7 +219,7 @@ function App() {
           }),
           React.createElement("p", { className: "eyebrow" }, "Registration Closed"),
           React.createElement("h1", { id: "closedTitle" }, "Dhan Teras Puja 2026"),
-          React.createElement("p", { className: "intro" }, "Thank you for your interest. Registration has reached capacity and is no longer accepting responses. For questions, please email usayouth@anoopam.org.")
+          React.createElement("p", { className: "intro" }, "Thank you for your interest. Registration is now closed and is no longer accepting responses. For questions, please email usayouth@anoopam.org.")
         )
       )
     );
