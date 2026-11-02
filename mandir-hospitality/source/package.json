@@ -23,12 +23,14 @@
     "@fontsource-variable/plus-jakarta-sans": "^5.2.0",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
     "@cloudflare/vitest-plugin": "^1.4.1",
     "@playwright/test": "^1.51.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "fflate": "^0.8.2",
     "vite": "^6.1.0",
     "vitest": "^4.1.11",
     "wrangler": "^4.150.0"
