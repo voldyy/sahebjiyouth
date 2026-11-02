@@ -79,11 +79,11 @@ var Hospitality = (() => {
     { number: "205", beds: 4 },
     { number: "206", beds: 4 },
     { number: "207", beds: 4 },
-    { number: "100", beds: 7 },
-    { number: "101", beds: 12 },
-    { number: "102", beds: 14 },
-    { number: "103", beds: 13 },
-    { number: "104", beds: 15 }
+    { number: "101", beds: 7 },
+    { number: "102", beds: 12 },
+    { number: "103", beds: 14 },
+    { number: "104", beds: 13 },
+    { number: "105", beds: 15 }
   ];
   var samarpanBedCount = samarpanRooms.reduce((sum, room) => sum + room.beds, 0);
   var sadhakRooms = [

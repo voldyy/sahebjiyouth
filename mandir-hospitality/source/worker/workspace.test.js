@@ -6,6 +6,7 @@ import { overlayChanges } from "../shared/workspace-sync.js";
 import { guestsFromRows } from "../src/lib/sheets.js";
 import { transportGroups } from "../src/lib/transport.js";
 import { dayDisplayId } from "../src/lib/transportDisplay.js";
+import { renumberSamarpanTables } from "../shared/samarpan-renumber.js";
 
 const admin = "synthetic-admin-key";
 let sheet, ack, unavailable, calls, holdSync, syncingStarted;
@@ -60,6 +61,18 @@ test("reads and room saves stay fast and durable during a Google outage; alarm r
   await runDurableObjectAlarm(stub());
   expect(sheet.Attendees[1][31]).toBe("S204B1");
   expect((await request({ action: "snapshot" })).sync.pending).toBe(0);
+});
+test('room renumbering blocks competing lodging writes until the corrected sheet is imported',async()=>{
+  sheet.Attendees[1].splice(29,3,'Samarpan','100','S100B7');
+  const before=await request({action:'snapshot'});
+  expect(before.capabilities.samarpanRoomNumbering).toBe(2);
+  expect((await request(assign(before.guests[1]))).error).toMatch(/room numbering/);
+  const corrected=renumberSamarpanTables(sheet.Attendees,sheet.Housekeeping);
+  sheet.Attendees=corrected.attendees;sheet.Housekeeping=corrected.housekeeping;
+  await runDurableObjectAlarm(stub());
+  const after=await request({action:'snapshot'});
+  expect(after.guests[0].roomCode).toBe('S101B7');
+  expect((await request(assign(after.guests[1]))).ok).toBe(true);
 });
 
 test("concurrent admins cannot reserve the same bed and viewer writes are rejected", async () => {

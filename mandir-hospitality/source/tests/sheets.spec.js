@@ -159,17 +159,17 @@ test("Samarpan offers only confirmed rooms with bed capacities", async ({ page }
   await page.getByRole("button", { name: "Assign lodging", exact: true }).click();
   const room = page.getByLabel("Room number (AE)");
   await expect(room).toHaveJSProperty("tagName", "SELECT");
-  await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "201 · 2 beds", "202 · 2 beds", "203 · 4 beds", "204 · 4 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds", "100 · 7 beds", "101 · 12 beds", "102 · 14 beds", "103 · 13 beds", "104 · 15 beds"]);
+  await expect(room.locator("option")).toHaveText(["Choose a Samarpan room", "201 · 2 beds", "202 · 2 beds", "203 · 4 beds", "204 · 4 beds", "205 · 4 beds", "206 · 4 beds", "207 · 4 beds", "101 · 7 beds", "102 · 12 beds", "103 · 14 beds", "104 · 13 beds", "105 · 15 beds"]);
   await room.selectOption("204");
   await expect(page.getByLabel("Bed number").locator("option")).toHaveCount(5);
   await page.getByLabel("Bed number").selectOption("1");
   await expect(page.getByLabel("Custom room code (AF)")).toHaveValue("S204B1");
   await expect(page.getByLabel("Custom room code (AF)")).toHaveAttribute("readonly", "");
-  await room.selectOption("101");
+  await room.selectOption("102");
   await expect(page.getByLabel("Custom room code (AF)")).toHaveValue("");
   await expect(page.getByLabel("Bed number").locator("option")).toHaveCount(13);
   await page.getByLabel("Bed number").selectOption("12");
-  await expect(page.getByLabel("Custom room code (AF)")).toHaveValue("S101B12");
+  await expect(page.getByLabel("Custom room code (AF)")).toHaveValue("S102B12");
   await page.getByLabel("Lodging location (AD)").selectOption("Hawthorn");
   await expect(page.getByLabel("Hotel planning room")).toHaveValue("");
   await expect(page.getByRole("button", { name: "Save assignment" })).toBeDisabled();
@@ -185,7 +185,7 @@ const plannerRows = () => [
   plannerGuest("B", "Bela Shah", "2026-10-28", "2026-10-31", "204", "1"),
   plannerGuest("C", "Chirag Mehta", "2026-10-25", "2026-10-31"),
   plannerGuest("D", "Dev Shah", "2026-11-01", "2026-11-03"),
-  plannerGuest("E", "Erin Patel", "2026-10-26", "2026-10-27", "101", "12"),
+  plannerGuest("E", "Erin Patel", "2026-10-26", "2026-10-27", "102", "12"),
   plannerGuest("F", "Guest Missing Dates", "", ""),
 ];
 async function openPlanner(page) {

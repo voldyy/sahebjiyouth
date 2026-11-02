@@ -102,7 +102,7 @@ test("permission failure does not retry or change the snapshot", async (t) => {
 });
 test("confirmed Samarpan inventory includes room 201 and totals 85 beds", () => {
   assert.equal(samarpanBedCount, 85);
-  assert.deepEqual(samarpanRooms.map((r) => r.number), ["201", "202", "203", "204", "205", "206", "207", "100", "101", "102", "103", "104"]);
+  assert.deepEqual(samarpanRooms.map((r) => r.number), ["201", "202", "203", "204", "205", "206", "207", "101", "102", "103", "104", "105"]);
   assert.deepEqual(samarpanRooms.map((r) => r.beds), [2, 2, 4, 4, 4, 4, 4, 7, 12, 14, 13, 15]);
   assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "202", roomCode: "S202B2" }), ["Samarpan", "202", "S202B2"]);
   assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "202", roomCode: "S202B3" }), /valid bed/);
@@ -110,11 +110,11 @@ test("confirmed Samarpan inventory includes room 201 and totals 85 beds", () => 
   assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "201", roomCode: "S201B2" }), ["Samarpan", "201", "S201B2"]);
   assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "201", roomCode: "S201B3" }), /valid bed/);
   assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "204", roomCode: "S204B5" }), /valid bed/);
-  assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "105", roomCode: "CUSTOM" }), /confirmed Samarpan/);
+  assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "100", roomCode: "CUSTOM" }), /confirmed Samarpan/);
   assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "204", roomCode: "S204B1" }), ["Samarpan", "204", "S204B1"]);
   assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "204", roomCode: "S204B5" }), /valid bed/);
   assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "204", roomCode: "S205B1" }), /valid bed/);
-  assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "101", roomCode: "S101B12" }), ["Samarpan", "101", "S101B12"]);
+  assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "102", roomCode: "S102B12" }), ["Samarpan", "102", "S102B12"]);
 });
 test("Samarpan pre-save validation rejects a bed booked after the dashboard loaded", async (t) => {
   const target = attendee();

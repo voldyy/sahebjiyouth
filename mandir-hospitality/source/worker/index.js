@@ -142,7 +142,7 @@ export class HospitalityWorkspace extends DurableObject {
     const book = tabularWorkspace({ ...this.load(), "Assignment History": [TABLES["Assignment History"]] });
     const snapshot = engine.snapshot(book, "viewer");
     const notices = JSON.parse(this.meta("lodgingNotices", "[]"));
-    return { ok: true, ...snapshot, capabilities: { childBedSharing: true, multipleDrivers: true }, guests: withLodgingNotices(this.meals.augment(snapshot.guests), notices), meals: this.meals.snapshot(role, snapshot.guests, role === "admin" ? this.survey.summary() : undefined), role, ...(role === "admin" ? { rows: book.data.Attendees } : {}), revision: this.meta("revision", "0"), sync: this.syncState() };
+    return { ok: true, ...snapshot, capabilities: { childBedSharing: true, multipleDrivers: true, samarpanRoomNumbering: 2 }, guests: withLodgingNotices(this.meals.augment(snapshot.guests), notices), meals: this.meals.snapshot(role, snapshot.guests, role === "admin" ? this.survey.summary() : undefined), role, ...(role === "admin" ? { rows: book.data.Attendees } : {}), revision: this.meta("revision", "0"), sync: this.syncState() };
   }
   async refreshLodgingNotices() {
     if (!this.env.LODGING_STATUS_KEY) return;
@@ -213,6 +213,11 @@ export class HospitalityWorkspace extends DurableObject {
         if (!this.meta("initialized")) throw new Error("The database is being connected to the roster. Please retry shortly.");
       }
       const role = await matchesDigest(req.accessKey, this.meta("adminDigest")) ? "admin" : "viewer";
+      // Protect the brief cutover between the new inventory and the source
+      // sheet's one-time correction. Once imported, normal writes resume.
+      const renumbering = this.meta("samarpanRoomNumbering") !== "2" && this.load().Attendees.slice(1).some(row => row[29] === "Samarpan" && String(row[30]) === "100");
+      if (!renumbering && this.meta("samarpanRoomNumbering") !== "2") this.putMeta("samarpanRoomNumbering", "2");
+      if (renumbering && ["lodging", "linen", "guest"].includes(req.action)) throw new Error("Samarpan room numbering is being updated. Reload shortly before assigning rooms.");
       if (req.action === "meal-health") {
         if (role !== "admin" && !await matchesDigest(req.syncKey, await digest(this.env.SYNC_KEY || crypto.randomUUID()))) throw Error("Meal service authorization required.");
         return { ok: true, configured: surveyConfigured(this.env), settings: this.meals.settings(), survey: this.survey.summary(), lastRun: this.meals.get("survey-config", "last-run"), lastSyncedAt: this.meta("lastSyncedAt") };
@@ -221,7 +226,7 @@ export class HospitalityWorkspace extends DurableObject {
         // Preserve the original admin-snapshot behavior: due linen tasks become
         // durable before a subsequent assignment clear or direct source edit.
         // Viewer snapshots continue to derive them without writing anything.
-        if (role === "admin") await this.persistHousekeeping();
+        if (role === "admin" && !renumbering) await this.persistHousekeeping();
         return this.result(role);
       }
       if (req.action === "trip-display-read") return { ok: true, tripDisplay: this.result(role).tripDisplay };
