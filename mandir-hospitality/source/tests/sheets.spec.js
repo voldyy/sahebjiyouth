@@ -452,7 +452,7 @@ test('hotel room slots provide four guest places and retain assignments when rea
   const h = await openPlanner(page);
   await page.getByRole('button', {name:'Offsite',exact:true}).click();
   await expect(page.getByLabel('Offsite hotel').locator('option')).toHaveText(['Hawthorn']);
-  await expect(page.locator('.stay-room-chip')).toHaveCount(15);
+  await expect(page.locator('.stay-room-chip')).toHaveCount(30);
   await expect(page.getByRole('heading',{name:'R01',exact:true})).toBeVisible();
   await expect(page.getByText('Hawthorn · 2 beds · 4 people · Hotel room number pending')).toBeVisible();
   await page.getByRole('button',{name:'Assign Chirag Mehta',exact:true}).click();
@@ -464,7 +464,7 @@ test('hotel room slots provide four guest places and retain assignments when rea
   await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(h.rows.find(r=>r[0]==='C')[30]).toBe('');
   await expect(slot(page,hotelRoom.id,'2','2026-10-25')).toContainText('Chirag Mehta');
-  await expect(page.getByRole('group', { name: /^R\d+ room type$/ })).toHaveCount(15);
+  await expect(page.getByRole('group', { name: /^R\d+ room type$/ })).toHaveCount(30);
   await page.getByRole('group', {name:'R01 room type',exact:true}).getByRole('button',{name:'King 2 spots',exact:true}).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByRole('group', {name:'R01 room type',exact:true}).getByRole('button',{name:'King 2 spots',exact:true})).toHaveAttribute('aria-pressed','true');
@@ -491,7 +491,7 @@ test('hotel room slots provide four guest places and retain assignments when rea
   await expect(page.locator('.sheet-room-details',{hasText:'Room 021'})).toBeVisible();
   await page.getByLabel('Offsite hotel').selectOption('Hawthorn');
   await page.getByRole('button',{name:'Weekly view',exact:true}).click();
-  await expect(page.locator('.stay-room-chip')).toHaveCount(15);
+  await expect(page.locator('.stay-room-chip')).toHaveCount(30);
   await expect(page.getByRole('heading',{name:'Room 021',exact:true})).toBeVisible();
   for (const width of [360,1440]) {
     await page.setViewportSize({width,height:1000});

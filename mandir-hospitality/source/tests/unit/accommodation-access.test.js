@@ -23,9 +23,9 @@ test('viewers receive all dashboard data but cannot mutate it', () => {
     assert.equal(snapshot.role,'viewer');
     assert.equal(snapshot.rows,undefined);
     assert.deepEqual(snapshot.transport,{assignments:[],drivers:[],vehicles:[]});
-    assert.equal(snapshot.offsiteRooms.filter(r=>r.lodging==='Hawthorn').length,15);
+    assert.equal(snapshot.offsiteRooms.filter(r=>r.lodging==='Hawthorn').length,30);
     assert.equal(snapshot.offsiteRooms.filter(r=>r.lodging==='Hilton Garden Inn').length,0);
-    assert.deepEqual(snapshot.offsiteRooms.filter(r=>r.lodging==='Hawthorn').map(r=>r.label),Array.from({length:15},(_,i)=>`R${String(i+1).padStart(2,'0')}`));
+    assert.deepEqual(snapshot.offsiteRooms.filter(r=>r.lodging==='Hawthorn').map(r=>r.label),Array.from({length:30},(_,i)=>`R${String(i+1).padStart(2,'0')}`));
     assert.ok(snapshot.offsiteRooms.every(r=>r.beds===4&&r.physicalBeds===2&&r.peoplePerBed===2));
     assert.deepEqual(snapshot.housekeeping,[]);
     assert.equal(snapshot.guests[0].name,'Private Guest');
@@ -76,6 +76,22 @@ test('Hawthorn room type changes switch a default slot between four and two spot
   const restored=req(h,{action:'offsite',id:updated.id,expectedRevision:updated.revision,lodging:'Hawthorn',roomNo:'',roomType:'doubleQueen',beds:4});
   assert.equal(restored.ok,true);
   assert.equal(restored.offsiteRooms.find(r=>r.id===room.id).beds,4);
+});
+test('a booked provisional room can become R16 without duplicating inventory or losing its bed assignments',()=>{
+  const h=createHarness([header(),row('A'),row('B')]);
+  const added=req(h,{action:'offsite',lodging:'Hawthorn',roomNo:'',roomType:'king',beds:2});
+  assert.equal(added.ok,true);
+  const room=added.offsiteRooms.find(r=>r.label==='Provisional room 1');
+  const first={lodging:'Hawthorn',roomNo:'',roomCode:`O${room.id}B1`};
+  assert.equal(assign(h,guestsFromRows(h.rows)[0],first).ok,true);
+  h.sheets.get('Offsite Rooms').rows.find(r=>r[0]===room.id)[4]='R16';
+  const snapshot=h.request({action:'snapshot'});
+  assert.equal(snapshot.offsiteRooms.length,30);
+  assert.equal(snapshot.offsiteRooms.filter(r=>r.label==='R16').length,1);
+  assert.equal(snapshot.offsiteRooms.find(r=>r.label==='R16').id,room.id);
+  assert.equal(snapshot.offsiteRooms.find(r=>r.label==='R16').beds,2);
+  assert.equal(h.rows[1][31],first.roomCode);
+  assert.equal(assign(h,guestsFromRows(h.rows)[1],{...first,roomCode:`O${room.id}B2`}).ok,true);
 });
 test('checkout linen state persists, rejects stale clears, and becomes dirty on the next checkout', () => {
   const h=createHarness([header(),row('A','2026-10-11','2026-10-14','S204B1'),row('B','2026-10-14','2026-10-16','S204B1'),row('Cancelled','2026-10-11','2026-10-13','S204B2')]);

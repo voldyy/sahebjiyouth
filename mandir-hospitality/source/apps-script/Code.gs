@@ -31,7 +31,7 @@ var Hospitality = (() => {
   var OFFSITE_HOTELS = ["Hawthorn"];
   var LEGACY_OFFSITE_HOTELS = { "Comfort Inn": "Hawthorn", "Hilton Garden Inn": "" };
   var normalizeOffsiteHotel = (hotel) => LEGACY_OFFSITE_HOTELS[hotel] ?? hotel;
-  var SLOT_COUNTS = { Hawthorn: 15 };
+  var SLOT_COUNTS = { Hawthorn: 30 };
   var slotId = (hotel, number) => `hawthorn-r${String(number).padStart(2, "0")}`;
   var HAWTHORN_ROOM_TYPES = {
     king: { label: "King", beds: 2, physicalBeds: 1, peoplePerBed: 2 },
@@ -55,8 +55,14 @@ var Hospitality = (() => {
   var defaultOffsiteRoom = (id) => DEFAULT_OFFSITE_ROOMS.find((room) => room.id === id) || null;
   function withDefaultOffsiteRooms(rooms) {
     const saved = new Map(rooms.filter((room) => normalizeOffsiteHotel(room.lodging)).map((room) => [room.id, { ...room, lodging: normalizeOffsiteHotel(room.lodging) }]));
-    const defaults = DEFAULT_OFFSITE_ROOMS.map((room) => ({ ...room, ...saved.get(room.id) || {} }));
-    const custom = rooms.filter((room) => !defaultOffsiteRoom(room.id) && normalizeOffsiteHotel(room.lodging)).map((room) => ({ ...room, lodging: normalizeOffsiteHotel(room.lodging) }));
+    const used = /* @__PURE__ */ new Set();
+    const defaults = DEFAULT_OFFSITE_ROOMS.map((room) => {
+      const numbered = [...saved.values()].filter((r) => !defaultOffsiteRoom(r.id) && r.lodging === room.lodging && r.label === room.label);
+      const existing = saved.get(room.id) || (numbered.length === 1 ? numbered[0] : null);
+      if (existing) used.add(existing.id);
+      return { ...room, ...existing || {} };
+    });
+    const custom = rooms.filter((room) => !used.has(room.id) && !defaultOffsiteRoom(room.id) && normalizeOffsiteHotel(room.lodging)).map((room) => ({ ...room, lodging: normalizeOffsiteHotel(room.lodging) }));
     return [...defaults, ...custom];
   }
   var offsiteBedCode = (room, bed) => `O${room.id}B${bed}`;

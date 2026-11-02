@@ -2,7 +2,7 @@ export const OFFSITE_HOTELS = ["Hawthorn"];
 export const LEGACY_OFFSITE_HOTELS = { "Comfort Inn": "Hawthorn", "Hilton Garden Inn": "" };
 export const normalizeOffsiteHotel = (hotel) => LEGACY_OFFSITE_HOTELS[hotel] ?? hotel;
 
-const SLOT_COUNTS = { Hawthorn: 15 };
+const SLOT_COUNTS = { Hawthorn: 30 };
 const slotId = (hotel, number) => `hawthorn-r${String(number).padStart(2, "0")}`;
 export const HAWTHORN_ROOM_TYPES = {
   king: { label: "King", beds: 2, physicalBeds: 1, peoplePerBed: 2 },
@@ -30,8 +30,16 @@ export const DEFAULT_OFFSITE_ROOMS = OFFSITE_HOTELS.flatMap((lodging) =>
 export const defaultOffsiteRoom = (id) => DEFAULT_OFFSITE_ROOMS.find((room) => room.id === id) || null;
 export function withDefaultOffsiteRooms(rooms) {
   const saved = new Map(rooms.filter((room) => normalizeOffsiteHotel(room.lodging)).map((room) => [room.id, { ...room, lodging: normalizeOffsiteHotel(room.lodging) }]));
-  const defaults = DEFAULT_OFFSITE_ROOMS.map((room) => ({ ...room, ...(saved.get(room.id) || {}) }));
-  const custom = rooms.filter((room) => !defaultOffsiteRoom(room.id) && normalizeOffsiteHotel(room.lodging)).map((room) => ({ ...room, lodging: normalizeOffsiteHotel(room.lodging) }));
+  const used = new Set();
+  const defaults = DEFAULT_OFFSITE_ROOMS.map((room) => {
+    // A provisional room can take a numbered slot without changing the stable
+    // room ID or bed codes already used by its reservations.
+    const numbered = [...saved.values()].filter(r => !defaultOffsiteRoom(r.id) && r.lodging === room.lodging && r.label === room.label);
+    const existing = saved.get(room.id) || (numbered.length === 1 ? numbered[0] : null);
+    if (existing) used.add(existing.id);
+    return { ...room, ...(existing || {}) };
+  });
+  const custom = rooms.filter((room) => !used.has(room.id) && !defaultOffsiteRoom(room.id) && normalizeOffsiteHotel(room.lodging)).map((room) => ({ ...room, lodging: normalizeOffsiteHotel(room.lodging) }));
   return [...defaults, ...custom];
 }
 
