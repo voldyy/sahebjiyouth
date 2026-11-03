@@ -10,7 +10,6 @@ import {
   Clock,
   ChevronDown,
   ExternalLink,
-  Download,
 } from "lucide-react";
 import Sheet from "../components/Sheet";
 import AirlineLabel from "../components/AirlineLabel";
@@ -20,7 +19,6 @@ import { crewForPlan } from "../lib/transportCrew";
 import { dayCollapsed, dayCollapseAt, dayDisplayId } from "../lib/transportDisplay";
 import { driverFromUrl, driverUrl } from "../lib/driverLinks";
 import { fullDay } from "../lib/occupancy";
-import { downloadRoomAssignments, roomAssignmentRows } from "../lib/roomAssignmentsExport";
 import "../styles/operations.css";
 import "../styles/shared-transport.css";
 export default function SheetTransport({ workspace, toast, readOnly = false }) {
@@ -36,8 +34,6 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
   const [newDriver, setNewDriver] = useState(""),
     [newVehicle, setNewVehicle] = useState("");
   const [displaySaving, setDisplaySaving] = useState("");
-  const [exporting, setExporting] = useState(false);
-  const exportRows = useMemo(() => roomAssignmentRows(workspace.guests, workspace.offsiteRooms), [workspace.guests, workspace.offsiteRooms]);
   const [extraRows, setExtraRows] = useState({});
   const [now, setNow] = useState(Date.now);
   useEffect(() => {
@@ -167,16 +163,6 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
       setInlineDraft(null);
     }
   };
-  const exportRooms = async () => {
-    if (exporting || !exportRows.length) return;
-    setExporting(true);
-    try {
-      await downloadRoomAssignments(exportRows);
-      toast(`Exported ${exportRows.length} room assignments.`);
-    } catch {
-      toast("Could not export room assignments. Please try again.");
-    } finally { setExporting(false); }
-  };
   return (
     <div className="op-page shared-transport">
       <div className="page-heading">
@@ -185,10 +171,6 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
           <h1>Airport Trips</h1>
           <p>Airport pickups and drop-offs, together in one schedule.</p>
         </div>
-        <div className="transport-heading-actions">
-        <button className="button secondary" disabled={!workspace.connected || workspace.loading || exporting || !exportRows.length} title="Download all room assignments, regardless of transport filters" onClick={exportRooms}>
-          <Download size={17} />{exporting ? "Exporting…" : "Export room assignments"}
-        </button>
         {!readOnly && <button
           className="button secondary"
           onClick={() => {
@@ -199,7 +181,6 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
           <Car size={17} />
           Drivers & vehicles
         </button>}
-        </div>
       </div>
       <div className="transport-summary">
         <div>

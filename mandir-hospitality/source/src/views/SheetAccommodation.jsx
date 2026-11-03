@@ -1,7 +1,7 @@
 import LodgingNotifications from "../components/LodgingNotifications";
 import WhatsAppSent from "../components/WhatsAppSent";
-import { useState } from "react";
-import { BedDouble, CalendarDays, ChevronLeft, ChevronRight, List, Plus, Search, Users, GripVertical, Building2, Sparkles, Settings2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { BedDouble, CalendarDays, ChevronLeft, ChevronRight, List, Plus, Search, Users, GripVertical, Building2, Sparkles, Settings2, Download } from "lucide-react";
 import Sheet from "../components/Sheet";
 import { DailyRooms, RoomStrip, WeeklyRooms, RoomOverview } from "../components/RoomCalendar";
 import WalkInForm from "../components/WalkInForm";
@@ -12,6 +12,7 @@ import { LODGING_LOCATIONS, SHEET_URL } from "../lib/sheets";
 import { samarpanRooms, sadhakRooms, fixedRoomsFor, isFixedLodging, roomKey, roomAssignment } from "../lib/lodgingRooms";
 import { HAWTHORN_ROOM_TYPES, OFFSITE_HOTELS, offsiteRoomFor, roomCapacityLabel, roomLabel, roomPlaceLabel, roomTypeFor, roomTypeLabel } from "../lib/offsite";
 import { isChildUnder12, isAdultBedOccupant, bedState, lodgingOccupancy, PLANNING_START_DAY, LAST_STAY_DAY, PLANNING_WEEK_STARTS, inPlanningWindow, moveDay, shortDay, fullDay, needsLodging, stayRange, overlaps, onDay, unassignedGuest, bedForGuest, assignmentIssue } from "../lib/occupancy";
+import { downloadRoomAssignments, roomAssignmentRows } from "../lib/roomAssignmentsExport";
 import "../styles/operations.css";
 import "../styles/sheets.css";
 import "../styles/accommodation-calendar.css";
@@ -42,6 +43,18 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
   const [roomError, setRoomError] = useState("");
   const [walkIn, setWalkIn] = useState(null);
   const [editingBed, setEditingBed] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const exportRows = useMemo(() => roomAssignmentRows(workspace.guests, workspace.offsiteRooms), [workspace.guests, workspace.offsiteRooms]);
+  const exportRooms = async () => {
+    if (exporting || !exportRows.length) return;
+    setExporting(true);
+    try {
+      await downloadRoomAssignments(exportRows);
+      toast(`Exported ${exportRows.length} room assignments.`);
+    } catch {
+      toast("Could not export room assignments. Please try again.");
+    } finally { setExporting(false); }
+  };
   const allRooms = [...samarpanRooms, ...sadhakRooms, ...workspace.offsiteRooms];
   const openWalkIn = (number = "", bed = "", date = currentStayDay()) => {
     if (!readOnly) { setAssignment(null); setWalkIn({ room: number, bed, day: date }); }
@@ -136,7 +149,7 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
     {walkIn && <Sheet title="Add a walk-in guest" subtitle="Guest details and a bed, together." onClose={() => { if (!workspace.saving) setWalkIn(null); }}><WalkInForm workspace={workspace} rooms={allRooms} initial={walkIn} onCancel={() => setWalkIn(null)} onSaved={name => { setWalkIn(null); toast(`${name} added and assigned for their full stay.`); }} /></Sheet>}
     <div className="stay-section-switch" role="group" aria-label="Accommodation sections">{[{ label: "Samarpan", icon: BedDouble }, { label: "Sadhak", icon: BedDouble }, { label: "Offsite", icon: Building2 }, { label: "Housekeeping", icon: Sparkles }].map(({ label, icon: Icon }) => <button key={label} aria-pressed={section === label} onClick={() => { setSection(label); setRoomNo(""); setDropError(""); }}><Icon size={19} />{label}</button>)}</div>
     {!workspace.refreshedAt ? <p role="status">{workspace.loading ? "Loading room occupancy from the sheet…" : "Room occupancy is unavailable. Refresh the sheet to load the calendar."}</p> : section === "Housekeeping" ? <Housekeeping workspace={workspace} toast={toast} readOnly={readOnly} /> : <>
-      <header className="page-header"><div><p className="eyebrow">{isFixedLodging(section) ? `${section.toUpperCase()} · ${rooms.length} ROOMS · ${rooms.reduce((sum, r) => sum + (r.beds || 0), 0)} BEDS` : `${hotel.toUpperCase()} · ${rooms.length} PLANNING ROOMS`}</p><h1 className="page-title">Accommodations</h1><p className="page-description">See who’s staying, find an empty bed, and make room for the next arrival.</p></div>{!readOnly && <div className="page-actions"><LodgingNotifications workspace={workspace} toast={toast} /><button className="button secondary" onClick={() => openWalkIn()} disabled={workspace.saving || !workspace.connected}><Plus size={17} />Add walk-in</button><button className="button primary" onClick={openAssign} disabled={workspace.saving || !workspace.connected || !rooms.length}><Plus size={17} />Assign guest</button></div>}</header>
+      <header className="page-header"><div><p className="eyebrow">{isFixedLodging(section) ? `${section.toUpperCase()} · ${rooms.length} ROOMS · ${rooms.reduce((sum, r) => sum + (r.beds || 0), 0)} BEDS` : `${hotel.toUpperCase()} · ${rooms.length} PLANNING ROOMS`}</p><h1 className="page-title">Accommodations</h1><p className="page-description">See who’s staying, find an empty bed, and make room for the next arrival.</p></div><div className="page-actions"><button className="button secondary" disabled={!workspace.connected || workspace.loading || exporting || !exportRows.length} title="Download all room assignments, regardless of accommodation filters" onClick={exportRooms}><Download size={17} />{exporting ? "Exporting…" : "Export room assignments"}</button>{!readOnly && <><LodgingNotifications workspace={workspace} toast={toast} /><button className="button secondary" onClick={() => openWalkIn()} disabled={workspace.saving || !workspace.connected}><Plus size={17} />Add walk-in</button><button className="button primary" onClick={openAssign} disabled={workspace.saving || !workspace.connected || !rooms.length}><Plus size={17} />Assign guest</button></>}</div></header>
       {capacityMeter}
       {section === "Offsite" && <div className="stay-offsite-toolbar"><label className="field">Hotel<select aria-label="Offsite hotel" value={hotel} onChange={(e) => { setHotel(e.target.value); setRoomNo(""); }}>{OFFSITE_HOTELS.map((name) => <option key={name}>{name}</option>)}</select></label>{!readOnly && <button className="button secondary" onClick={() => openRoom()} disabled={workspace.saving}><Plus size={17} />Add planning room</button>}{room && !readOnly && <button className="button secondary" onClick={() => openRoom(room)} disabled={workspace.saving}><Settings2 size={17} />Edit room details</button>}<p>Room slots hold assignments until the hotel confirms room numbers. R01 onward each has two beds with two guest places per bed.</p></div>}
       <div className="stay-view-switch" role="group" aria-label="Accommodation views">{[{ id: "weekly", label: "Weekly view", icon: CalendarDays }, { id: "daily", label: "Daily view", icon: BedDouble }, { id: "overview", label: "Day at a glance", icon: Building2 }, { id: "list", label: "Guest list", icon: List }].map((tab) => <button key={tab.id} aria-pressed={view === tab.id} onClick={() => { setView(tab.id); if (tab.id !== view && tab.id !== "list") selectDay(currentStayDay()); }}><tab.icon size={17} />{tab.label}</button>)}</div>

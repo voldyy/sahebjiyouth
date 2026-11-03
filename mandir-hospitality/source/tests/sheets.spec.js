@@ -33,7 +33,7 @@ test('view-only accommodation page does not offer WhatsApp sending', async ({pag
 });
 
 const TODAY = new Date("2026-10-25T16:00:00Z"); // first planning day, so tests do not depend on the real date
-test('Transport exports a real Excel workbook with all room assignments and lodging dates',async({page})=>{
+test('Accommodations exports a real Excel workbook with registration IDs and all room assignments',async({page})=>{
   const flight=plannerGuest('X-FLIGHT','Flight Guest','2026-11-03 14:30','2026-11-10 18:15','102','1');
   Object.assign(flight,{5:'2025550101',7:'Redmond, WA',11:'Flight',14:'ABE',15:'AA123',16:'ABE',17:'AA456',18:'YES',21:'2026-11-02',22:'2026-11-11'});
   const car=plannerGuest('X-CAR','=1+1','2026-11-01','2026-11-05','101','1');Object.assign(car,{7:'Toronto, ON',11:'CAR',18:'NO',29:'Sadhak',31:'SD101B1'});
@@ -46,7 +46,10 @@ test('Transport exports a real Excel workbook with all room assignments and lodg
   const result=h.request({action:'offsite',id:'hawthorn-r29',expectedRevision:'default-r29-v1',lodging:'Hawthorn',roomNo:'021',roomType:'doubleQueen',beds:4,requestId:crypto.randomUUID()});expect(result.ok).toBe(true);
   const sourceBefore=structuredClone(h.rows),historyCount=h.sheets.get('Assignment History').rows.length;
   await page.goto('/#transport');await page.reload();
-  await page.getByRole('textbox',{name:'Search transport'}).fill('Flight Guest');
+  await expect(page.getByRole('button',{name:'Export room assignments',exact:true})).toHaveCount(0);
+  await page.goto('/#rooms');await page.reload();
+  await page.getByRole('button',{name:'Guest list',exact:true}).click();
+  await page.getByRole('textbox',{name:'Search lodging attendees'}).fill('Flight Guest');
   const button=page.getByRole('button',{name:'Export room assignments',exact:true});await expect(button).toBeEnabled();
   const downloadPromise=page.waitForEvent('download');await button.click();const download=await downloadPromise;
   expect(download.suggestedFilename()).toBe('mandir-room-assignments-2026-10-25.xlsx');expect(await download.failure()).toBeNull();
@@ -58,21 +61,22 @@ test('Transport exports a real Excel workbook with all room assignments and lodg
     const sheet=parse(xmls['xl/worksheets/sheet1.xml']);const styles=parse(xmls['xl/styles.xml']);
     const strings=[...parse(xmls['xl/sharedStrings.xml']).querySelectorAll('si')].map(e=>e.textContent);
     const read=cell=>{if(!cell)return null;const v=cell.querySelector('v')?.textContent;return cell.getAttribute('t')==='s'?strings[Number(v)]:v===undefined?null:Number(v);};
-    const rows=[...sheet.querySelectorAll('sheetData > row')].map(row=>Array.from({length:6},(_,i)=>read(row.querySelector(`c[r="${String.fromCharCode(65+i)}${row.getAttribute('r')}"]`))));
+    const rows=[...sheet.querySelectorAll('sheetData > row')].map(row=>Array.from({length:7},(_,i)=>read(row.querySelector(`c[r="${String.fromCharCode(65+i)}${row.getAttribute('r')}"]`))));
     return {rows,formulas:sheet.querySelectorAll('f').length,frozen:!!sheet.querySelector('pane[state="frozen"][ySplit="1"]'),formats:[...styles.querySelectorAll('numFmt')].map(n=>n.getAttribute('formatCode')),sheetName:parse(xmls['xl/workbook.xml']).querySelector('sheet')?.getAttribute('name'),roomNumberType:sheet.querySelector('c[r="B2"]').getAttribute('t')};
   },xmls);
-  expect(book.rows[0]).toEqual(['Lodging','Room number','Name','City, State','Check-in date','Check-out date']);
+  expect(book.rows[0]).toEqual(['Lodging','Room number','Name','City, State','Check-in date','Check-out date','Registration ID']);
   expect(book.rows).toHaveLength(7);expect(book.sheetName).toBe('Room assignments');expect(book.frozen).toBe(true);expect(book.formats).toContain('mm/dd/yyyy');expect(book.formulas).toBe(0);expect(book.roomNumberType).toBe('s');
   expect(book.rows.slice(1).map(row=>row[2])).toEqual(['Numbered Hotel','Planning Hotel','=1+1','Flight Guest','Shared Child','Dates Pending']);
   expect(book.rows[1].slice(0,4)).toEqual(['Hawthorn','021','Numbered Hotel','London, UK']);
   expect(book.rows[2][1]).toBe('R30');
-  expect(book.rows[3]).toEqual(['Sadhak','101','=1+1','Toronto, ON',46327,46331]);
-  expect(book.rows[4]).toEqual(['Samarpan','102','Flight Guest','Redmond, WA',46328,46337]);
-  expect(book.rows[5].slice(0,2)).toEqual(['Samarpan','102']);expect(book.rows[6].slice(4)).toEqual([null,null]);
+  expect(book.rows.slice(1).map(row=>row[6])).toEqual(['X-NUMBER','X-PLAN','X-CAR','X-FLIGHT','X-CHILD','X-DATES']);
+  expect(book.rows[3]).toEqual(['Sadhak','101','=1+1','Toronto, ON',46327,46331,'X-CAR']);
+  expect(book.rows[4]).toEqual(['Samarpan','102','Flight Guest','Redmond, WA',46328,46337,'X-FLIGHT']);
+  expect(book.rows[5].slice(0,2)).toEqual(['Samarpan','102']);expect(book.rows[6].slice(4,6)).toEqual([null,null]);
   expect(h.rows).toEqual(sourceBefore);expect(h.sheets.get('Assignment History').rows).toHaveLength(historyCount);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.screenshot({path:test.info().outputPath('room-export-mobile.png'),fullPage:true});
-  await page.goto('/#transport?team=yogi-prasad');await page.reload();await expect(button).toBeEnabled();
+  await page.goto('/#rooms?team=yogi-prasad');await page.reload();await expect(button).toBeEnabled();
   const viewerDownload=page.waitForEvent('download');await button.click();expect(await(await viewerDownload).failure()).toBeNull();
   for(const row of h.rows.slice(1))row.splice(29,3,'','','');await page.reload();await expect(button).toBeDisabled();
 });
