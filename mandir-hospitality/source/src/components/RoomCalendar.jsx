@@ -15,7 +15,7 @@ export function RoomStrip({ selected, onSelect, rooms = samarpanRooms, lodging =
     <button className="stay-arrow" aria-label="Scroll rooms left" onClick={() => strip.current?.scrollBy({ left: -300, behavior: "smooth" })}><ChevronLeft size={18} /></button>
     <div className="stay-room-strip" ref={strip}>{rooms.map((room) => <div className="stay-room-choice" key={roomKey(room)}>
       <button className={`stay-room-chip ${selected === roomKey(room) ? "is-selected" : ""}`} aria-pressed={selected === roomKey(room)} onClick={() => onSelect(roomKey(room))}><BedDouble size={20} /><span><strong>{roomLabel(room)}</strong><small>{roomCapacityLabel(room)}{OFFSITE_HOTELS.includes(room.lodging) && !room.roomNo ? " · Number pending" : ""}</small></span></button>
-      {onRoomTypeChange && room.lodging === "Hawthorn" && <div className="stay-room-type-switch" role="group" aria-label={`${room.label || roomLabel(room)} room type`}>
+      {onRoomTypeChange && OFFSITE_HOTELS.includes(room.lodging) && <div className="stay-room-type-switch" role="group" aria-label={`${room.label || roomLabel(room)} room type`}>
         {[{ value: "king", label: "King", spots: 2 }, { value: "doubleQueen", label: "Double Queen", spots: 4 }].map(type => <button key={type.value} type="button" aria-pressed={roomTypeFor(room) === type.value} disabled={saving} onClick={() => { if (roomTypeFor(room) !== type.value) onRoomTypeChange(room, type.value); }}>{type.label}<small>{type.spots} spots</small></button>)}
       </div>}
     </div>)}</div>

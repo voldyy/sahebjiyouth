@@ -15,9 +15,10 @@ import { transportGroups } from "../src/lib/transport.js";
 import { crewForPlan, readAdditionalDrivers } from "../src/lib/transportCrew.js";
 import { driverConfirmationsFor, readDriverConfirmations, driverNames } from "../src/lib/transportConfirmation.js";
 import { dayDisplayId, displayChangedAt } from "../src/lib/transportDisplay.js";
-import { HAWTHORN_ROOM_TYPES, OFFSITE_HOTELS, defaultOffsiteRoom, normalizeOffsiteHotel, offsiteRoomFor, withDefaultOffsiteRooms } from "../src/lib/offsite.js";
+import { HAWTHORN_ROOM_TYPES, OFFSITE_HOTELS, defaultOffsiteRoom, normalizeOffsiteHotel, offsiteRoomFor, withDefaultOffsiteRooms, readHotelInventory } from "../src/lib/offsite.js";
 import { checkoutEvents } from "../src/lib/housekeeping.js";
 export const TABLES = {
+  "Hotel Inventory": ["Hotel", "Active room slots"],
   "Transport Confirmations": ["Journey ID", "Driver confirmations"],
   "Transport Crew": ["Journey ID", "Additional drivers"],
   "Transport Display": ["Journey ID", "Collapsed", "Revision", "Request ID"],
@@ -122,7 +123,10 @@ function plans(book, readOnly = false) {
 }
 function hotelRooms(book, readOnly = false) {
   const stored = table(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => { const beds = Number(r[3]); const type = beds === HAWTHORN_ROOM_TYPES.king.beds ? HAWTHORN_ROOM_TYPES.king : HAWTHORN_ROOM_TYPES.doubleQueen; return { id: r[0], number: r[0], lodging: normalizeOffsiteHotel(r[1]), roomNo: r[2], beds, physicalBeds: type.physicalBeds, peoplePerBed: type.peoplePerBed, label: r[4], revision: r[5] }; });
-  return withDefaultOffsiteRooms(stored);
+  const inventoryRows = table(book, "Hotel Inventory", true).rows.slice(1).filter(row => row[0]);
+  if (new Set(inventoryRows.map(row => normalizeOffsiteHotel(row[0]))).size !== inventoryRows.length) throw new Error("Duplicate hotels in Hotel Inventory. Review the sheet.");
+  const inventory = Object.fromEntries(inventoryRows.map(row => { const hotel = normalizeOffsiteHotel(row[0]); return [hotel, readHotelInventory(row[1], hotel)]; }));
+  return withDefaultOffsiteRooms(stored, inventory);
 }
 function tripDisplay(book) {
   return table(book, "Transport Display", true).rows.slice(1).filter(r => r[0]).map(r => ({ id: r[0], collapsed: r[1] === "Yes", revision: r[2], updatedAt: displayChangedAt(r[2]) }));
@@ -334,8 +338,8 @@ function offsite(book, req) {
   const type = HAWTHORN_ROOM_TYPES[roomType];
   const beds = req.roomType ? type?.beds : (preset?.beds || type?.beds || Number(req.beds));
   if (!OFFSITE_HOTELS.includes(hotel) || !Number.isInteger(beds) || beds < 1 || beds > 20) throw new Error("Choose a hotel and between 1 and 20 beds.");
-  if (hotel === "Hawthorn" && !type) throw new Error("Choose King or Double Queen room type.");
-  if (hotel === "Hawthorn" && beds !== type.beds) throw new Error("The selected Hawthorn room type has a fixed capacity.");
+  if (!type) throw new Error("Choose King or Double Queen room type.");
+  if (beds !== type.beds) throw new Error("The selected hotel room type has a fixed capacity.");
   if (old && old.lodging !== hotel) throw new Error("An existing planning room cannot be moved to another hotel.");
   if (roomNo && rooms.some((r) => r.id !== old?.id && r.lodging === hotel && r.roomNo.toLowerCase() === roomNo.toLowerCase())) throw new Error("This hotel room number is already in the inventory.");
   const current = roster(book);

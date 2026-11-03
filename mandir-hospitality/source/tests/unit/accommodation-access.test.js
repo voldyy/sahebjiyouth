@@ -63,7 +63,7 @@ test('hotel slots fit two guests per bed, enforce four-person capacity and survi
   assert.match(req(h,{action:'offsite',id:room.id,expectedRevision:room.revision,lodging:'Hawthorn',roomNo:'022',beds:4}).error,/room changed/);
   assert.match(req(h,{action:'offsite',id:room.id,expectedRevision:updated.offsiteRooms.find(r=>r.id===room.id).revision,lodging:'Hawthorn',roomNo:'022',beds:2}).error,/fixed capacity/);
   assert.match(req(h,{action:'offsite',lodging:'Hawthorn',roomNo:'021',beds:2}).error,/already/);
-  assert.equal(req(h,{action:'offsite',lodging:'Hilton Garden Inn',roomNo:'021',beds:2}).ok,false);
+  assert.equal(req(h,{action:'offsite',lodging:'Hilton Garden Inn',roomNo:'021',beds:2}).ok,true);
 });
 test('Hawthorn room type changes switch a default slot between four and two spots', () => {
   const h=createHarness([header(),row('A')]);
@@ -86,7 +86,7 @@ test('a booked provisional room can become R16 without duplicating inventory or 
   assert.equal(assign(h,guestsFromRows(h.rows)[0],first).ok,true);
   h.sheets.get('Offsite Rooms').rows.find(r=>r[0]===room.id)[4]='R16';
   const snapshot=h.request({action:'snapshot'});
-  assert.equal(snapshot.offsiteRooms.length,30);
+  assert.equal(snapshot.offsiteRooms.length,34);
   assert.equal(snapshot.offsiteRooms.filter(r=>r.label==='R16').length,1);
   assert.equal(snapshot.offsiteRooms.find(r=>r.label==='R16').id,room.id);
   assert.equal(snapshot.offsiteRooms.find(r=>r.label==='R16').beds,2);

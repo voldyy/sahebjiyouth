@@ -28,18 +28,18 @@ var Hospitality = (() => {
   });
 
   // src/lib/offsite.js
-  var OFFSITE_HOTELS = ["Hawthorn"];
-  var LEGACY_OFFSITE_HOTELS = { "Comfort Inn": "Hawthorn", "Hilton Garden Inn": "" };
+  var OFFSITE_HOTELS = ["Hawthorn", "Hilton"];
+  var LEGACY_OFFSITE_HOTELS = { "Comfort Inn": "Hawthorn", "Hilton Garden Inn": "Hilton" };
   var normalizeOffsiteHotel = (hotel) => LEGACY_OFFSITE_HOTELS[hotel] ?? hotel;
-  var SLOT_COUNTS = { Hawthorn: 30 };
-  var slotId = (hotel, number) => `hawthorn-r${String(number).padStart(2, "0")}`;
+  var SLOT_COUNTS = { Hawthorn: 30, Hilton: 4 };
+  var slotId = (hotel, number) => `${hotel === "Hilton" ? "hilton" : "hawthorn"}-r${String(number).padStart(2, "0")}`;
   var HAWTHORN_ROOM_TYPES = {
     king: { label: "King", beds: 2, physicalBeds: 1, peoplePerBed: 2 },
     doubleQueen: { label: "Double Queen", beds: 4, physicalBeds: 2, peoplePerBed: 2 }
   };
   var DEFAULT_OFFSITE_ROOMS = OFFSITE_HOTELS.flatMap(
     (lodging) => Array.from({ length: SLOT_COUNTS[lodging] }, (_, index) => {
-      const slot = `R${String(index + 1).padStart(2, "0")}`;
+      const slot = `${lodging === "Hilton" ? "HL" : "R"}${String(index + 1).padStart(2, "0")}`;
       return {
         id: slotId(lodging, index + 1),
         number: slotId(lodging, index + 1),
@@ -53,21 +53,39 @@ var Hospitality = (() => {
     })
   );
   var defaultOffsiteRoom = (id) => DEFAULT_OFFSITE_ROOMS.find((room) => room.id === id) || null;
-  function withDefaultOffsiteRooms(rooms) {
-    const saved = new Map(rooms.filter((room) => normalizeOffsiteHotel(room.lodging)).map((room) => [room.id, { ...room, lodging: normalizeOffsiteHotel(room.lodging) }]));
+  var slotNumber = (label) => Number(String(label || "").match(/^(?:HR|HL|R)([0-9]+)$/i)?.[1]) || null;
+  function readHotelInventory(value, hotel) {
+    const labels = JSON.parse(value);
+    const prefix = hotel === "Hilton" ? /^HL[0-9]+$/ : /^(?:HR|R)[0-9]+$/;
+    if (!OFFSITE_HOTELS.includes(hotel) || !Array.isArray(labels) || labels.some((label) => typeof label !== "string" || !prefix.test(label) || !slotNumber(label)) || new Set(labels.map(slotNumber)).size !== labels.length) throw new Error("Invalid hotel room inventory. Review Hotel Inventory.");
+    return labels;
+  }
+  function withDefaultOffsiteRooms(rooms, inventory = {}) {
+    const active = OFFSITE_HOTELS.flatMap((lodging) => inventory[lodging] === void 0 ? DEFAULT_OFFSITE_ROOMS.filter((room) => room.lodging === lodging) : inventory[lodging].map((label) => {
+      const number = slotNumber(label), id = slotId(lodging, number);
+      return { ...defaultOffsiteRoom(id) || { id, number: id, lodging, roomNo: "", ...HAWTHORN_ROOM_TYPES.doubleQueen, revision: `default-${label.toLowerCase()}-v1`, isDefaultSlot: true }, label };
+    }));
+    const saved = new Map(rooms.filter((room) => OFFSITE_HOTELS.includes(normalizeOffsiteHotel(room.lodging))).map((room) => [room.id, { ...room, lodging: normalizeOffsiteHotel(room.lodging) }]));
     const used = /* @__PURE__ */ new Set();
-    const defaults = DEFAULT_OFFSITE_ROOMS.map((room) => {
-      const numbered = [...saved.values()].filter((r) => !defaultOffsiteRoom(r.id) && r.lodging === room.lodging && r.label === room.label);
+    const defaults = active.map((room) => {
+      const numbered = [...saved.values()].filter((r) => !defaultOffsiteRoom(r.id) && r.lodging === room.lodging && slotNumber(r.label) === slotNumber(room.label));
       const existing = saved.get(room.id) || (numbered.length === 1 ? numbered[0] : null);
       if (existing) used.add(existing.id);
-      return { ...room, ...existing || {} };
+      return { ...room, ...existing || {}, ...inventory[room.lodging] !== void 0 ? { label: room.label } : {} };
     });
-    const custom = rooms.filter((room) => !used.has(room.id) && !defaultOffsiteRoom(room.id) && normalizeOffsiteHotel(room.lodging)).map((room) => ({ ...room, lodging: normalizeOffsiteHotel(room.lodging) }));
+    const custom = [...saved.values()].filter((room) => !used.has(room.id) && !defaultOffsiteRoom(room.id) && (inventory[room.lodging] === void 0 || !slotNumber(room.label) || inventory[room.lodging].some((label) => slotNumber(label) === slotNumber(room.label))));
     return [...defaults, ...custom];
   }
   var offsiteBedCode = (room, bed) => `O${room.id}B${bed}`;
   function offsiteRoomFor(guest, rooms) {
-    return rooms.find((room) => room.lodging === guest.lodging && new RegExp(`^O${room.id}B[1-9]\\d*$`).test(guest.roomCode || ""));
+    const hotel = normalizeOffsiteHotel(guest.lodging);
+    const candidates = rooms.filter((room) => room.lodging === hotel);
+    const internal = candidates.find((room) => new RegExp(`^O${room.id}B[1-9]\\d*$`).test(guest.roomCode || ""));
+    if (internal) return internal;
+    const external = String(guest.roomCode || "").match(/^(HR|HL)([0-9]+)B[1-9]\d*$/i);
+    if (external && (hotel === "Hawthorn" ? external[1].toUpperCase() === "HR" : hotel === "Hilton" && external[1].toUpperCase() === "HL")) return candidates.find((room) => slotNumber(room.label) === Number(external[2]));
+    if (!guest.roomCode && guest.roomNo) return candidates.find((room) => room.roomNo === guest.roomNo || room.label === guest.roomNo);
+    return null;
   }
 
   // src/lib/lodgingRooms.js
@@ -219,7 +237,7 @@ var Hospitality = (() => {
         if (state.occupants.every((g) => isAdultBedOccupant(g) || isChildUnder12(g)) && adultCoversStay(state.occupants, range)) return "";
         return "An adult must be assigned to this bed for the child\u2019s full stay. Choose another bed or review the stay dates.";
       }
-      if (isAdultBedOccupant(guest) && guest.lodging === assignment.lodging && guest.roomCode === assignment.roomCode && state.occupants.every(isChildUnder12) && state.occupants.every((g) => {
+      if (isAdultBedOccupant(guest) && guest.lodging === assignment.lodging && bedForGuest(guest, rooms) === bed && (isFixedLodging(guest.lodging) ? guest.roomNo === assignment.roomNo : offsiteRoomFor(guest, rooms)?.id === hotelRoom?.id) && state.occupants.every(isChildUnder12) && state.occupants.every((g) => {
         const s = stayRange(g);
         return s && s.start >= range.start && s.end <= range.end;
       })) return "";
@@ -479,6 +497,7 @@ reply({ ready: true });
 
   // shared/workspace-engine.js
   var TABLES = {
+    "Hotel Inventory": ["Hotel", "Active room slots"],
     "Transport Confirmations": ["Journey ID", "Driver confirmations"],
     "Transport Crew": ["Journey ID", "Additional drivers"],
     "Transport Display": ["Journey ID", "Collapsed", "Revision", "Request ID"],
@@ -572,7 +591,13 @@ reply({ ready: true });
         const type = beds === HAWTHORN_ROOM_TYPES.king.beds ? HAWTHORN_ROOM_TYPES.king : HAWTHORN_ROOM_TYPES.doubleQueen;
         return { id: r[0], number: r[0], lodging: normalizeOffsiteHotel(r[1]), roomNo: r[2], beds, physicalBeds: type.physicalBeds, peoplePerBed: type.peoplePerBed, label: r[4], revision: r[5] };
       });
-      return withDefaultOffsiteRooms(stored);
+      const inventoryRows = table2(book, "Hotel Inventory", true).rows.slice(1).filter((row) => row[0]);
+      if (new Set(inventoryRows.map((row) => normalizeOffsiteHotel(row[0]))).size !== inventoryRows.length) throw new Error("Duplicate hotels in Hotel Inventory. Review the sheet.");
+      const inventory = Object.fromEntries(inventoryRows.map((row) => {
+        const hotel = normalizeOffsiteHotel(row[0]);
+        return [hotel, readHotelInventory(row[1], hotel)];
+      }));
+      return withDefaultOffsiteRooms(stored, inventory);
     }
     function tripDisplay2(book) {
       return table2(book, "Transport Display", true).rows.slice(1).filter((r) => r[0]).map((r) => ({ id: r[0], collapsed: r[1] === "Yes", revision: r[2], updatedAt: displayChangedAt(r[2]) }));
@@ -771,8 +796,8 @@ reply({ ready: true });
       const type = HAWTHORN_ROOM_TYPES[roomType];
       const beds = req.roomType ? type?.beds : preset?.beds || type?.beds || Number(req.beds);
       if (!OFFSITE_HOTELS.includes(hotel) || !Number.isInteger(beds) || beds < 1 || beds > 20) throw new Error("Choose a hotel and between 1 and 20 beds.");
-      if (hotel === "Hawthorn" && !type) throw new Error("Choose King or Double Queen room type.");
-      if (hotel === "Hawthorn" && beds !== type.beds) throw new Error("The selected Hawthorn room type has a fixed capacity.");
+      if (!type) throw new Error("Choose King or Double Queen room type.");
+      if (beds !== type.beds) throw new Error("The selected hotel room type has a fixed capacity.");
       if (old && old.lodging !== hotel) throw new Error("An existing planning room cannot be moved to another hotel.");
       if (roomNo && rooms.some((r) => r.id !== old?.id && r.lodging === hotel && r.roomNo.toLowerCase() === roomNo.toLowerCase())) throw new Error("This hotel room number is already in the inventory.");
       const current = roster2(book);

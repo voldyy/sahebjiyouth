@@ -241,3 +241,16 @@ test('driver drafts and locks survive SQLite reload and mirror atomically to She
   result=await request({...base,expectedRevision:plan.revision,expectedPlan:plan,plan,confirmation:{driver:'Draft Driver',confirmed:false}});
   expect(result.ok).toBe(true);expect(result.transport.assignments[0].driverConfirmations).toEqual({});
 });
+
+test('configured hotel slots survive imports, gaps and room type changes with spreadsheet room codes',async()=>{
+  const labels=Array.from({length:27},(_,i)=>i+1).filter(n=>![12,16,17,23].includes(n)).map(n=>'HR'+String(n).padStart(2,'0'));
+  sheet['Hotel Inventory']=[['Hotel','Active room slots'],['Hawthorn',JSON.stringify(labels)],['Hilton',JSON.stringify(['HL01','HL02','HL03','HL04'])]];
+  sheet.Attendees[1].splice(29,3,'Hilton','HL01','HL01B1');
+  const before=await request({action:'snapshot'});
+  expect(before.offsiteRooms.filter(r=>r.lodging==='Hawthorn')).toHaveLength(23);
+  const room=before.offsiteRooms.find(r=>r.lodging==='Hilton'&&r.label==='HL01');expect(room).toBeTruthy();
+  const saved=await request({action:'offsite',id:room.id,expectedRevision:room.revision,lodging:'Hilton',roomNo:'021',roomType:'king',beds:2});
+  expect(saved.ok).toBe(true);expect(saved.guests[0].roomNo).toBe('021');expect(saved.guests[0].roomCode).toBe('HL01B1');
+  await runDurableObjectAlarm(stub());expect((await request({action:'snapshot'})).sync.pending).toBe(0);
+  expect(sheet['Hotel Inventory'][1][1]).toBe(JSON.stringify(labels));
+});

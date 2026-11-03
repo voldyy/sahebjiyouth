@@ -116,6 +116,31 @@ test('driver selections persist as drafts and each lock confirms, unlocks and pr
   await expect(page.getByRole('button',{name:/^(Confirm|Unlock) driver/})).toHaveCount(0);
   await expect(trip.getByRole('img',{name:'Confirmed driver'})).toHaveCount(2);
 });
+test('Hilton and revised Hawthorn inventory render imported codes and keep room-only guests visible', async ({page}) => {
+  const hotel=plannerGuest('HOTEL','Hilton Assigned','2026-11-06','2026-11-08');Object.assign(hotel,{29:'Hilton',30:'HL01',31:'HL01B1'});
+  const pending=plannerGuest('PENDING','Hilton Bed Pending','2026-11-06','2026-11-08');Object.assign(pending,{29:'Hilton',30:'HL04',31:''});
+  const hawthorn=plannerGuest('HAWTHORN','Hawthorn Imported','2026-11-06','2026-11-08');Object.assign(hawthorn,{29:'Hawthorn',30:'HR03',31:'HR03B2'});
+  const h=await setup(page,'ok',[hotel,pending,hawthorn]);
+  const slots=Array.from({length:27},(_,i)=>i+1).filter(n=>![12,16,17,23].includes(n)).map(n=>'HR'+String(n).padStart(2,'0'));
+  const Sheet=h.sheets.get('Attendees').constructor;
+  h.sheets.set('Hotel Inventory',new Sheet('Hotel Inventory',[['Hotel','Active room slots'],['Hawthorn',JSON.stringify(slots)],['Hilton',JSON.stringify(['HL01','HL02','HL03','HL04'])]]));
+  await page.goto('/#rooms');await page.reload();await page.getByRole('button',{name:'Offsite',exact:true}).click();
+  await expect(page.locator('.stay-room-chip')).toHaveCount(23);
+  await expect(page.getByRole('button',{name:/^HR12 /})).toHaveCount(0);
+  await page.getByRole('combobox',{name:'Offsite hotel'}).selectOption('Hilton');
+  await expect(page.locator('.stay-room-chip')).toHaveCount(4);
+  await page.getByRole('group',{name:'HL01 room type',exact:true}).getByRole('button',{name:/^King/}).click();
+  await expect(page.getByRole('group',{name:'HL01 room type',exact:true}).getByRole('button',{name:/^King/})).toHaveAttribute('aria-pressed','true');
+  await page.getByRole('button',{name:'Guest list',exact:true}).click();
+  await expect(page.locator('.sheet-attendee-list')).toContainText('Hilton Assigned');
+  await expect(page.locator('.sheet-attendee-list')).toContainText('Hilton Bed Pending');
+  await expect(page.locator('.sheet-attendee-list')).toContainText('HL04');
+  await page.reload();await page.getByRole('button',{name:'Offsite',exact:true}).click();await page.getByRole('combobox',{name:'Offsite hotel'}).selectOption('Hilton');
+  await expect(page.locator('.stay-room-chip')).toHaveCount(4);
+  await page.goto('/#rooms?team=yogi-prasad');await page.reload();await page.getByRole('button',{name:'Offsite',exact:true}).click();await page.getByRole('combobox',{name:'Offsite hotel'}).selectOption('Hilton');
+  await expect(page.getByRole('group',{name:'HL01 room type',exact:true})).toHaveCount(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
 test('multiple pickup drivers save, reload, filter, remove and remain visible to viewers',async({page})=>{
   const row=plannerGuest('CREW','Synthetic Traveller','2026-11-01 14:30','2026-11-03 15:00');
   Object.assign(row,{11:'Flight',14:'PHL',15:'AA123',16:'EWR',17:'UA456',18:'YES'});

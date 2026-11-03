@@ -107,7 +107,7 @@ export function assignmentIssue(guests, guest, assignment, rooms = []) {
       return "An adult must be assigned to this bed for the child’s full stay. Choose another bed or review the stay dates.";
     }
     // An existing adult host can keep their own assignment after children join.
-    if (isAdultBedOccupant(guest) && guest.lodging === assignment.lodging && guest.roomCode === assignment.roomCode && state.occupants.every(isChildUnder12) && state.occupants.every(g=>{const s=stayRange(g);return s && s.start>=range.start && s.end<=range.end;})) return "";
+    if (isAdultBedOccupant(guest) && guest.lodging === assignment.lodging && bedForGuest(guest, rooms) === bed && (isFixedLodging(guest.lodging) ? guest.roomNo === assignment.roomNo : offsiteRoomFor(guest, rooms)?.id === hotelRoom?.id) && state.occupants.every(isChildUnder12) && state.occupants.every(g=>{const s=stayRange(g);return s && s.start>=range.start && s.end<=range.end;})) return "";
     return `${assignment.roomCode} is occupied during this guest’s stay. Choose another bed.`;
   }
   return "";

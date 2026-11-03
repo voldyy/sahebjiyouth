@@ -6,7 +6,7 @@ const text = value => String(value ?? "").trim();
 const compare = new Intl.Collator("en", { numeric: true, sensitivity: "base" }).compare;
 
 export function roomAssignmentRows(guests, offsiteRooms = []) {
-  const rooms = withDefaultOffsiteRooms(offsiteRooms);
+  const rooms = offsiteRooms.length ? offsiteRooms : withDefaultOffsiteRooms([]);
   return guests.filter(guest => guest.status !== "Cancelled").map(guest => {
     const lodging = normalizeOffsiteHotel(text(guest.lodging));
     const room = offsiteRoomFor({ ...guest, lodging }, rooms);
