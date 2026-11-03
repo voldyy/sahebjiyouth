@@ -82,12 +82,17 @@ export function assignedTrips(snapshot) {
   const groups = ["Arrivals", "Departures"].flatMap(direction => transportWithPlans(transportGroups(snapshot.guests, direction), snapshot.assignments));
   return tripsForCrew(groups.filter(g => g.guests.every(a => a.status !== "Departed")));
 }
+export function driverBinding(snapshot, group) {
+  const driver = snapshot.drivers.get(oneLine(group.plan.driver).toLowerCase());
+  if (!group.plan.confirmation || !driver?.phone) return "";
+  return digest(group.plan.confirmation === "legacy" ? [driver.name, driver.phone] : [driver.name, driver.phone, group.plan.confirmation]);
+}
 export function tripParties(snapshot, group) {
   const driver = snapshot.drivers.get(oneLine(group.plan.driver).toLowerCase());
   const arrival = group.direction === "Arrivals";
   const times = group.guests.map(g => arrival ? [g.arrivalTime, g.arrivalTimeKnown] : [g.departureTime, g.departureTimeKnown]);
   const at = easternAirports.has(group.airport) && times.every(([time, known]) => known && time === group.time) ? easternInstant(group.day, group.time) : null;
-  if (!driver?.phone || !hasData(driver.name) || !hasData(group.plan.driver) || !hasData(group.plan.status) || at === null || group.plan.status === "Completed") return [];
+  if (!group.plan.confirmation || !driver?.phone || !hasData(driver.name) || !hasData(group.plan.driver) || !hasData(group.plan.status) || at === null || group.plan.status === "Completed") return [];
   if (!hasData(group.airport) || (group.method === "Flight" && (!hasData(group.flight) || !airlineForFlight(group.flight)))) return [];
   const flight = group.method === "Flight" ? [airlineForFlight(group.flight)?.name, group.flight].filter(Boolean).join(" ") : group.method === "Bus" ? "Bus service (no flight)" : "Ground transport (no flight)";
   const registrations = [...new Set(group.guests.map(g => g.registrationId))];
@@ -105,8 +110,8 @@ export function tripParties(snapshot, group) {
     const companions = travelers.filter(g => !g.isPrimaryContact).length;
     const name = primary.name + (primary.city ? ` (${primary.city})` : "");
     const summary = name + (companions ? `, with ${companions} accompanying passenger${companions === 1 ? "" : "s"}` : "");
-    const crewDrivers = (group.crew || [{ driver: group.plan.driver }]).map(pair => snapshot.drivers.get(oneLine(pair.driver).toLowerCase())).filter(d => d?.phone && hasData(d.name));
-    return [{ group, driver, crewDrivers, primary, passengerPhone, companions, summary, name, flight, at, arrival, identity: [group.id, registrationId, driver.name, driver.phone] }];
+    const crewDrivers = (group.crew || [{ driver: group.plan.driver, confirmation: group.plan.confirmation }]).filter(pair => pair.confirmation).map(pair => { const contact = snapshot.drivers.get(oneLine(pair.driver).toLowerCase()); return contact ? { ...contact, confirmation: pair.confirmation } : null; }).filter(d => d?.phone && hasData(d.name));
+    return [{ group, driver, crewDrivers, primary, passengerPhone, companions, summary, name, flight, at, arrival, identity: [group.id, registrationId, driver.name, driver.phone, ...(group.plan.confirmation === "legacy" ? [] : [group.plan.confirmation])] }];
   });
 }
 export function driverAssignment(party, epoch) {
@@ -121,7 +126,7 @@ export function passengerAssignment(party) {
   const p = party;
   const contacts = p.crewDrivers?.length ? p.crewDrivers : [p.driver];
   const first = contacts[0];
-  const identity = [p.group.sourceTripId || p.group.id, p.primary.registrationId, first.name, first.phone];
+  const identity = [p.group.sourceTripId || p.group.id, p.primary.registrationId, first.name, first.phone, ...(contacts.some(d => d.confirmation && d.confirmation !== "legacy") ? [contacts.map(d => [d.name, d.phone, d.confirmation])] : [])];
   return candidate(p.arrival ? "passenger_arrival" : "passenger_departure", identity, p.passengerPhone,
     [p.primary.name, p.flight, p.group.airport, formatWhen(p.at), contacts.map(d => d.name).join(" / "), contacts.length === 1 ? displayPhone(first.phone) : contacts.map(d => `${d.name}: ${displayPhone(d.phone)}`).join("; ")],
     { trip: digest(p.group.id), event: "driver assigned" });

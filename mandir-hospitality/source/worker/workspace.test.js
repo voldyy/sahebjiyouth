@@ -223,3 +223,21 @@ test("a request restarts synchronization whose alarm is missing, and a failing a
     expect(await state.storage.getAlarm()).toBeGreaterThan(Date.now());
   });
 });
+
+test('driver drafts and locks survive SQLite reload and mirror atomically to Sheets',async()=>{
+  await request({action:'snapshot'});
+  expect((await request({action:'resource',type:'Driver',name:'Draft Driver',active:true})).ok).toBe(true);
+  const group=transportGroups(guestsFromRows(sheet.Attendees),'Arrivals')[0];
+  const base={action:'transport',id:group.id,direction:group.direction,signature:group.signature};
+  let result=await request({...base,expectedRevision:'',plan:{driver:'Draft Driver',vehicle:'',status:'Planned',pickup:'',notes:''}});
+  expect(result.ok).toBe(true);let plan=result.transport.assignments[0];expect(plan.driverConfirmations).toEqual({});
+  result=await request({...base,expectedRevision:plan.revision,expectedPlan:plan,plan,confirmation:{driver:'Draft Driver',confirmed:true}});
+  expect(result.ok).toBe(true);plan=result.transport.assignments[0];expect(plan.driverConfirmations['draft driver']).toBeTruthy();
+  await runInDurableObject(stub(),instance=>{instance.tables=null;});
+  expect((await request({action:'snapshot'})).transport.assignments[0]).toEqual(plan);
+  const stale=await request({...base,expectedRevision:'',plan,confirmation:{driver:'Draft Driver',confirmed:false}});expect(stale.ok).toBe(false);
+  await runDurableObjectAlarm(stub());expect((await request({action:'snapshot'})).sync.pending).toBe(0);
+  expect(JSON.parse(sheet['Transport Confirmations'][1][1])).toEqual(plan.driverConfirmations);
+  result=await request({...base,expectedRevision:plan.revision,expectedPlan:plan,plan,confirmation:{driver:'Draft Driver',confirmed:false}});
+  expect(result.ok).toBe(true);expect(result.transport.assignments[0].driverConfirmations).toEqual({});
+});

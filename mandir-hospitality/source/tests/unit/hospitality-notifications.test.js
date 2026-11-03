@@ -307,3 +307,42 @@ test('removing a driver invalidates both queued assignment notices', async () =>
   assert.equal(sent.length, 0);
   assert.equal([...table.rows.values()].filter(r => r.partitionKey === "hospitality-notification-outbox" && r.status === "stale").length, 2);
 });
+
+test('drafts suppress assignment, reminder and flight-alert paths until a driver is locked', async () => {
+  const s=snapshot(),table=memoryTable(),sent=[];let flightChecks=0;
+  for(const plan of s.assignments)plan.driverConfirmations={};
+  const at=easternInstant('2026-10-20','12:00');
+  const worker=createHospitalityWorker({table,env:{HOSPITALITY_NOTIFICATIONS_ENABLED:'true',LODGING_AUTO_NOTIFICATIONS_ENABLED:'false'},getSnapshot:async()=>s,now:()=>at,readFlight:async()=>{flightChecks++;return {available:false};},send:async c=>{sent.push(c);return accepted;}});
+  await worker();await worker();assert.equal(sent.length,0);assert.equal(flightChecks,0);
+  s.assignments[0].vehicle='';s.assignments[0].driverConfirmations={raj:'a'.repeat(36)};
+  await worker();await worker();
+  assert.deepEqual(sent.map(c=>c.type).sort(),['driver_assignment','passenger_arrival']);
+  s.assignments[0].vehicle='Car';await worker();assert.equal(sent.length,2);
+  // An unlock and re-lock may happen between timer polls; the new token still triggers both notices.
+  s.assignments[0].driverConfirmations={raj:'b'.repeat(36)};
+  await worker();assert.equal(sent.length,4);
+  s.assignments[0].driverConfirmations={};await worker();assert.equal(sent.length,4);
+});
+test('additional drivers stay out of passenger messages until separately confirmed', async () => {
+  const s=snapshot(),table=memoryTable(),sent=[];
+  for(const plan of s.assignments)plan.driverConfirmations={};
+  s.assignments[0].additionalDrivers=[{driver:'Mira',vehicle:''}];
+  const worker=createHospitalityWorker({table,env:{HOSPITALITY_NOTIFICATIONS_ENABLED:'true',LODGING_AUTO_NOTIFICATIONS_ENABLED:'false'},getSnapshot:async()=>s,now:()=>easternInstant('2026-10-16','12:00'),send:async c=>{sent.push(c);return accepted;}});
+  await worker();s.assignments[0].driverConfirmations={raj:'a'.repeat(36)};await worker();
+  assert.equal(sent.length,2);assert.equal(sent.find(c=>c.type==='passenger_arrival').variables['5'],'Raj');
+  s.assignments[0].driverConfirmations.mira='b'.repeat(36);await worker();await worker();
+  assert.equal(sent.length,4);
+  assert.equal(sent[2].recipient,'whatsapp:+12025550125');
+  assert.equal(sent[3].variables['5'],'Raj / Mira');
+});
+test('unlocking invalidates queued notices without removing the saved draft selection', async () => {
+  const s=snapshot(),table=memoryTable(),sent=[];
+  for(const plan of s.assignments)plan.driverConfirmations={};
+  const worker=createHospitalityWorker({table,env:{HOSPITALITY_NOTIFICATIONS_ENABLED:'true'},getSnapshot:async()=>s,now:()=>easternInstant('2026-10-16','12:00'),send:async c=>{sent.push(c);return accepted;}});
+  await worker();const upsert=table.upsertEntity;
+  table.upsertEntity=async()=>{throw Error('interrupted');};
+  s.assignments[0].driverConfirmations={raj:'a'.repeat(36)};await assert.rejects(worker(),/interrupted/);
+  table.upsertEntity=upsert;s.assignments[0].driverConfirmations={};await worker();
+  assert.equal(s.assignments[0].driver,'Raj');assert.equal(sent.length,0);
+  assert.equal([...table.rows.values()].filter(r=>r.partitionKey==='hospitality-notification-outbox'&&r.status==='stale').length,2);
+});

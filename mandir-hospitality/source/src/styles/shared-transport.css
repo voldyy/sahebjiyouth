@@ -570,3 +570,10 @@
 .transport-add-driver, .transport-remove-driver { justify-self: start; font-size: 12px; gap: 4px; }
 .transport-remove-driver { grid-column: 1 / -1; }
 .transport-plan > .transport-add-driver { grid-column: 1 / -1; }
+
+.transport-driver-select { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.transport-driver-select select, .transport-driver-select .transport-read-value { flex: 1; min-width: 0; width: 0; }
+.transport-driver-lock { display: inline-flex; flex: 0 0 30px; align-items: center; justify-content: center; width: 30px; height: 32px; border: 1px solid #d5dde3; border-radius: 7px; color: #78838d; background: #f3f5f7; cursor: pointer; }
+.transport-driver-lock.is-confirmed { color: #217342; background: #e7f5eb; border-color: #9dcfac; }
+.transport-driver-lock:disabled { cursor: default; opacity: .55; }
+.transport-driver-lock:focus-visible { outline: 2px solid #326681; outline-offset: 2px; }

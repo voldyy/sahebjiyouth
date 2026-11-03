@@ -239,11 +239,27 @@ function guestsFromRows(rows) {
   });
 }
 
+// src/lib/transportConfirmation.js
+var driverKey = (name) => String(name || "").trim().toLowerCase();
+var driverNames = (plan) => [plan.driver, ...(plan.additionalDrivers || []).map((pair) => pair.driver)].filter(Boolean);
+function readDriverConfirmations(value) {
+  const confirmations = JSON.parse(value || "{}");
+  if (!confirmations || typeof confirmations !== "object" || Array.isArray(confirmations) || Object.entries(confirmations).some(([name, token]) => !name || name !== driverKey(name) || typeof token !== "string" || !/^(?:legacy|[a-zA-Z0-9-]{20,80})$/.test(token))) throw new Error("Invalid driver confirmations. Review Transport Confirmations.");
+  return confirmations;
+}
+function driverConfirmationsFor(plan = {}) {
+  return plan.driverConfirmations === void 0 ? Object.fromEntries(driverNames(plan).map((name) => [driverKey(name), "legacy"])) : plan.driverConfirmations;
+}
+function driverConfirmation(plan, name) {
+  const confirmations = driverConfirmationsFor(plan);
+  return Object.hasOwn(confirmations, driverKey(name)) ? confirmations[driverKey(name)] : "";
+}
+
 // src/lib/transportCrew.js
 var crewForPlan = (plan = {}) => [
   { driver: plan.driver || "", vehicle: plan.vehicle || "" },
   ...plan.additionalDrivers || []
-];
+].map((pair) => ({ ...pair, confirmation: driverConfirmation(plan, pair.driver) }));
 function readAdditionalDrivers(value) {
   if (!value) return [];
   const crew = JSON.parse(value);
@@ -423,6 +439,7 @@ function transportWithPlans(groups, assignments) {
       driver: "",
       vehicle: "",
       status: "Planned",
+      driverConfirmations: {},
       pickup: "",
       notes: "",
       revision: ""
@@ -564,12 +581,17 @@ function assignedTrips(snapshot) {
   const groups = ["Arrivals", "Departures"].flatMap((direction) => transportWithPlans(transportGroups(snapshot.guests, direction), snapshot.assignments));
   return tripsForCrew(groups.filter((g) => g.guests.every((a) => a.status !== "Departed")));
 }
+function driverBinding(snapshot, group) {
+  const driver = snapshot.drivers.get(oneLine(group.plan.driver).toLowerCase());
+  if (!group.plan.confirmation || !driver?.phone) return "";
+  return digest(group.plan.confirmation === "legacy" ? [driver.name, driver.phone] : [driver.name, driver.phone, group.plan.confirmation]);
+}
 function tripParties(snapshot, group) {
   const driver = snapshot.drivers.get(oneLine(group.plan.driver).toLowerCase());
   const arrival = group.direction === "Arrivals";
   const times = group.guests.map((g) => arrival ? [g.arrivalTime, g.arrivalTimeKnown] : [g.departureTime, g.departureTimeKnown]);
   const at = easternAirports.has(group.airport) && times.every(([time, known]) => known && time === group.time) ? easternInstant(group.day, group.time) : null;
-  if (!driver?.phone || !hasData(driver.name) || !hasData(group.plan.driver) || !hasData(group.plan.status) || at === null || group.plan.status === "Completed") return [];
+  if (!group.plan.confirmation || !driver?.phone || !hasData(driver.name) || !hasData(group.plan.driver) || !hasData(group.plan.status) || at === null || group.plan.status === "Completed") return [];
   if (!hasData(group.airport) || group.method === "Flight" && (!hasData(group.flight) || !airlineForFlight(group.flight))) return [];
   const flight = group.method === "Flight" ? [airlineForFlight(group.flight)?.name, group.flight].filter(Boolean).join(" ") : group.method === "Bus" ? "Bus service (no flight)" : "Ground transport (no flight)";
   const registrations = [...new Set(group.guests.map((g) => g.registrationId))];
@@ -586,8 +608,11 @@ function tripParties(snapshot, group) {
     const companions = travelers.filter((g) => !g.isPrimaryContact).length;
     const name = primary.name + (primary.city ? ` (${primary.city})` : "");
     const summary = name + (companions ? `, with ${companions} accompanying passenger${companions === 1 ? "" : "s"}` : "");
-    const crewDrivers = (group.crew || [{ driver: group.plan.driver }]).map((pair) => snapshot.drivers.get(oneLine(pair.driver).toLowerCase())).filter((d) => d?.phone && hasData(d.name));
-    return [{ group, driver, crewDrivers, primary, passengerPhone, companions, summary, name, flight, at, arrival, identity: [group.id, registrationId, driver.name, driver.phone] }];
+    const crewDrivers = (group.crew || [{ driver: group.plan.driver, confirmation: group.plan.confirmation }]).filter((pair) => pair.confirmation).map((pair) => {
+      const contact = snapshot.drivers.get(oneLine(pair.driver).toLowerCase());
+      return contact ? { ...contact, confirmation: pair.confirmation } : null;
+    }).filter((d) => d?.phone && hasData(d.name));
+    return [{ group, driver, crewDrivers, primary, passengerPhone, companions, summary, name, flight, at, arrival, identity: [group.id, registrationId, driver.name, driver.phone, ...group.plan.confirmation === "legacy" ? [] : [group.plan.confirmation]] }];
   });
 }
 function driverAssignment(party, epoch) {
@@ -604,7 +629,7 @@ function passengerAssignment(party) {
   const p = party;
   const contacts = p.crewDrivers?.length ? p.crewDrivers : [p.driver];
   const first = contacts[0];
-  const identity = [p.group.sourceTripId || p.group.id, p.primary.registrationId, first.name, first.phone];
+  const identity = [p.group.sourceTripId || p.group.id, p.primary.registrationId, first.name, first.phone, ...contacts.some((d) => d.confirmation && d.confirmation !== "legacy") ? [contacts.map((d) => [d.name, d.phone, d.confirmation])] : []];
   return candidate(
     p.arrival ? "passenger_arrival" : "passenger_departure",
     identity,
@@ -668,6 +693,7 @@ var CLAIMS = "hospitality-notifications";
 var STATE = "hospitality-notification-state";
 var OUTBOX = "hospitality-notification-outbox";
 var headers = {
+  "Transport Confirmations": ["Journey ID", "Driver confirmations"],
   "Transport Crew": ["Journey ID", "Additional drivers"],
   "Transport Resources": ["Type", "Name", "Active", "Updated at", "Phone number"],
   "Transport Assignments": ["Journey ID", "Direction", "Date", "Flight / service", "Airport", "Attendees", "Driver", "Vehicle", "Pickup / mandir departure", "Status", "Notes", "Revision", "Updated at", "Request ID"]
@@ -696,7 +722,10 @@ async function readTable(name, fetchImpl) {
   }))];
 }
 async function loadSnapshot(fetchImpl = fetch) {
-  const [rows, resources, assignments, crew] = await Promise.all(["Sheet1", "Transport Resources", "Transport Assignments", "Transport Crew"].map((name) => readTable(name, fetchImpl)));
+  const [rows, resources, assignments, crew, confirmationTable] = await Promise.all(["Sheet1", "Transport Resources", "Transport Assignments", "Transport Crew", "Transport Confirmations"].map((name) => readTable(name, fetchImpl)));
+  const confirmationRows = confirmationTable.slice(1).filter((r) => r[0]);
+  if (new Set(confirmationRows.map((r) => r[0])).size !== confirmationRows.length) throw Error("Duplicate driver confirmations; notifications paused");
+  const confirmations = new Map(confirmationRows.map((r) => [r[0], readDriverConfirmations(r[1])]));
   const crewRows = crew.slice(1).filter((r) => r[0]);
   if (new Set(crewRows.map((r) => r[0])).size !== crewRows.length) throw Error("Duplicate transport crew; notifications paused");
   const additional = new Map(crewRows.map((r) => [r[0], readAdditionalDrivers(r[1])]));
@@ -706,7 +735,7 @@ async function loadSnapshot(fetchImpl = fetch) {
     incompleteTransportRegistrations: new Set(rows.slice(1).filter((r) => hasData(r[0]) && (!hasData(r[8]) || !/^(YES|NO|Y|N|TRUE|FALSE)$/i.test(String(r[2]).trim()))).map((r) => String(r[0]).trim())),
     guests: guestsFromRows(rows),
     drivers: driverDirectory(resources),
-    assignments: validAssignments.map((r) => ({ id: r[0], driver: r[6], vehicle: r[7], pickup: r[8], status: r[9], notes: r[10], revision: r[11], additionalDrivers: additional.get(r[0]) || [] }))
+    assignments: validAssignments.map((r) => ({ id: r[0], driver: r[6], vehicle: r[7], pickup: r[8], status: r[9], notes: r[10], revision: r[11], additionalDrivers: additional.get(r[0]) || [], driverConfirmations: confirmations.get(r[0]) ?? driverConfirmationsFor({ driver: r[6], additionalDrivers: additional.get(r[0]) || [] }) }))
   };
 }
 async function scriptRequest(body, fetchImpl = fetch) {
@@ -820,7 +849,7 @@ function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now =
     if (!initialized) {
       await Promise.all(groups.map((group) => {
         const driver = snapshot.drivers.get(group.plan.driver?.trim().toLowerCase());
-        return create(table, { partitionKey: STATE, rowKey: "trip-" + digest(group.id), binding: driver?.phone ? digest([driver.name, driver.phone]) : "", epoch: 1, ...group.secondaryDriver ? { additionalDriver: true, tripId: group.id } : {} });
+        return create(table, { partitionKey: STATE, rowKey: "trip-" + digest(group.id), binding: driverBinding(snapshot, group), epoch: 1, ...group.secondaryDriver ? { additionalDriver: true, tripId: group.id } : {} });
       }));
       await create(table, { partitionKey: STATE, rowKey: "initialized", initializedAt: new Date(started).toISOString() });
     }
@@ -829,7 +858,7 @@ function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now =
       if (now() - started > 65e3) break;
       const rowKey = "trip-" + digest(group.id), previous = await get(table, STATE, rowKey);
       const driver = snapshot.drivers.get(group.plan.driver?.trim().toLowerCase());
-      const binding = driver?.phone ? digest([driver.name, driver.phone]) : "";
+      const binding = driverBinding(snapshot, group);
       const epoch = previous ? Number(previous.epoch) + (previous.binding !== binding ? 1 : 0) : 1;
       const parties = tripParties(snapshot, group), assignmentNotices = [];
       for (const party of parties) {
@@ -865,7 +894,7 @@ function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now =
       let candidate2 = currentLodging.get(row.rowKey);
       if (row.candidateJson) {
         const group = groups.find((g) => g.id === row.tripId), driver = group && snapshot.drivers.get(group.plan.driver?.trim().toLowerCase());
-        const currentBinding = driver?.phone ? digest([driver.name, driver.phone]) : "";
+        const currentBinding = group ? driverBinding(snapshot, group) : "";
         if (group && row.binding === currentBinding) {
           const state = await get(table, STATE, "trip-" + digest(group.id));
           candidate2 = tripParties(snapshot, group).filter((p) => p.at > started).flatMap((p) => [driverAssignment(p, state?.epoch), passengerAssignment(p)]).find((c) => c.key === row.rowKey);

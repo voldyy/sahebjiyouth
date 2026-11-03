@@ -161,9 +161,10 @@ export function useSheetWorkspace(enabled) {
         stay: stayRange(guest),
         assignment,
       }),
-    saveTransport: (group, plan) =>
+    saveTransport: (group, plan, confirmation) =>
       save({
         action: "transport",
+        ...(confirmation ? { confirmation } : {}),
         id: group.id,
         direction: group.direction,
         signature: group.signature,

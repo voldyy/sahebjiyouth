@@ -10,6 +10,8 @@ import {
   Clock,
   ChevronDown,
   ExternalLink,
+  LockKeyhole,
+  LockKeyholeOpen,
 } from "lucide-react";
 import Sheet from "../components/Sheet";
 import AirlineLabel from "../components/AirlineLabel";
@@ -108,7 +110,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
   const filtered = showPast || date ? matching : matching.filter((g) => !isPast(g));
   const days = [...new Set(filtered.map((g) => g.day))];
   const assigned = filtered.filter(
-    (g) => crewForPlan(g.plan).every(pair => pair.driver),
+    (g) => crewForPlan(g.plan).every(pair => pair.driver && pair.confirmation),
   ).length;
   useEffect(() => {
     const sync = () => setDriver(driverFromUrl(location.href));
@@ -163,13 +165,24 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
       setInlineDraft(null);
     }
   };
+  const toggleConfirmation = async (group, pair) => {
+    if (readOnly || !pair.driver) return;
+    setInlineDraft({ id: group.id, plan: group.plan });
+    setSaveState({ id: group.id, message: pair.confirmation ? "Unlocking…" : "Confirming…" });
+    try {
+      await workspace.saveTransport(group, group.plan, { driver: pair.driver, confirmed: !pair.confirmation });
+      setSaveState({ id: group.id, message: pair.confirmation ? "Draft saved" : "Driver confirmed" });
+      toast(pair.confirmation ? `${pair.driver} is now a draft assignment.` : `${pair.driver} confirmed. Notifications will be sent on the next check.`);
+    } catch (error) { setSaveState({ id: group.id, error: error.message }); }
+    finally { setInlineDraft(null); }
+  };
   return (
     <div className="op-page shared-transport">
       <div className="page-heading">
         <div>
           <div className="eyebrow">JOURNEYS & SEVA</div>
           <h1>Airport Trips</h1>
-          <p>Airport pickups and drop-offs, together in one schedule.</p>
+          <p>Driver selections save as drafts. Lock a driver to confirm and send notifications.</p>
         </div>
         {!readOnly && <button
           className="button secondary"
@@ -199,7 +212,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
         </div>
         <div>
           <strong>{filtered.length - assigned}</strong>
-          <span>Need assignment</span>
+          <span>Need confirmation</span>
         </div>
         <div>
           <strong>{workspace.transport.drivers.length}</strong>
@@ -312,7 +325,8 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
               const crew = crewForPlan(plan);
               const pairs = readOnly ? crew : Array.from({ length: Math.max(crew.length, (extraRows[group.id] || 0) + 1) }, (_, i) => crew[i] || { driver: "", vehicle: "" });
               const disabled = !workspace.connected || workspace.saving || inlineDraft !== null || !group.day || group.guests.some(guest => !guest.sourceWritable);
-              const assigned = crew.every(pair => pair.driver);
+              const assigned = crew.every(pair => pair.driver && pair.confirmation);
+              const hasDriver = crew.some(pair => pair.driver);
               return (
               <LiveFlightProvider key={group.id} group={group} workspace={workspace}>
               <article className={`card transport-journey${group.method === "Flight" ? " transport-journey--flight" : ""}`}>
@@ -335,8 +349,8 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                     className={`transport-status ${assigned ? "assigned" : ""}`}
                   >
                     {assigned
-                      ? "Assigned"
-                      : "Unassigned"}
+                      ? "Confirmed"
+                      : hasDriver ? "Draft" : "Unassigned"}
                   </span>
                 </div>
                 <div className="transport-journey-content">
@@ -385,7 +399,24 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                     ].map(({ field, label, options }) => (
                       <label className="field" key={field}>
                         {label}{index > 0 ? ` ${index + 1}` : ""}
-                        {readOnly ? <span className="transport-read-value">{pair[field] || "Not assigned"}</span> : <select
+                        {field === "driver" ? <div className="transport-driver-select">{readOnly ? <span className="transport-read-value">{pair.driver || "Not assigned"}</span> : <select
+                          aria-label={`${label}${index > 0 ? ` ${index + 1}` : ""} for ${group.flight || group.method} ${group.direction} ${group.day}`}
+                          value={pair[field]}
+                          disabled={disabled || !!pair.confirmation}
+                          onChange={(event) =>
+                            saveInline(group, field, event.target.value, index)
+                          }
+                        >
+                          <option value="">Not assigned</option>
+                          {[
+                            ...new Set([
+                              ...options,
+                              ...(pair[field] ? [pair[field]] : []),
+                            ]),
+                          ].map((name) => (
+                            <option key={name} disabled={pairs.some((p, i) => i !== index && p[field] === name)}>{name}</option>
+                          ))}
+                        </select>}{readOnly ? <span className={`transport-driver-lock ${pair.confirmation ? "is-confirmed" : ""}`} role="img" aria-label={pair.confirmation ? "Confirmed driver" : "Draft driver"} title={pair.confirmation ? "Driver confirmed" : "Draft assignment"}>{pair.confirmation ? <LockKeyhole size={15} /> : <LockKeyholeOpen size={15} />}</span> : <button type="button" className={`transport-driver-lock ${pair.confirmation ? "is-confirmed" : ""}`} aria-pressed={!!pair.confirmation} aria-label={`${pair.confirmation ? "Unlock" : "Confirm"} driver${index > 0 ? ` ${index + 1}` : ""} for ${group.flight || group.method} ${group.direction} ${group.day}`} title={pair.confirmation ? "Unlock driver and return to draft" : "Confirm driver and send notifications"} disabled={disabled || !pair.driver} onClick={() => toggleConfirmation(group, pair)}>{pair.confirmation ? <LockKeyhole size={15} /> : <LockKeyholeOpen size={15} />}</button>}</div> : readOnly ? <span className="transport-read-value">{pair[field] || "Not assigned"}</span> : <select
                           aria-label={`${label}${index > 0 ? ` ${index + 1}` : ""} for ${group.flight || group.method} ${group.direction} ${group.day}`}
                           value={pair[field]}
                           disabled={disabled}
@@ -405,7 +436,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
                         </select>}
                       </label>
                     ))}
-                    {index > 0 && !readOnly && <button className="text-button transport-remove-driver" aria-label={`Remove driver ${index + 1} for ${group.flight || group.method} ${group.direction} ${group.day}`} disabled={disabled} onClick={() => {
+                    {index > 0 && !readOnly && <button className="text-button transport-remove-driver" aria-label={`Remove driver ${index + 1} for ${group.flight || group.method} ${group.direction} ${group.day}`} disabled={disabled || !!pair.confirmation} onClick={() => {
                       const remaining = (plan.additionalDrivers || []).filter((_, i) => i !== index - 1);
                       setExtraRows(current => ({ ...current, [group.id]: Math.max(0, pairs.length - 2) }));
                       if (index < crew.length) saveInline(group, "additionalDrivers", remaining);

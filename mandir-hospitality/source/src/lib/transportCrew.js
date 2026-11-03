@@ -1,8 +1,9 @@
+import { driverConfirmation } from "./transportConfirmation.js";
 // Keep the original driver/vehicle fields for existing trips and integrations.
 export const crewForPlan = (plan = {}) => [
   { driver: plan.driver || "", vehicle: plan.vehicle || "" },
   ...(plan.additionalDrivers || []),
-];
+].map(pair => ({ ...pair, confirmation: driverConfirmation(plan, pair.driver) }));
 
 export function readAdditionalDrivers(value) {
   if (!value) return [];

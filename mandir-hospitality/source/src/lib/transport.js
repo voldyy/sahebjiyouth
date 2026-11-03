@@ -97,6 +97,7 @@ export function transportWithPlans(groups, assignments) {
       driver: "",
       vehicle: "",
       status: "Planned",
+      driverConfirmations: {},
       pickup: "",
       notes: "",
       revision: "",

@@ -13,10 +13,12 @@ import {
 } from "../src/lib/occupancy.js";
 import { transportGroups } from "../src/lib/transport.js";
 import { crewForPlan, readAdditionalDrivers } from "../src/lib/transportCrew.js";
+import { driverConfirmationsFor, readDriverConfirmations, driverNames } from "../src/lib/transportConfirmation.js";
 import { dayDisplayId, displayChangedAt } from "../src/lib/transportDisplay.js";
 import { HAWTHORN_ROOM_TYPES, OFFSITE_HOTELS, defaultOffsiteRoom, normalizeOffsiteHotel, offsiteRoomFor, withDefaultOffsiteRooms } from "../src/lib/offsite.js";
 import { checkoutEvents } from "../src/lib/housekeeping.js";
 export const TABLES = {
+  "Transport Confirmations": ["Journey ID", "Driver confirmations"],
   "Transport Crew": ["Journey ID", "Additional drivers"],
   "Transport Display": ["Journey ID", "Collapsed", "Revision", "Request ID"],
   "Offsite Rooms": ["ID", "Hotel", "Room number", "Beds", "Planning label", "Revision"],
@@ -90,6 +92,9 @@ function roster(book) {
   return { sheet, rows, guests: guestsFromRows(rows) };
 }
 function plans(book, readOnly = false) {
+  const confirmationRows = table(book, "Transport Confirmations", true).rows.slice(1).filter(r => r[0]);
+  if (new Set(confirmationRows.map(r => r[0])).size !== confirmationRows.length) throw new Error("Duplicate journeys in Transport Confirmations. Review the sheet.");
+  const confirmations = new Map(confirmationRows.map(r => [r[0], readDriverConfirmations(r[1])]));
   const crewRows = table(book, "Transport Crew", true).rows.slice(1).filter(r => r[0]);
   if (new Set(crewRows.map(r => r[0])).size !== crewRows.length) throw new Error("Duplicate journeys in Transport Crew. Review the sheet.");
   const crew = new Map(crewRows.map(r => [r[0], readAdditionalDrivers(r[1])]));
@@ -109,6 +114,7 @@ function plans(book, readOnly = false) {
       notes: r[10],
       revision: r[11],
       additionalDrivers: crew.get(r[0]) || [],
+      driverConfirmations: confirmations.get(r[0]) ?? driverConfirmationsFor({ driver: r[6], additionalDrivers: crew.get(r[0]) || [] }),
     })),
     drivers: resources.filter((r) => r[0] === "Driver").map((r) => r[1]),
     vehicles: resources.filter((r) => r[0] === "Vehicle").map((r) => r[1]),
@@ -394,7 +400,10 @@ function transport(book, req) {
     [req.expectedPlan.driver, req.expectedPlan.vehicle, req.expectedPlan.pickup, req.expectedPlan.status, req.expectedPlan.notes]
   )) throw new Error("Someone edited this journey in the sheet. Refresh before saving.");
   const data = plans(book);
-  const previousCrew = data.assignments.find(p => p.id === group.id)?.additionalDrivers || [];
+  const previousPlan = data.assignments.find(p => p.id === group.id);
+  const previousCrew = previousPlan?.additionalDrivers || [];
+  const previousConfirmations = previousPlan?.driverConfirmations || {};
+  if (req.expectedPlan?.driverConfirmations && !equal(previousConfirmations, req.expectedPlan.driverConfirmations)) throw new Error("Someone edited driver confirmations in the sheet. Refresh before saving.");
   if (req.expectedPlan && !equal(previousCrew, req.expectedPlan.additionalDrivers || [])) throw new Error("Someone edited this journey in the sheet. Refresh before saving.");
   // An older client can update the original fields without erasing added drivers.
   const submittedCrew = req.plan.additionalDrivers ?? previousCrew;
@@ -406,6 +415,20 @@ function transport(book, req) {
     notes = clean(req.plan.notes, 500),
     status = clean(req.plan.status);
   const crew = [{ driver, vehicle }, ...additionalDrivers];
+  const names = driverNames({ driver, additionalDrivers });
+  const currentNames = new Set(names.map(name => name.toLowerCase()));
+  const previouslyAssigned = new Set(driverNames(previousPlan || {}).map(name => name.toLowerCase()));
+  const confirmedNames = Object.keys(previousConfirmations).filter(name => previouslyAssigned.has(name));
+  if (confirmedNames.some(name => !currentNames.has(name))) throw new Error("Unlock the confirmed driver before changing or removing them.");
+  const confirmations = new Map(Object.entries(previousConfirmations).filter(([name]) => currentNames.has(name)));
+  if (req.confirmation !== undefined) {
+    const name = clean(req.confirmation?.driver).toLowerCase();
+    if (!name || typeof req.confirmation?.confirmed !== "boolean" || !currentNames.has(name) || !driverNames(previousPlan || {}).some(driver => driver.toLowerCase() === name)) throw new Error("Save a driver selection before confirming it.");
+    if (req.confirmation.confirmed) { if (!confirmations.has(name)) confirmations.set(name, runtime.uuid()); }
+    else confirmations.delete(name);
+  }
+  const driverConfirmations = Object.fromEntries(confirmations);
+
   if (crew.some(pair => pair.driver && !data.drivers.includes(pair.driver)))
     throw new Error("Choose an active driver.");
   if (crew.some(pair => pair.vehicle && !data.vehicles.includes(pair.vehicle)))
@@ -456,7 +479,13 @@ function transport(book, req) {
   runtime.flush();
   const confirmedCrew = table(book, "Transport Crew").rows.find(r => r[0] === group.id);
   if (!equal(confirmedCrew, crewValues)) throw new Error("Driver assignments could not be confirmed. Refresh before retrying.");
-  history(book, req, group.id, { plan: match?.row || [], additionalDrivers: previousCrew }, { plan: values, additionalDrivers });
+  const confirmationTable = table(book, "Transport Confirmations");
+  const confirmationIndex = confirmationTable.rows.findIndex((r, i) => i > 0 && r[0] === group.id);
+  const confirmationValues = [group.id, JSON.stringify(driverConfirmations)];
+  writeRow(confirmationTable.sheet, confirmationIndex < 0 ? confirmationTable.sheet.getLastRow() + 1 : confirmationIndex + 1, confirmationValues);
+  runtime.flush();
+  if (!equal(table(book, "Transport Confirmations").rows.find(r => r[0] === group.id), confirmationValues)) throw new Error("Driver confirmation could not be saved. Refresh before retrying.");
+  history(book, req, group.id, { plan: match?.row || [], additionalDrivers: previousCrew, driverConfirmations: previousConfirmations }, { plan: values, additionalDrivers, driverConfirmations });
 }
 function resource(book, req) {
   if (!["Driver", "Vehicle"].includes(req.type))
