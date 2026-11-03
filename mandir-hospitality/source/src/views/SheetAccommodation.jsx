@@ -1,13 +1,14 @@
 import LodgingNotifications from "../components/LodgingNotifications";
 import WhatsAppSent from "../components/WhatsAppSent";
 import { useMemo, useState } from "react";
-import { BedDouble, CalendarDays, ChevronLeft, ChevronRight, List, Plus, Search, Users, GripVertical, Building2, Sparkles, Settings2, Download } from "lucide-react";
+import { BedDouble, CalendarDays, ChevronLeft, ChevronRight, List, Plus, Search, Users, GripVertical, Building2, Sparkles, Settings2, Download, ClipboardList } from "lucide-react";
 import Sheet from "../components/Sheet";
 import { DailyRooms, RoomStrip, WeeklyRooms, RoomOverview } from "../components/RoomCalendar";
 import WalkInForm from "../components/WalkInForm";
 import ChosenBed from "../components/ChosenBed";
 import { allentownDay } from "../lib/housekeeping";
 import Housekeeping from "./Housekeeping";
+import FinalAccommodation from "./FinalAccommodation";
 import { LODGING_LOCATIONS, SHEET_URL } from "../lib/sheets";
 import { samarpanRooms, sadhakRooms, fixedRoomsFor, isFixedLodging, roomKey, roomAssignment } from "../lib/lodgingRooms";
 import { HAWTHORN_ROOM_TYPES, OFFSITE_HOTELS, offsiteRoomFor, roomCapacityLabel, roomLabel, roomPlaceLabel, roomTypeFor, roomTypeLabel } from "../lib/offsite";
@@ -22,7 +23,7 @@ const assignmentFor = roomAssignment;
 const currentStayDay = () => { const today = allentownDay(); return today < PLANNING_START_DAY ? PLANNING_START_DAY : today > LAST_STAY_DAY ? LAST_STAY_DAY : today; };
 
 export default function SheetAccommodation({ workspace, toast, readOnly = false }) {
-  const [section, setSection] = useState("Samarpan");
+  const [section, setSection] = useState(() => new URLSearchParams(location.hash.split("?")[1] || "").get("view") === "final" ? "Final" : "Samarpan");
   const [hotel, setHotel] = useState(OFFSITE_HOTELS[0]);
   const [view, setView] = useState("weekly");
   const [weekIndex, setWeekIndex] = useState(() => PLANNING_WEEK_STARTS.findLastIndex(start => start <= currentStayDay()));
@@ -147,8 +148,8 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
 
   return <div className="stay-workspace">
     {walkIn && <Sheet title="Add a walk-in guest" subtitle="Guest details and a bed, together." onClose={() => { if (!workspace.saving) setWalkIn(null); }}><WalkInForm workspace={workspace} rooms={allRooms} initial={walkIn} onCancel={() => setWalkIn(null)} onSaved={name => { setWalkIn(null); toast(`${name} added and assigned for their full stay.`); }} /></Sheet>}
-    <div className="stay-section-switch" role="group" aria-label="Accommodation sections">{[{ label: "Samarpan", icon: BedDouble }, { label: "Sadhak", icon: BedDouble }, { label: "Offsite", icon: Building2 }, { label: "Housekeeping", icon: Sparkles }].map(({ label, icon: Icon }) => <button key={label} aria-pressed={section === label} onClick={() => { setSection(label); setRoomNo(""); setDropError(""); }}><Icon size={19} />{label}</button>)}</div>
-    {!workspace.refreshedAt ? <p role="status">{workspace.loading ? "Loading room occupancy from the sheet…" : "Room occupancy is unavailable. Refresh the sheet to load the calendar."}</p> : section === "Housekeeping" ? <Housekeeping workspace={workspace} toast={toast} readOnly={readOnly} /> : <>
+    <div className="stay-section-switch" role="group" aria-label="Accommodation sections">{[{ label: "Samarpan", icon: BedDouble }, { label: "Sadhak", icon: BedDouble }, { label: "Offsite", icon: Building2 }, { label: "Final", icon: ClipboardList }, { label: "Housekeeping", icon: Sparkles }].map(({ label, icon: Icon }) => <button key={label} aria-pressed={section === label} onClick={() => { setSection(label); setRoomNo(""); setDropError(""); const params = new URLSearchParams(location.hash.split("?")[1] || ""); if (label === "Final") params.set("view", "final"); else params.delete("view"); history.replaceState(null, "", `${location.pathname}${location.search}#rooms${params.size ? `?${params}` : ""}`); }}><Icon size={19} />{label}</button>)}</div>
+    {!workspace.refreshedAt ? <p role="status">{workspace.loading ? "Loading room occupancy from the sheet…" : "Room occupancy is unavailable. Refresh the sheet to load the calendar."}</p> : section === "Final" ? <FinalAccommodation workspace={workspace} /> : section === "Housekeeping" ? <Housekeeping workspace={workspace} toast={toast} readOnly={readOnly} /> : <>
       <header className="page-header"><div><p className="eyebrow">{isFixedLodging(section) ? `${section.toUpperCase()} · ${rooms.length} ROOMS · ${rooms.reduce((sum, r) => sum + (r.beds || 0), 0)} BEDS` : `${hotel.toUpperCase()} · ${rooms.length} PLANNING ROOMS`}</p><h1 className="page-title">Accommodations</h1><p className="page-description">See who’s staying, find an empty bed, and make room for the next arrival.</p></div><div className="page-actions"><button className="button secondary" disabled={!workspace.connected || workspace.loading || exporting || !exportRows.length} title="Download all room assignments, regardless of accommodation filters" onClick={exportRooms}><Download size={17} />{exporting ? "Exporting…" : "Export room assignments"}</button>{!readOnly && <><LodgingNotifications workspace={workspace} toast={toast} /><button className="button secondary" onClick={() => openWalkIn()} disabled={workspace.saving || !workspace.connected}><Plus size={17} />Add walk-in</button><button className="button primary" onClick={openAssign} disabled={workspace.saving || !workspace.connected || !rooms.length}><Plus size={17} />Assign guest</button></>}</div></header>
       {capacityMeter}
       {section === "Offsite" && <div className="stay-offsite-toolbar"><label className="field">Hotel<select aria-label="Offsite hotel" value={hotel} onChange={(e) => { setHotel(e.target.value); setRoomNo(""); }}>{OFFSITE_HOTELS.map((name) => <option key={name}>{name}</option>)}</select></label>{!readOnly && <button className="button secondary" onClick={() => openRoom()} disabled={workspace.saving}><Plus size={17} />Add planning room</button>}{room && !readOnly && <button className="button secondary" onClick={() => openRoom(room)} disabled={workspace.saving}><Settings2 size={17} />Edit room details</button>}<p>Room slots hold assignments until the hotel confirms room numbers. King rooms have 2 guest places; Double Queen rooms have 4.</p></div>}

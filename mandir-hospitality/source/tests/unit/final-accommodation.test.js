@@ -1,0 +1,34 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {finalAccommodationPlan} from '../../src/lib/finalAccommodation.js';
+import {renumberHawthornTables} from '../../shared/hawthorn-renumber.js';
+const room=(id,label,lodging='Hawthorn')=>({id,number:id,label,lodging,roomNo:'',beds:4});
+const guest=(id,lodging,roomNo,roomCode,start,end)=>({id,sourceIdentity:id,name:id,city:'Edison, NJ',lodging,roomNo,roomCode,stay:lodging,status:'Registered',arrivalDate:start,departureDate:end});
+test('Final counts unique hotel rooms from Nov 6 with checkout exclusive, turnover and pending beds',()=>{
+ const rooms=[room('h1','HR01'),room('h2','HR02'),room('l1','HL01','Hilton')];
+ const guests=[guest('Parent','Hawthorn','HR01','HR01B1','2026-11-06','2026-11-08'),guest('Child','Hawthorn','HR01','HR01B1','2026-11-06','2026-11-08'),guest('Pending bed','Hawthorn','HR02','','2026-11-07','2026-11-08'),guest('Next stay','Hawthorn','HR01','HR01B1','2026-11-08','2026-11-09'),guest('Hilton guest','Hilton','HL01','HL01B1','2026-11-05','2026-11-07'),guest('Onsite','Samarpan','101','S101B1','2026-11-06','2026-11-10'),{...guest('Cancelled','Hilton','HL01','HL01B2','2026-11-06','2026-11-20'),status:'Cancelled'}];
+ const plan=finalAccommodationPlan(guests,rooms);
+ assert.deepEqual(plan.nights.map(n=>[n.day,n.byHotel.Hawthorn,n.byHotel.Hilton,n.total]),[['2026-11-06',1,1,2],['2026-11-07',2,0,2],['2026-11-08',1,0,1]]);
+ assert.equal(plan.rows.length,3);assert.equal(plan.rows.flatMap(r=>r.occupants).length,5);
+ const missing=finalAccommodationPlan([...guests,guest('Dates pending','Hilton','HL01','','',''),guest('Room pending','Hawthorn','','','2026-11-06','2026-11-08')],rooms);
+ assert.deepEqual(missing.nights,plan.nights);assert.equal(missing.missingDates.length,1);assert.equal(missing.missingRooms.length,1);
+});
+test('Hawthorn renumbering preserves room groups, bed places, capacity, housekeeping and other lodgings',()=>{
+ const active=Array.from({length:27},(_,i)=>i+1).filter(n=>![12,16,17,23].includes(n)).map(n=>room('hawthorn-r'+String(n).padStart(2,'0'),'HR'+String(n).padStart(2,'0')));
+ active[4].beds=2;
+ const headers=Array(33).fill('');Object.assign(headers,{0:'Registration ID',8:'Attendee Full Name',29:'Lodging',30:'Room No.',31:'Room Code'});
+ const attendee=(name,lodging,number,code)=>{const r=Array(33).fill('');Object.assign(r,{0:name,8:name,9:'Self',12:'2026-11-06',13:'2026-11-08',24:'Confirmed',29:lodging,30:number,31:code});return r;};
+ const oldCode='HR13B2',id=JSON.stringify(['a',oldCode,2,'2026-11-08']);
+ const tables={Attendees:[headers,attendee('a','Hawthorn','HR13',oldCode),attendee('b','Hawthorn','HR27',''),attendee('c','Hilton','HL01','HL01B1'),attendee('d','Samarpan','101','S101B1')],'Offsite Rooms':[['ID','Hotel','Room number','Beds','Planning label','Revision'],['old-custom','Comfort Inn','','2','R16','old'],['hilton-r01','Hilton','','2','HL01','kept']],'Hotel Inventory':[['Hotel','Active room slots'],['Hawthorn',JSON.stringify(active.map(r=>r.label))],['Hilton','["HL01"]']],Housekeeping:[['Checkout ID','Room','Bed','Bed code','Guest','Checkout date','Linens refreshed at','Request ID','State'],[id,'HR13','2',oldCode,'a','2026-11-08','clean-time','clean-request','Pending']]};
+ const result=renumberHawthornTables(tables,active,'test-revision');
+ assert.equal(result.mapping.HR13,'HR12');assert.equal(result.mapping.HR27,'HR23');
+ assert.deepEqual(result.tables.Attendees[1].slice(29,32),['Hawthorn','HR12','HR12B2']);assert.deepEqual(result.tables.Attendees[2].slice(29,32),['Hawthorn','HR23','']);
+ result.tables.Attendees.forEach((r,i)=>{assert.deepEqual(r.slice(0,29),tables.Attendees[i].slice(0,29));assert.equal(r[32],tables.Attendees[i][32]);});
+ assert.deepEqual(result.tables.Attendees.slice(3),tables.Attendees.slice(3));
+ assert.equal(result.tables['Offsite Rooms'].filter(r=>r[1]==='Hawthorn').length,23);assert.equal(result.tables['Offsite Rooms'].some(r=>r[0]==='old-custom'),false);
+ assert.deepEqual(result.tables['Offsite Rooms'].find(r=>r[0]==='hilton-r01'),tables['Offsite Rooms'][2]);
+ assert.equal(result.tables['Offsite Rooms'].find(r=>r[0]==='hawthorn-r05')[3],'2');
+ assert.equal(result.tables.Housekeeping[1][3],'HR12B2');assert.equal(JSON.parse(result.tables.Housekeeping[1][0])[1],'HR12B2');assert.deepEqual(result.tables.Housekeeping[1].slice(4),tables.Housekeeping[1].slice(4));
+ const contiguous=active.map((r,i)=>({...r,label:`HR${String(i+1).padStart(2,'0')}`}));
+ assert.equal(renumberHawthornTables(result.tables,contiguous,'repeat').changed,false);
+});
