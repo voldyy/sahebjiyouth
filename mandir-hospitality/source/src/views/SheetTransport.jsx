@@ -108,7 +108,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
   const filtered = showPast || date ? matching : matching.filter((g) => !isPast(g));
   const days = [...new Set(filtered.map((g) => g.day))];
   const assigned = filtered.filter(
-    (g) => crewForPlan(g.plan).every(pair => pair.driver && pair.vehicle),
+    (g) => crewForPlan(g.plan).every(pair => pair.driver),
   ).length;
   useEffect(() => {
     const sync = () => setDriver(driverFromUrl(location.href));
@@ -312,7 +312,7 @@ export default function SheetTransport({ workspace, toast, readOnly = false }) {
               const crew = crewForPlan(plan);
               const pairs = readOnly ? crew : Array.from({ length: Math.max(crew.length, (extraRows[group.id] || 0) + 1) }, (_, i) => crew[i] || { driver: "", vehicle: "" });
               const disabled = !workspace.connected || workspace.saving || inlineDraft !== null || !group.day || group.guests.some(guest => !guest.sourceWritable);
-              const assigned = crew.every(pair => pair.driver && pair.vehicle);
+              const assigned = crew.every(pair => pair.driver);
               return (
               <LiveFlightProvider key={group.id} group={group} workspace={workspace}>
               <article className={`card transport-journey${group.method === "Flight" ? " transport-journey--flight" : ""}`}>

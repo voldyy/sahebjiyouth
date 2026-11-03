@@ -115,12 +115,22 @@ export function driverAssignment(party, epoch) {
     [p.driver.name, p.summary, displayPhone(p.passengerPhone), p.arrival ? "Arrival / airport pickup" : "Departure / airport dropoff", p.flight, formatWhen(p.at), p.group.airport],
     { trip: digest(p.group.id), event: "driver assigned" });
 }
+// Use the same passenger key for assignment and timed reminders, so vehicle edits
+// and the 18-hour check cannot repeat an assignment notice already accepted.
+export function passengerAssignment(party) {
+  const p = party;
+  const contacts = p.crewDrivers?.length ? p.crewDrivers : [p.driver];
+  const first = contacts[0];
+  const identity = [p.group.sourceTripId || p.group.id, p.primary.registrationId, first.name, first.phone];
+  return candidate(p.arrival ? "passenger_arrival" : "passenger_departure", identity, p.passengerPhone,
+    [p.primary.name, p.flight, p.group.airport, formatWhen(p.at), contacts.map(d => d.name).join(" / "), contacts.length === 1 ? displayPhone(first.phone) : contacts.map(d => `${d.name}: ${displayPhone(d.phone)}`).join("; ")],
+    { trip: digest(p.group.id), event: "driver assigned" });
+}
 export function tripReminders(party, now) {
   const p = party, result = [];
   if (p.group.method !== "Flight" || now >= p.at || now < p.at - 18 * HOUR) return result;
   const contacts = p.crewDrivers?.length ? p.crewDrivers : [p.driver];
-  if (p.driver.name === contacts[0].name) result.push(candidate(p.arrival ? "passenger_arrival" : "passenger_departure", p.identity, p.passengerPhone,
-    [p.primary.name, p.flight, p.group.airport, formatWhen(p.at), contacts.map(d => d.name).join(" / "), contacts.length === 1 ? displayPhone(contacts[0].phone) : contacts.map(d => `${d.name}: ${displayPhone(d.phone)}`).join("; ")], { trip: digest(p.group.id), event: "18-hour passenger reminder" }));
+  if (p.driver.name === contacts[0].name) result.push(passengerAssignment(p));
   if (!p.arrival && now >= p.at - 8 * HOUR) result.push(candidate("driver_dropoff", p.identity, p.driver.phone,
     [p.driver.name, p.name, displayPhone(p.passengerPhone), p.flight, formatWhen(p.at), p.group.airport], { trip: digest(p.group.id), event: "8-hour driver reminder" }));
   return result;

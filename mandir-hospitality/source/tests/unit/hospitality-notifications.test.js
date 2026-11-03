@@ -111,8 +111,8 @@ test("worker seeds existing assignments, detects changes, and ignores vehicle-on
   await worker(); assert.equal(sent.length, 0);
   s.assignments[0].driver = "Mira";
   await worker(); assert.equal(sent.filter(c => c.type === "driver_assignment").length, 1);
-  s.assignments[0].vehicle = "Car"; await worker(); assert.equal(sent.length, 1);
-  s.assignments[0].driver = ""; await worker(); s.assignments[0].driver = "Mira"; await worker(); assert.equal(sent.length, 2);
+  s.assignments[0].vehicle = "Car"; await worker(); assert.equal(sent.length, 2);
+  s.assignments[0].driver = ""; await worker(); s.assignments[0].driver = "Mira"; await worker(); assert.equal(sent.length, 3);
 });
 test('adding a driver notifies only the new driver and removal invalidates their notices',async()=>{
   const s=snapshot(),table=memoryTable(),sent=[];
@@ -120,9 +120,11 @@ test('adding a driver notifies only the new driver and removal invalidates their
   await worker();assert.equal(sent.length,0);
   s.assignments[0].additionalDrivers=[{driver:'Mira',vehicle:'Car'}];
   await worker();await worker();
-  assert.equal(sent.length,1);assert.equal(sent[0].recipient,'whatsapp:+12025550125');
-  s.assignments[0].additionalDrivers=[];await worker();assert.equal(sent.length,1);
-  s.assignments[0].additionalDrivers=[{driver:'Mira',vehicle:'Car'}];await worker();await worker();assert.equal(sent.length,2);
+  assert.equal(sent.length,2);assert.equal(sent[0].recipient,'whatsapp:+12025550125');assert.equal(sent[1].type,'passenger_arrival');
+  s.assignments[0].additionalDrivers=[];await worker();assert.equal(sent.length,2);
+  s.assignments[0].additionalDrivers=[{driver:'Mira',vehicle:'Car'}];await worker();await worker();assert.equal(sent.length,3);
+  assert.equal(sent.filter(c=>c.type==='driver_assignment').length,2);
+  assert.equal(sent.filter(c=>c.type==='passenger_arrival').length,1);
 });
 test('multiple drivers share one flight lookup and passengers receive one reminder listing both contacts',async()=>{
   const {departureFlightCheck}=await import('../../notifications/hospitality-service.js');
@@ -255,4 +257,53 @@ test('last-line sending validation blocks placeholder variables before claiming 
   candidate.variables['3']='N/A';
   assert.equal((await sendOnce(table,candidate,async()=>{sent++;return accepted;})).status,'skipped_incomplete_data');
   assert.equal(sent,0);assert.equal(table.rows.size,0);
+});
+
+
+test('driver-only assignments notify driver and passenger for both legs before the reminder window', async () => {
+  const s = snapshot(), table = memoryTable(), sent = [];
+  for (const assignment of s.assignments) Object.assign(assignment, { driver: "", vehicle: "" });
+  let at = easternInstant("2026-10-16", "12:00");
+  const worker = createHospitalityWorker({ table, env: { HOSPITALITY_NOTIFICATIONS_ENABLED: "true", LODGING_AUTO_NOTIFICATIONS_ENABLED: "false" }, getSnapshot: async () => s, now: () => at, readFlight: async () => ({ available: false }), send: async c => { sent.push(c); return accepted; } });
+  await worker(); assert.equal(sent.length, 0);
+  for (const assignment of s.assignments) assignment.driver = "Raj";
+  await worker(); await worker();
+  assert.deepEqual(sent.map(c => c.type).sort(), ["driver_assignment", "driver_assignment", "passenger_arrival", "passenger_departure"]);
+  assert.equal(sent.filter(c => c.recipient === "whatsapp:+12025550123").length, 2);
+  for (const assignment of s.assignments) assignment.vehicle = "Van";
+  await worker(); assert.equal(sent.length, 4);
+  at = easternInstant("2026-10-20", "00:00");
+  await worker(); assert.equal(sent.length, 4, "18-hour passenger check shares assignment deduplication");
+  at = easternInstant("2026-10-24", "04:00");
+  await worker(); assert.equal(sent.length, 5); assert.equal(sent.at(-1).type, "driver_dropoff");
+});
+
+test('interrupted driver-only assignment retains both notices in the durable outbox', async () => {
+  const s = snapshot(), table = memoryTable(), sent = [];
+  Object.assign(s.assignments[0], { driver: "", vehicle: "" });
+  const worker = createHospitalityWorker({ table, env: { HOSPITALITY_NOTIFICATIONS_ENABLED: "true" }, getSnapshot: async () => s, now: () => easternInstant("2026-10-16", "12:00"), send: async c => { sent.push(c); return accepted; } });
+  await worker();
+  const upsert = table.upsertEntity;
+  table.upsertEntity = async e => { if (e.binding) throw Error("interrupted after queue"); return upsert(e); };
+  s.assignments[0].driver = "Raj";
+  await assert.rejects(worker(), /interrupted after queue/);
+  assert.equal(sent.length, 0);
+  assert.equal([...table.rows.values()].filter(r => r.partitionKey === "hospitality-notification-outbox" && r.status === "pending").length, 2);
+  table.upsertEntity = upsert;
+  await worker(); await worker();
+  assert.deepEqual(sent.map(c => c.type).sort(), ["driver_assignment", "passenger_arrival"]);
+});
+
+test('removing a driver invalidates both queued assignment notices', async () => {
+  const s = snapshot(), table = memoryTable(), sent = [];
+  Object.assign(s.assignments[0], { driver: "", vehicle: "" });
+  const worker = createHospitalityWorker({ table, env: { HOSPITALITY_NOTIFICATIONS_ENABLED: "true" }, getSnapshot: async () => s, now: () => easternInstant("2026-10-16", "12:00"), send: async c => { sent.push(c); return accepted; } });
+  await worker();
+  const upsert = table.upsertEntity;
+  table.upsertEntity = async () => { throw Error("interrupted"); };
+  s.assignments[0].driver = "Raj"; await assert.rejects(worker(), /interrupted/);
+  table.upsertEntity = upsert; s.assignments[0].driver = "";
+  await worker();
+  assert.equal(sent.length, 0);
+  assert.equal([...table.rows.values()].filter(r => r.partitionKey === "hospitality-notification-outbox" && r.status === "stale").length, 2);
 });

@@ -1,7 +1,7 @@
 import { SPREADSHEET_ID, guestsFromRows } from "../src/lib/sheets.js";
 import { readAdditionalDrivers } from "../src/lib/transportCrew.js";
 import templates from "./hospitality-templates.json" with { type: "json" };
-import { HOUR, digest, driverDirectory, assignedTrips, tripParties, driverAssignment, tripReminders, airborneMessage, lodgingCandidates, phoneAddress, utcInstant, hasData, completeLodgingData } from "./hospitality-model.js";
+import { HOUR, digest, driverDirectory, assignedTrips, tripParties, driverAssignment, passengerAssignment, tripReminders, airborneMessage, lodgingCandidates, phoneAddress, utcInstant, hasData, completeLodgingData } from "./hospitality-model.js";
 
 export const SCHEDULE = "0 * * * * *";
 export const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYBR2sIywbufmytSNLiQvGRy2oYg_tsMTEqdUj855z1LX8OJcDf6rTI0gR14kzdzpGog/exec";
@@ -149,14 +149,17 @@ export function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot
       const driver = snapshot.drivers.get(group.plan.driver?.trim().toLowerCase());
       const binding = driver?.phone ? digest([driver.name, driver.phone]) : "";
       const epoch = previous ? Number(previous.epoch) + (previous.binding !== binding ? 1 : 0) : 1;
-      const parties = tripParties(snapshot, group);
+      const parties = tripParties(snapshot, group), assignmentNotices = [];
       for (const party of parties) {
-        if (party.at > started && binding && (previous ? previous.binding !== binding : !!initialized)) candidates.push(driverAssignment(party, epoch));
+        if (party.at > started && binding && (previous ? previous.binding !== binding : !!initialized)) {
+          assignmentNotices.push(driverAssignment(party, epoch), passengerAssignment(party));
+        }
         candidates.push(...tripReminders(party, started));
       }
+      candidates.push(...assignmentNotices);
       if (!previous || previous.binding !== binding) {
         // Save state only after assignment candidates have durable outbox records.
-        for (const candidate of candidates.filter(c => c.type === "driver_assignment" && c.detail.trip === digest(group.id))) {
+        for (const candidate of assignmentNotices) {
           await create(table, { partitionKey: OUTBOX, rowKey: candidate.key, status: "pending", candidateJson: JSON.stringify(candidate), tripId: group.id, binding, createdAt: new Date(started).toISOString() });
         }
         await table.upsertEntity({ partitionKey: STATE, rowKey, binding, epoch, ...(group.secondaryDriver ? { additionalDriver: true, tripId: group.id } : {}) }, "Replace");
@@ -180,7 +183,7 @@ export function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot
         // Reassignment/removal invalidates queued notices to the former driver.
         if (group && row.binding === currentBinding) {
           const state = await get(table, STATE, "trip-" + digest(group.id));
-          candidate = tripParties(snapshot, group).filter(p => p.at > started).map(p => driverAssignment(p, state?.epoch)).find(c => c.key === row.rowKey);
+          candidate = tripParties(snapshot, group).filter(p => p.at > started).flatMap(p => [driverAssignment(p, state?.epoch), passengerAssignment(p)]).find(c => c.key === row.rowKey);
         }
       }
       if (candidate) { candidates.push(candidate); outbox.push(row.rowKey); }

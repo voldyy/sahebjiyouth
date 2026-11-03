@@ -36,7 +36,7 @@ module.exports = __toCommonJS(hospitality_service_exports);
 var OFFSITE_HOTELS = ["Hawthorn"];
 var LEGACY_OFFSITE_HOTELS = { "Comfort Inn": "Hawthorn", "Hilton Garden Inn": "" };
 var normalizeOffsiteHotel = (hotel) => LEGACY_OFFSITE_HOTELS[hotel] ?? hotel;
-var SLOT_COUNTS = { Hawthorn: 15 };
+var SLOT_COUNTS = { Hawthorn: 30 };
 var slotId = (hotel, number) => `hawthorn-r${String(number).padStart(2, "0")}`;
 var HAWTHORN_ROOM_TYPES = {
   king: { label: "King", beds: 2, physicalBeds: 1, peoplePerBed: 2 },
@@ -67,11 +67,11 @@ var samarpanRooms = [
   { number: "205", beds: 4 },
   { number: "206", beds: 4 },
   { number: "207", beds: 4 },
-  { number: "100", beds: 7 },
-  { number: "101", beds: 12 },
-  { number: "102", beds: 14 },
-  { number: "103", beds: 13 },
-  { number: "104", beds: 15 }
+  { number: "101", beds: 7 },
+  { number: "102", beds: 12 },
+  { number: "103", beds: 14 },
+  { number: "104", beds: 13 },
+  { number: "105", beds: 15 }
 ];
 var samarpanBedCount = samarpanRooms.reduce((sum, room) => sum + room.beds, 0);
 var sadhakRooms = [
@@ -600,17 +600,24 @@ function driverAssignment(party, epoch) {
     { trip: digest(p.group.id), event: "driver assigned" }
   );
 }
+function passengerAssignment(party) {
+  const p = party;
+  const contacts = p.crewDrivers?.length ? p.crewDrivers : [p.driver];
+  const first = contacts[0];
+  const identity = [p.group.sourceTripId || p.group.id, p.primary.registrationId, first.name, first.phone];
+  return candidate(
+    p.arrival ? "passenger_arrival" : "passenger_departure",
+    identity,
+    p.passengerPhone,
+    [p.primary.name, p.flight, p.group.airport, formatWhen(p.at), contacts.map((d) => d.name).join(" / "), contacts.length === 1 ? displayPhone(first.phone) : contacts.map((d) => `${d.name}: ${displayPhone(d.phone)}`).join("; ")],
+    { trip: digest(p.group.id), event: "driver assigned" }
+  );
+}
 function tripReminders(party, now) {
   const p = party, result = [];
   if (p.group.method !== "Flight" || now >= p.at || now < p.at - 18 * HOUR2) return result;
   const contacts = p.crewDrivers?.length ? p.crewDrivers : [p.driver];
-  if (p.driver.name === contacts[0].name) result.push(candidate(
-    p.arrival ? "passenger_arrival" : "passenger_departure",
-    p.identity,
-    p.passengerPhone,
-    [p.primary.name, p.flight, p.group.airport, formatWhen(p.at), contacts.map((d) => d.name).join(" / "), contacts.length === 1 ? displayPhone(contacts[0].phone) : contacts.map((d) => `${d.name}: ${displayPhone(d.phone)}`).join("; ")],
-    { trip: digest(p.group.id), event: "18-hour passenger reminder" }
-  ));
+  if (p.driver.name === contacts[0].name) result.push(passengerAssignment(p));
   if (!p.arrival && now >= p.at - 8 * HOUR2) result.push(candidate(
     "driver_dropoff",
     p.identity,
@@ -824,13 +831,16 @@ function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now =
       const driver = snapshot.drivers.get(group.plan.driver?.trim().toLowerCase());
       const binding = driver?.phone ? digest([driver.name, driver.phone]) : "";
       const epoch = previous ? Number(previous.epoch) + (previous.binding !== binding ? 1 : 0) : 1;
-      const parties = tripParties(snapshot, group);
+      const parties = tripParties(snapshot, group), assignmentNotices = [];
       for (const party of parties) {
-        if (party.at > started && binding && (previous ? previous.binding !== binding : !!initialized)) candidates.push(driverAssignment(party, epoch));
+        if (party.at > started && binding && (previous ? previous.binding !== binding : !!initialized)) {
+          assignmentNotices.push(driverAssignment(party, epoch), passengerAssignment(party));
+        }
         candidates.push(...tripReminders(party, started));
       }
+      candidates.push(...assignmentNotices);
       if (!previous || previous.binding !== binding) {
-        for (const candidate2 of candidates.filter((c) => c.type === "driver_assignment" && c.detail.trip === digest(group.id))) {
+        for (const candidate2 of assignmentNotices) {
           await create(table, { partitionKey: OUTBOX, rowKey: candidate2.key, status: "pending", candidateJson: JSON.stringify(candidate2), tripId: group.id, binding, createdAt: new Date(started).toISOString() });
         }
         await table.upsertEntity({ partitionKey: STATE, rowKey, binding, epoch, ...group.secondaryDriver ? { additionalDriver: true, tripId: group.id } : {} }, "Replace");
@@ -858,7 +868,7 @@ function createHospitalityWorker({ table, env, getSnapshot = loadSnapshot, now =
         const currentBinding = driver?.phone ? digest([driver.name, driver.phone]) : "";
         if (group && row.binding === currentBinding) {
           const state = await get(table, STATE, "trip-" + digest(group.id));
-          candidate2 = tripParties(snapshot, group).filter((p) => p.at > started).map((p) => driverAssignment(p, state?.epoch)).find((c) => c.key === row.rowKey);
+          candidate2 = tripParties(snapshot, group).filter((p) => p.at > started).flatMap((p) => [driverAssignment(p, state?.epoch), passengerAssignment(p)]).find((c) => c.key === row.rowKey);
         }
       }
       if (candidate2) {

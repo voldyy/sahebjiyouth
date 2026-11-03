@@ -89,6 +89,8 @@ test('multiple pickup drivers save, reload, filter, remove and remain visible to
   const trip=page.locator('.transport-journey').filter({hasText:'AA123'});
   const select=(label)=>trip.getByRole('combobox',{name:new RegExp(`^${label} for`)});
   await select('Sevak driver').selectOption('First Driver');await expect(select('Sevak driver')).toBeEnabled();
+  await expect(trip.locator('.transport-status')).toHaveText('Assigned');
+  await expect(select('Vehicle')).toHaveValue('');
   await select('Vehicle').selectOption('Van');await expect(select('Vehicle')).toBeEnabled();
   await expect(select('Sevak driver 2')).toHaveCount(0);
   await trip.getByRole('button',{name:'Add driver',exact:true}).click();
