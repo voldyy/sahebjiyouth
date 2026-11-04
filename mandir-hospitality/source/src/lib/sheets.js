@@ -174,15 +174,15 @@ export async function readAuthorizedRows(token) {
   return { rows: result.values || [], title };
 }
 
-export function validateAssignment(assignment) {
+export function validateAssignment(assignment, rooms = []) {
   const values = [text(assignment.lodging), text(assignment.roomNo), text(assignment.roomCode)];
   if (values.every((v) => v === "")) return values;
   const provisional = OFFSITE_HOTELS.includes(values[0]) && /^O[a-zA-Z0-9-]+B[1-9]\d*$/.test(values[2]);
   if (!LODGING_LOCATIONS.includes(values[0]) || (!values[1] && !provisional) || !values[2]) throw new Error("Choose a lodging location and enter both the room number and custom room code.");
-  if (isFixedLodging(values[0]) && !fixedRoomsFor(values[0]).some(room => room.number === values[1])) throw new Error(`Choose a confirmed ${values[0]} room.`);
+  if (isFixedLodging(values[0]) && !fixedRoomsFor(values[0], rooms).some(room => room.number === values[1])) throw new Error(`Choose a confirmed ${values[0]} room.`);
   if (isFixedLodging(values[0])) {
     const bed = values[2].match(/B([1-9]\d*)$/)?.[1];
-    if (!bed || fixedRoomCode(values[0], values[1], bed) !== values[2]) throw new Error(`Select a valid bed in the chosen ${values[0]} room to generate its code.`);
+    if (!bed || fixedRoomCode(values[0], values[1], bed, rooms) !== values[2]) throw new Error(`Select a valid bed in the chosen ${values[0]} room to generate its code.`);
   }
   if (values.some((v) => v.length > 100 || /[\r\n\x00]/.test(v))) throw new Error("Room details must be single-line text, up to 100 characters each.");
   return values;

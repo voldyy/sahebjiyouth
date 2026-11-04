@@ -210,3 +210,5 @@
 .stay-capacity-bar i { display: block; height: 100%; border-radius: inherit; background: #3b9b6a; transition: width .25s ease; }
 .stay-capacity-bar.is-busy i { background: #d99a1c; }
 .stay-capacity-bar.is-full i { background: #b3342a; }
+
+.stay-room-choice{position:relative}.stay-add-bed{border:1px solid #cbd5e1;background:white;color:#326681;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}.stay-room-choice>.stay-add-bed{position:absolute;top:5px;right:5px}.stay-room-choice:has(>.stay-add-bed) .stay-room-chip{padding-right:36px}.stay-add-bed:disabled{opacity:.45;cursor:wait}

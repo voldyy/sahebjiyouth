@@ -56,16 +56,24 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
       toast("Could not export room assignments. Please try again.");
     } finally { setExporting(false); }
   };
-  const allRooms = [...samarpanRooms, ...sadhakRooms, ...workspace.offsiteRooms];
+  const onsiteRooms = workspace.fixedRooms?.length ? workspace.fixedRooms : [...samarpanRooms.map(r=>({...r,lodging:"Samarpan",revision:`default-Samarpan-${r.number}-${r.beds}`})),...sadhakRooms.map(r=>({...r,revision:`default-Sadhak-${r.number}-${r.beds}`}))];
+  const capacityRooms = [...onsiteRooms,...workspace.offsiteRooms];
+  const allRooms = capacityRooms;
+  const addBedSlot = async target => {
+    if (readOnly || workspace.saving || !workspace.connected) return;
+    setDropError("");
+    try { await workspace.addBedSlot(target); toast(`Added a bed slot to ${roomLabel(target)}.`); }
+    catch(failure) {setDropError(failure.message);}
+  };
   const openWalkIn = (number = "", bed = "", date = currentStayDay()) => {
     if (!readOnly) { setAssignment(null); setWalkIn({ room: number, bed, day: date }); }
   };
   const lodging = section === "Offsite" ? hotel : section;
-  const rooms = section === "Offsite" ? workspace.offsiteRooms.filter((r) => r.lodging === hotel) : fixedRoomsFor(section);
+  const rooms = section === "Offsite" ? workspace.offsiteRooms.filter((r) => r.lodging === hotel) : fixedRoomsFor(section, onsiteRooms);
   const room = rooms.find((r) => roomKey(r) === roomNo) || rooms[0];
   const guests = workspace.guests.filter(needsLodging).filter(inPlanningWindow);
   const week = PLANNING_WEEK_STARTS[weekIndex];
-  const draftRooms = isFixedLodging(draft.lodging) ? fixedRoomsFor(draft.lodging) : workspace.offsiteRooms.filter((r) => r.lodging === draft.lodging);
+  const draftRooms = isFixedLodging(draft.lodging) ? fixedRoomsFor(draft.lodging, onsiteRooms) : workspace.offsiteRooms.filter((r) => r.lodging === draft.lodging);
   const selectedRoom = draftRooms.find((r) => isFixedLodging(draft.lodging) ? r.number === draft.roomNo : r.id === hotelRoomId);
   const windowRange = ["daily", "overview"].includes(view) ? { start: day, end: moveDay(day, 1) } : { start: week, end: planningWeekEnd(week) };
   const queue = guests.filter((g) => unassignedGuest(g) && overlaps(stayRange(g), windowRange));
@@ -73,19 +81,19 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
     [g.name, g.registrationId, g.lodging, g.roomNo, g.roomCode].join(" ").toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => Number(unassignedGuest(b)) - Number(unassignedGuest(a)));
   const undated = guests.filter((g) => unassignedGuest(g) && !stayRange(g));
-  const review = guests.filter((g) => g.lodging === lodging && (g.roomNo || g.roomCode) && (!bedForGuest(g, workspace.offsiteRooms) || !stayRange(g)));
+  const review = guests.filter((g) => g.lodging === lodging && (g.roomNo || g.roomCode) && (!bedForGuest(g, capacityRooms) || !stayRange(g)));
   const candidates = guests.filter((g) => (assignment?.childOnly ? isChildUnder12(g) : unassignedGuest(g)) && (!assignment?.day || onDay(g, assignment.day)));
-  const issue = selected && draft.roomCode ? assignmentIssue(workspace.guests, selected, draft, workspace.offsiteRooms) : "";
+  const issue = selected && draft.roomCode ? assignmentIssue(workspace.guests, selected, draft, capacityRooms) : "";
   const selectDay = (next) => { if (next < PLANNING_START_DAY || next > LAST_STAY_DAY) return; setDay(next); setWeekIndex(PLANNING_WEEK_STARTS.findLastIndex((start) => start <= next)); };
   const changeWeek = (next) => { setWeekIndex(next); setDay(PLANNING_WEEK_STARTS[next]); };
   const resetForm = () => { setError(""); setBedNo(""); setSelected(null); setHotelRoomId(""); setEditingBed(false); };
   const openGuest = (guest) => {
     resetForm(); setSelected(guest);
     const place = guest.lodging || lodging;
-    const offsite = offsiteRoomFor(guest, workspace.offsiteRooms);
-    setDraft({ lodging: place, roomNo: guest.roomNo || (isFixedLodging(place) ? (fixedRoomsFor(place).find(r => roomKey(r) === roomNo)?.number || fixedRoomsFor(place)[0].number) : ""), roomCode: guest.roomCode || "" });
+    const offsite = offsiteRoomFor(guest, capacityRooms);
+    setDraft({ lodging: place, roomNo: guest.roomNo || (isFixedLodging(place) ? (fixedRoomsFor(place, onsiteRooms).find(r => roomKey(r) === roomNo)?.number || fixedRoomsFor(place, onsiteRooms)[0].number) : ""), roomCode: guest.roomCode || "" });
     setHotelRoomId(offsite?.id || "");
-    setBedNo(String(bedForGuest(guest, workspace.offsiteRooms) || ""));
+    setBedNo(String(bedForGuest(guest, capacityRooms) || ""));
     setAssignment({ day: null, guestFirst: true });
   };
   const openBed = (number, bed, date, childOnly = false) => {
@@ -110,13 +118,13 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
     const guest = guests.find((g) => g.id === id && unassignedGuest(g) && g.sourceWritable);
     if (!guest || !workspace.connected || workspace.saving) return;
     const value = assignmentFor(target, bed);
-    const problem = assignmentIssue(workspace.guests, guest, value, workspace.offsiteRooms);
+    const problem = assignmentIssue(workspace.guests, guest, value, capacityRooms);
     if (problem) { setDropError(problem); return; }
     try { await workspace.saveAssignment(guest, value); toast(`${guest.name} assigned to ${roomLabel(target)}, bed ${bed} · ${stayLabel(guest)}.`); }
     catch (failure) { setDropError(failure.message); }
   };
-  const drag = { guest: dragGuest, target: dragTarget ? `${roomKey(dragTarget.room)}:${dragTarget.bed}` : "", problem: dragGuest && dragTarget ? assignmentIssue(guests, dragGuest, assignmentFor(dragTarget.room, dragTarget.bed), workspace.offsiteRooms) : "", hover: (target, bed) => { if (dragTarget?.room !== target || dragTarget?.bed !== bed) setDragTarget({ room: target, bed }); }, drop };
-  const openRoom = (existing = null) => { if (readOnly) return; setRoomError(""); setRoomDraft(existing ? { id: existing.id, expectedRevision: existing.revision, lodging: existing.lodging, roomNo: existing.roomNo, beds: existing.beds, roomType: roomTypeFor(existing), isDefaultSlot: existing.isDefaultSlot } : { lodging: hotel, roomNo: "", beds: "", roomType: "doubleQueen" }); };
+  const drag = { guest: dragGuest, target: dragTarget ? `${roomKey(dragTarget.room)}:${dragTarget.bed}` : "", problem: dragGuest && dragTarget ? assignmentIssue(guests, dragGuest, assignmentFor(dragTarget.room, dragTarget.bed), capacityRooms) : "", hover: (target, bed) => { if (dragTarget?.room !== target || dragTarget?.bed !== bed) setDragTarget({ room: target, bed }); }, drop };
+  const openRoom = (existing = null) => { if (readOnly) return; setRoomError(""); setRoomDraft(existing ? { id: existing.id, expectedRevision: existing.revision, lodging: existing.lodging, roomNo: existing.roomNo, beds: existing.beds, roomType: roomTypeFor(existing), preserveCapacity:true, isDefaultSlot: existing.isDefaultSlot } : { lodging: hotel, roomNo: "", beds: "", roomType: "doubleQueen" }); };
   const saveRoom = async (event) => {
     event.preventDefault(); if (readOnly) return; setRoomError("");
     try { await workspace.saveOffsiteRoom(roomDraft); setRoomDraft(null); toast("Hotel room inventory saved."); }
@@ -132,7 +140,7 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
   };
   // Capacity reached: assigned beds against all beds in this lodging, for the chosen day or the busiest day of the week.
   const weekly = view === "weekly";
-  const occupancy = lodgingOccupancy(guests, lodging, rooms, weekly ? planningWeekDays(week) : [day], workspace.offsiteRooms);
+  const occupancy = lodgingOccupancy(guests, lodging, rooms, weekly ? planningWeekDays(week) : [day], capacityRooms);
   const shown = weekly ? occupancy.peak : occupancy.perDay[0];
   const places = isFixedLodging(section) ? "beds" : "places";
   const capacityMeter = occupancy.capacity > 0 && <section className="stay-capacity" aria-label={`${lodging} capacity`}>
@@ -157,22 +165,22 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
       {dropError && <p className="op-form-error stay-drop-error" role="alert">{dropError}</p>}
       {dragGuest && <p className="stay-drag-status" role="status">{drag.problem || `Place ${dragGuest.name} · ${stayLabel(dragGuest)}`}</p>}
       {view === "weekly" && <>
-        {!!rooms.length && <RoomStrip selected={room ? roomKey(room) : ""} onSelect={setRoomNo} rooms={rooms} lodging={lodging} onRoomTypeChange={!readOnly && section === "Offsite" ? changeRoomType : undefined} saving={workspace.saving || !workspace.connected} />}
+        {!!rooms.length && <RoomStrip selected={room ? roomKey(room) : ""} onSelect={setRoomNo} rooms={rooms} lodging={lodging} onRoomTypeChange={!readOnly && section === "Offsite" ? changeRoomType : undefined} saving={workspace.saving || !workspace.connected} onAddBed={!readOnly ? addBedSlot : undefined} />}
         <div className="stay-date-toolbar"><div><span className="stay-kicker">WEEK {weekIndex + 1} OF {PLANNING_WEEK_STARTS.length}</span><h2 aria-live="polite">{shortDay(week)} – {shortDay(moveDay(planningWeekEnd(week), -1))}, 2026</h2></div><div className="stay-date-controls"><button className="stay-arrow" aria-label="Previous week" disabled={weekIndex === 0} onClick={() => changeWeek(weekIndex - 1)}><ChevronLeft size={20} /></button><select aria-label="Choose occupancy week" value={weekIndex} onChange={(e) => changeWeek(Number(e.target.value))}>{PLANNING_WEEK_STARTS.map((start, index) => <option key={start} value={index}>{shortDay(start)} – {shortDay(moveDay(planningWeekEnd(start), -1))}</option>)}</select><button className="stay-arrow" aria-label="Next week" disabled={weekIndex === PLANNING_WEEK_STARTS.length - 1} onClick={() => changeWeek(weekIndex + 1)}><ChevronRight size={20} /></button></div></div>
         {queuePanel}
-        {room && <WeeklyRooms guests={guests} room={room} week={week} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} rooms={workspace.offsiteRooms} drag={readOnly ? null : drag} readOnly={readOnly} onChooseDay={(next) => { selectDay(next); setView("daily"); }} />}
+        {room && <WeeklyRooms guests={guests} room={room} week={week} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} rooms={capacityRooms} drag={readOnly ? null : drag} readOnly={readOnly} onChooseDay={(next) => { selectDay(next); setView("daily"); }} />}
       </>}
       {["daily", "overview"].includes(view) && <>
         <div className="stay-date-toolbar"><div><span className="stay-kicker">{view === "overview" ? "ALL ROOMS" : `ALL ${lodging.toUpperCase()} ROOMS`}</span><h2 aria-live="polite">{fullDay(day)}</h2></div><div className="stay-date-controls"><button className="stay-arrow" aria-label="Previous occupancy day" disabled={day === PLANNING_START_DAY} onClick={() => selectDay(moveDay(day, -1))}><ChevronLeft size={20} /></button><label className="stay-date-input"><CalendarDays size={17} /><input type="date" aria-label="Choose occupancy date" min={PLANNING_START_DAY} max={LAST_STAY_DAY} value={day} onChange={(e) => { if (e.target.value) selectDay(e.target.value); }} /></label><button className="stay-arrow" aria-label="Next occupancy day" disabled={day === LAST_STAY_DAY} onClick={() => selectDay(moveDay(day, 1))}><ChevronRight size={20} /></button></div></div>
-        {view === "daily" ? <>{queuePanel}<div className="stay-daily-heading"><h2>Room availability</h2><p>Checkout day is free{!readOnly && " · Drag a guest or tap an empty bed"}</p></div><DailyRooms guests={guests} day={day} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} rooms={rooms} lodging={lodging} drag={readOnly ? null : drag} readOnly={readOnly} /></> : <><p className="stay-overview-note">All Samarpan, Sadhak and offsite rooms · Checkout day is free. {queue.length} unassigned guests staying today.</p><RoomOverview guests={guests} day={day} rooms={allRooms} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} readOnly={readOnly} /></>}
+        {view === "daily" ? <>{queuePanel}<div className="stay-daily-heading"><h2>Room availability</h2><p>Checkout day is free{!readOnly && " · Drag a guest or tap an empty bed"}</p></div><DailyRooms guests={guests} day={day} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} rooms={rooms} lodging={lodging} onAddBed={!readOnly ? addBedSlot : undefined} drag={readOnly ? null : drag} readOnly={readOnly} /></> : <><p className="stay-overview-note">All Samarpan, Sadhak and offsite rooms · Checkout day is free. {queue.length} unassigned guests staying today.</p><RoomOverview guests={guests} day={day} rooms={allRooms} onAddBed={!readOnly ? addBedSlot : undefined} onAssign={openBed} onEdit={openGuest} saving={workspace.saving} readOnly={readOnly} /></>}
       </>}
       {!rooms.length && view !== "list" && <div className="stay-clean-state"><Building2 size={30} /><h2>No planning rooms yet</h2><p>{readOnly ? `No rooms have been added for ${hotel}.` : `Add a provisional room and its bed count to start assigning stays at ${hotel}.`}</p>{!readOnly && <button className="button primary" onClick={() => openRoom()}>Add planning room</button>}</div>}
       {view !== "list" && review.length > 0 && <details className="stay-review"><summary>{review.length} {lodging} assignments need review</summary><p>These assignments have missing dates, an unknown room, or a code that doesn’t identify a bed. Affected beds stay marked for review.</p>{review.map((g) => <button key={g.id} onClick={() => openGuest(g)}>{g.name} · {g.roomCode || `Room ${g.roomNo}`}</button>)}</details>}
       {view === "list" && <>
         <label className="search-field"><Search size={18} /><input aria-label="Search lodging attendees" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search attendee or room…" /></label>
         <div className="sheet-attendee-list">{listedGuests.map(guest => {
-          const pending = unassignedGuest(guest), bed = bedForGuest(guest, workspace.offsiteRooms);
-          const hotelRoom = offsiteRoomFor(guest, workspace.offsiteRooms);
+          const pending = unassignedGuest(guest), bed = bedForGuest(guest, capacityRooms);
+          const hotelRoom = offsiteRoomFor(guest, capacityRooms);
           return <article className={`card sheet-attendee ${pending ? "is-unassigned" : ""}`} key={guest.id}>
             <div className="stay-card-heading"><h3>{guest.name}<WhatsAppSent guest={guest} /></h3>{pending && <span className="stay-pending-badge">Unassigned</span>}</div>
             <p className="stay-card-dates"><CalendarDays size={14} />{stayLabel(guest)}</p>
@@ -202,7 +210,7 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
         <label className="field">{isFixedLodging(draft.lodging) ? "Room number (AE)" : "Hotel room slot"}<select aria-label={isFixedLodging(draft.lodging) ? "Room number (AE)" : "Hotel planning room"} value={isFixedLodging(draft.lodging) ? draft.roomNo : hotelRoomId} disabled={workspace.saving} onChange={(e) => { const target = draftRooms.find((r) => r.number === e.target.value); setDraft({ ...draft, roomNo: target && !isFixedLodging(draft.lodging) ? target.roomNo : e.target.value, roomCode: "" }); setHotelRoomId(target?.id || ""); setBedNo(""); setError(""); }} required><option value="" disabled>{isFixedLodging(draft.lodging) ? `Choose a ${draft.lodging} room` : "Choose a hotel room slot"}</option>{draftRooms.map((r) => <option key={r.number} value={r.number}>{isFixedLodging(draft.lodging) ? r.number : roomLabel(r)} · {roomCapacityLabel(r)}</option>)}</select></label>
         {!isFixedLodging(draft.lodging) && !draftRooms.length && <p className="sheet-data-note">Add a planning room in Offsite before assigning a guest to this hotel.</p>}
         {selectedRoom && !isFixedLodging(draft.lodging) && !selectedRoom.roomNo && <p className="sheet-data-note">The hotel room number is pending. Column AE stays blank; this provisional bed code keeps the assignment in place.</p>}
-        <label className="field">Bed / guest place<select aria-label="Bed number" value={bedNo} disabled={workspace.saving || !selectedRoom} required onChange={(e) => { setBedNo(e.target.value); setDraft(assignmentFor(selectedRoom, e.target.value)); setError(""); }}><option value="" disabled>Choose a place</option>{Array.from({ length: selectedRoom?.beds || 0 }, (_, i) => { const number = i + 1; const value=assignmentFor(selectedRoom,number); const problem = selected ? assignmentIssue(workspace.guests, selected, value, workspace.offsiteRooms) : ""; const adults = selected && isChildUnder12(selected) && stayRange(selected) ? bedState(workspace.guests, selectedRoom.id || selectedRoom.number, number, stayRange(selected), selected, selectedRoom.lodging || 'Samarpan', workspace.offsiteRooms).occupants.filter(isAdultBedOccupant) : []; return <option key={number} value={number} disabled={!!problem}>{selectedRoom ? roomPlaceLabel(selectedRoom, number) : `Bed ${number}`}{problem ? " · unavailable for this stay" : adults.length ? ` · share with ${adults.map(g=>g.name).join(', ')}` : ""}</option>; })}</select></label>
+        <label className="field">Bed / guest place<select aria-label="Bed number" value={bedNo} disabled={workspace.saving || !selectedRoom} required onChange={(e) => { setBedNo(e.target.value); setDraft(assignmentFor(selectedRoom, e.target.value)); setError(""); }}><option value="" disabled>Choose a place</option>{Array.from({ length: selectedRoom?.beds || 0 }, (_, i) => { const number = i + 1; const value=assignmentFor(selectedRoom,number); const problem = selected ? assignmentIssue(workspace.guests, selected, value, capacityRooms) : ""; const adults = selected && isChildUnder12(selected) && stayRange(selected) ? bedState(workspace.guests, isFixedLodging(selectedRoom.lodging) ? selectedRoom.number : selectedRoom.id || selectedRoom.number, number, stayRange(selected), selected, selectedRoom.lodging || 'Samarpan', capacityRooms).occupants.filter(isAdultBedOccupant) : []; return <option key={number} value={number} disabled={!!problem}>{selectedRoom ? roomPlaceLabel(selectedRoom, number) : `Bed ${number}`}{problem ? " · unavailable for this stay" : adults.length ? ` · share with ${adults.map(g=>g.name).join(', ')}` : ""}</option>; })}</select></label>
         <label className="field">Custom room code (AF)<input value={draft.roomCode} readOnly disabled={workspace.saving} required placeholder="Generated from room and bed" /></label>
         </>}
         {selected && !stayRange(selected) && <a className="button secondary" href={SHEET_URL} target="_blank" rel="noreferrer">Open source sheet to add dates</a>}
@@ -213,8 +221,8 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
     </Sheet>}
     {roomDraft && !readOnly && <Sheet title={roomDraft.id ? "Edit hotel room" : "Add planning room"} subtitle={roomDraft.lodging} onClose={() => { if (!workspace.saving) setRoomDraft(null); }}><form className="op-form" onSubmit={saveRoom}>
       <label className="field">Hotel room number (optional)<input value={roomDraft.roomNo} maxLength={100} placeholder="Leave blank until confirmed" onChange={(e) => setRoomDraft({ ...roomDraft, roomNo: e.target.value })} disabled={workspace.saving} /></label>
-      <label className="field">Room type<select aria-label={`${roomDraft.lodging} room type`} value={roomDraft.roomType || "doubleQueen"} onChange={(e) => { const type = HAWTHORN_ROOM_TYPES[e.target.value]; setRoomDraft({ ...roomDraft, roomType: e.target.value, beds: type.beds }); }} disabled={workspace.saving}><option value="king">King · 2 spots</option><option value="doubleQueen">Double Queen · 4 spots</option></select></label>
-      <p className="sheet-data-note"><strong>{roomDraft.roomType === "king" ? "King" : "Double Queen"}:</strong> {roomDraft.roomType === "king" ? "1 bed · 2 people total." : "2 beds · 4 people total."} Changing type requires enough capacity for existing assignments.</p>
+      <label className="field">Room type<select aria-label={`${roomDraft.lodging} room type`} value={roomDraft.roomType || "doubleQueen"} onChange={(e) => { const type = HAWTHORN_ROOM_TYPES[e.target.value]; setRoomDraft({ ...roomDraft, roomType: e.target.value, beds: type.beds, preserveCapacity:false }); }} disabled={workspace.saving}><option value="king">King · 2 spots</option><option value="doubleQueen">Double Queen · 4 spots</option></select></label>
+      <p className="sheet-data-note">Current capacity: {Number(roomDraft.beds) || HAWTHORN_ROOM_TYPES[roomDraft.roomType || "doubleQueen"].beds} guest slots. Changing room type resets its standard capacity and requires enough space for existing assignments.</p>
       <p className="sheet-data-note">Adding the actual hotel room number later preserves every guest assignment and stay date.</p>
       {roomError && <p className="op-form-error" role="alert">{roomError}</p>}<button className="button primary" disabled={workspace.saving || !workspace.connected}>{workspace.saving ? "Saving…" : "Save room"}</button>
     </form></Sheet>}

@@ -16,6 +16,7 @@ import { crewForPlan, readAdditionalDrivers } from "../src/lib/transportCrew.js"
 import { driverConfirmationsFor, readDriverConfirmations, driverNames } from "../src/lib/transportConfirmation.js";
 import { dayDisplayId, displayChangedAt } from "../src/lib/transportDisplay.js";
 import { HAWTHORN_ROOM_TYPES, OFFSITE_HOTELS, defaultOffsiteRoom, normalizeOffsiteHotel, offsiteRoomFor, withDefaultOffsiteRooms, readHotelInventory } from "../src/lib/offsite.js";
+import { FIXED_LODGINGS, fixedRoomsFor } from "../src/lib/lodgingRooms.js";
 import { checkoutEvents } from "../src/lib/housekeeping.js";
 export const TABLES = {
   "Hotel Inventory": ["Hotel", "Active room slots"],
@@ -122,11 +123,28 @@ function plans(book, readOnly = false) {
   };
 }
 function hotelRooms(book, readOnly = false) {
-  const stored = table(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => { const beds = Number(r[3]); const type = beds === HAWTHORN_ROOM_TYPES.king.beds ? HAWTHORN_ROOM_TYPES.king : HAWTHORN_ROOM_TYPES.doubleQueen; return { id: r[0], number: r[0], lodging: normalizeOffsiteHotel(r[1]), roomNo: r[2], beds, physicalBeds: type.physicalBeds, peoplePerBed: type.peoplePerBed, label: r[4], revision: r[5] }; });
+  const stored = table(book, "Offsite Rooms", readOnly).rows.slice(1).filter((r) => r[0]).map((r) => { const beds = Number(r[3]); const type = beds === HAWTHORN_ROOM_TYPES.king.beds ? HAWTHORN_ROOM_TYPES.king : HAWTHORN_ROOM_TYPES.doubleQueen; return { id: r[0], number: r[0], lodging: normalizeOffsiteHotel(r[1]), roomNo: r[2], beds, physicalBeds: Math.ceil(beds / type.peoplePerBed), peoplePerBed: type.peoplePerBed, label: r[4], revision: r[5] }; });
   const inventoryRows = table(book, "Hotel Inventory", true).rows.slice(1).filter(row => row[0]);
   if (new Set(inventoryRows.map(row => normalizeOffsiteHotel(row[0]))).size !== inventoryRows.length) throw new Error("Duplicate hotels in Hotel Inventory. Review the sheet.");
   const inventory = Object.fromEntries(inventoryRows.map(row => { const hotel = normalizeOffsiteHotel(row[0]); return [hotel, readHotelInventory(row[1], hotel)]; }));
   return withDefaultOffsiteRooms(stored, inventory);
+}
+function fixedRooms(book) {
+  const saved = table(book, "Offsite Rooms", true).rows.slice(1).filter(r => FIXED_LODGINGS.includes(r[1])).map(r => ({id:r[0], number:r[2], lodging:r[1], beds:Number(r[3]), revision:r[5]}));
+  return FIXED_LODGINGS.flatMap(lodging => fixedRoomsFor(lodging, saved).map(r => ({...r, lodging, revision:r.revision || `default-${lodging}-${r.number}-${r.beds}`})));
+}
+const allRooms = book => [...hotelRooms(book,true), ...fixedRooms(book)];
+function addBedSlot(book, req) {
+  const rooms = allRooms(book), old = rooms.find(r => r.lodging === req.lodging && (r.id || r.number) === req.room);
+  if (!old || old.revision !== req.expectedRevision) throw Error("This room changed. Refresh before adding a slot.");
+  if (old.beds >= 100) throw Error("This room has reached the 100-slot limit.");
+  const id = old.id || `onsite-${old.lodging}-${old.number}`;
+  const {sheet,rows} = table(book,"Offsite Rooms");
+  const index = rows.findIndex(r => r[0] === id);
+  const values = [id,old.lodging,old.roomNo || (FIXED_LODGINGS.includes(old.lodging) ? old.number : ""),String(old.beds+1),old.label || old.number,runtime.uuid()];
+  writeRow(sheet,index < 0 ? sheet.getLastRow()+1 : index+1,values);
+  history(book,req,id,old,{...old,beds:old.beds+1,revision:values[5]});
+  runtime.flush();
 }
 function tripDisplay(book) {
   return table(book, "Transport Display", true).rows.slice(1).filter(r => r[0]).map(r => ({ id: r[0], collapsed: r[1] === "Yes", revision: r[2], updatedAt: displayChangedAt(r[2]) }));
@@ -149,7 +167,7 @@ function setTripDisplay(book, req) {
 function housekeeping(book, guests, readOnly = false) {
   const current = table(book, "Housekeeping", readOnly);
   const today = runtime.today();
-  const due = checkoutEvents(guests, today);
+  const due = checkoutEvents(guests, today, allRooms(book));
   const dueIds = new Set(due.map((e) => e.id));
   const known = new Set(current.rows.slice(1).map((r) => r[0]));
   current.rows.forEach((r, i) => {
@@ -183,6 +201,7 @@ function snapshot(book, role) {
     guests: current.guests,
     transport: plans(book, true),
     offsiteRooms: hotelRooms(book, true),
+    fixedRooms: fixedRooms(book),
     housekeeping: housekeeping(book, current.guests, true),
     // Retain the meal projection for already-open versions of the team page.
     kitchenGuests: current.guests.map((g, index) => ({ sourceIdentity: `meal-${index}`, name: g.name, city: g.city, count: g.count, arrivalDate: g.arrivalDate, arrivalTime: g.arrivalTime, departureDate: g.departureDate, status: g.status, stay: g.stay === "Day visitor" ? "Day visitor" : "Overnight" })),
@@ -194,6 +213,7 @@ function snapshot(book, role) {
     rows: current.rows,
     transport: plans(book),
     offsiteRooms: hotelRooms(book),
+    fixedRooms: fixedRooms(book),
     housekeeping: housekeeping(book, current.guests),
     refreshedAt: new Date().toISOString(),
   };
@@ -216,7 +236,7 @@ function history(book, req, record, before, after) {
   ]);
 }
 function lodging(book, req) {
-  const values = validateAssignment(req.assignment);
+  const values = validateAssignment(req.assignment, allRooms(book));
   const current = roster(book);
   housekeeping(book, current.guests);
   const matches = current.rows
@@ -249,7 +269,7 @@ function lodging(book, req) {
       lodging: values[0],
       roomNo: values[1],
       roomCode: values[2],
-    }, hotelRooms(book));
+    }, allRooms(book));
     if (problem) throw new Error(problem);
   }
   current.sheet
@@ -302,10 +322,10 @@ function guest(book, req) {
   Object.assign(row, { 0: id, 1: new Date().toISOString(), 2: primary === name ? "YES" : "NO", 3: primary, 5: field("phone"), 7: field("city"), 8: name, 9: field("relationship") || (primary === name ? "Self (Primary)" : ""), 11: mode, 12: time("arrivalTime", start), 13: time("departureTime", end), 18: transport, 20: overnight, 21: start, 22: end, 23: notes });
   if (row.length >= 33) row[32] = dropoff;
   if (req.assignment) {
-    const values = validateAssignment(req.assignment);
+    const values = validateAssignment(req.assignment, allRooms(book));
     const proposed = guestsFromRows([current.rows[0], row])[0];
     if (!values[0] || overnight !== "YES" || !stayRange(proposed)) throw new Error("Enter valid check-in and checkout dates for the walk-in stay.");
-    const problem = assignmentIssue(current.guests, proposed, { lodging: values[0], roomNo: values[1], roomCode: values[2] }, hotelRooms(book, true));
+    const problem = assignmentIssue(current.guests, proposed, { lodging: values[0], roomNo: values[1], roomCode: values[2] }, allRooms(book));
     if (problem) throw new Error(problem);
     row.splice(29, 3, ...values);
   }
@@ -336,10 +356,11 @@ function offsite(book, req) {
   const hotel = normalizeOffsiteHotel(clean(req.lodging)), roomNo = clean(req.roomNo);
   const roomType = req.roomType || (Number(req.beds) === HAWTHORN_ROOM_TYPES.king.beds ? "king" : "doubleQueen");
   const type = HAWTHORN_ROOM_TYPES[roomType];
-  const beds = req.roomType ? type?.beds : (preset?.beds || type?.beds || Number(req.beds));
+  const preserveCapacity = req.preserveCapacity === true && old && Number(req.beds) === old.beds;
+  const beds = preserveCapacity ? old.beds : req.roomType ? type?.beds : (preset?.beds || type?.beds || Number(req.beds));
   if (!OFFSITE_HOTELS.includes(hotel) || !Number.isInteger(beds) || beds < 1 || beds > 20) throw new Error("Choose a hotel and between 1 and 20 beds.");
   if (!type) throw new Error("Choose King or Double Queen room type.");
-  if (beds !== type.beds) throw new Error("The selected hotel room type has a fixed capacity.");
+  if (!preserveCapacity && beds !== type.beds) throw new Error("The selected hotel room type has a fixed capacity.");
   if (old && old.lodging !== hotel) throw new Error("An existing planning room cannot be moved to another hotel.");
   if (roomNo && rooms.some((r) => r.id !== old?.id && r.lodging === hotel && r.roomNo.toLowerCase() === roomNo.toLowerCase())) throw new Error("This hotel room number is already in the inventory.");
   const current = roster(book);
@@ -532,5 +553,5 @@ function resource(book, req) {
   );
 }
 
-return { table, roster, plans, hotelRooms, tripDisplay, housekeeping, snapshot, clean, mutate: (book, req) => ({lodging, guest, linen, offsite, transport, resource, "trip-display": setTripDisplay})[req.action](book, req) };
+return { table, roster, plans, hotelRooms, tripDisplay, housekeeping, snapshot, clean, mutate: (book, req) => ({lodging, guest, linen, offsite, "bed-slot": addBedSlot, transport, resource, "trip-display": setTripDisplay})[req.action](book, req) };
 }

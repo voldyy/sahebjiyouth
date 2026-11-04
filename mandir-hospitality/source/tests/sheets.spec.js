@@ -814,3 +814,19 @@ test('Samarpan YP1 has four assignable beds and 202 has three', async ({page}) =
   await expect(page.locator('.stay-week-grid tbody tr')).toHaveCount(3);
   await expect(page.locator('.stay-week-grid')).toContainText('S202B3');
 });
+
+test('room plus saves onsite and offsite slots through refresh and viewers cannot add slots', async ({page,browser})=>{
+ const h=await setup(page,'ok',[plannerGuest('PLUS','Waiting Guest','2026-11-03','2026-11-08')]);
+ await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Accommodations',exact:true}).click();
+ await page.getByRole('button',{name:'Add bed slot to Room 202',exact:true}).click();
+ await page.getByRole('button',{name:'Room 202 4 beds',exact:true}).click();
+ await expect(page.locator('.stay-week-grid tbody tr')).toHaveCount(4);
+ await page.reload();await page.getByRole('button',{name:'Room 202 4 beds',exact:true}).click();
+ await expect(page.locator('.stay-week-grid')).toContainText('S202B4');
+ await page.getByRole('button',{name:'Offsite',exact:true}).click();
+ await page.getByRole('button',{name:'Add bed slot to R01',exact:true}).click();
+ await expect(page.getByRole('button',{name:/^R01 3 beds · 5 people/})).toBeVisible();
+ await page.getByRole('button',{name:/^R01 3 beds · 5 people/}).click();
+ await expect(page.locator('.stay-week-grid tbody tr')).toHaveCount(5);
+ const c=await browser.newContext();await c.clock.install({time:TODAY});await mockBridge(c,h,false);const viewer=await c.newPage();await viewer.goto('http://localhost:5175/#rooms');await expect(viewer.getByRole('button',{name:/Add bed slot/})).toHaveCount(0);await c.close();
+});

@@ -43,7 +43,7 @@ export function bedForGuest(guest, rooms = []) {
     return room && bed >= 1 && bed <= room.beds ? bed : null;
   }
   const bed = String(guest.roomCode || "").match(/B([1-9]\d*)$/)?.[1];
-  return bed && fixedRoomCode(guest.lodging, guest.roomNo, bed) === guest.roomCode ? Number(bed) : null;
+  return bed && fixedRoomCode(guest.lodging, guest.roomNo, bed, rooms) === guest.roomCode ? Number(bed) : null;
 }
 const sameGuest = (a, b) => (a.sourceIdentity || a.id) === (b.sourceIdentity || b.id);
 export const isChildUnder12 = guest => /^child\s*\(\s*under\s*12\s*\)\s*[:.]?$/i.test(String(guest?.relationship || "").trim());

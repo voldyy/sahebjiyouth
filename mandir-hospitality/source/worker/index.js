@@ -16,7 +16,7 @@ async function matchesDigest(value, expected) {
   const actual = await digest(value || "");
   return crypto.subtle.timingSafeEqual(encoder.encode(actual), encoder.encode(expected || "0".repeat(64)));
 }
-const mutating = new Set(["lodging", "transport", "resource", "linen", "offsite", "guest", "trip-display"]);
+const mutating = new Set(["lodging", "transport", "resource", "linen", "offsite", "bed-slot", "guest", "trip-display"]);
 const allowedOrigins = new Set(["https://www.sahebjiyouth.org", "https://sahebjiyouth.org", "http://localhost:5174", "http://127.0.0.1:5174", "http://localhost:5175", "http://127.0.0.1:5175",
   // Local mandal meals form (anoopam.us) and its Azure Front Door address.
   "https://www.anoopam.us", "https://anoopam.us", "https://events.anoopam.us", "https://anoopam-events-adgphqgpcjgmcubv.z01.azurefd.net"]);

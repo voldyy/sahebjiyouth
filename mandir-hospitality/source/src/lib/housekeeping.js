@@ -8,9 +8,9 @@ export function allentownDay(now = new Date()) {
 
 // A checkout is tied to the particular stay, not simply to a bed's last clean date.
 // The backend retains these records when a lodging assignment is later cleared.
-export function checkoutEvents(guests, today) {
+export function checkoutEvents(guests, today, rooms = []) {
   return guests.flatMap((guest) => {
-    const stay = stayRange(guest), bed = bedForGuest(guest);
+    const stay = stayRange(guest), bed = bedForGuest(guest, rooms);
     if (guest.lodging !== "Samarpan" || !bed || !stay || guest.status === "Cancelled" || stay.end > today) return [];
     return [{ id: JSON.stringify([guest.sourceIdentity || guest.id, guest.roomCode, stay.start, stay.end]), roomNo: guest.roomNo, bed, roomCode: guest.roomCode, name: guest.name, checkout: stay.end, refreshedAt: "" }];
   });

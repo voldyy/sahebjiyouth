@@ -99,7 +99,7 @@ export function hospitalityRequest(req, local = false) {
       return JSON.parse(response.getContentText());
     }
     if (
-      !["snapshot", "lodging", "transport", "resource", "flight", "linen", "offsite", "guest", "trip-display", "trip-display-read", "notification-authorize", "notification-flight", "accommodation-notifications"].includes(
+      !["snapshot", "lodging", "transport", "resource", "flight", "linen", "offsite", "bed-slot", "guest", "trip-display", "trip-display-read", "notification-authorize", "notification-flight", "accommodation-notifications"].includes(
         req.action,
       )
     )

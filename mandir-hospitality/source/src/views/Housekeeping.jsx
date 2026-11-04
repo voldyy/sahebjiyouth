@@ -6,7 +6,7 @@ import { shortDay, bedForGuest, stayRange } from "../lib/occupancy";
 export default function Housekeeping({ workspace, toast, readOnly = false }) {
   const [error, setError] = useState("");
   const beds = linenBeds(workspace.housekeeping);
-  const unresolved = workspace.guests.filter((g) => g.lodging === "Samarpan" && g.status !== "Cancelled" && (g.roomNo || g.roomCode) && (!bedForGuest(g) || !stayRange(g)));
+  const unresolved = workspace.guests.filter((g) => g.lodging === "Samarpan" && g.status !== "Cancelled" && (g.roomNo || g.roomCode) && (!bedForGuest(g, workspace.fixedRooms || []) || !stayRange(g)));
   const refreshed = workspace.housekeeping.filter((e) => e.refreshedAt).sort((a, b) => b.refreshedAt.localeCompare(a.refreshedAt));
   const refresh = async (bed) => {
     if (readOnly) return;

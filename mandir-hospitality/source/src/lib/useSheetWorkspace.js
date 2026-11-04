@@ -18,6 +18,7 @@ const emptyMeals = () => ({
 export function useSheetWorkspace(enabled) {
   const [guests, setGuests] = useState([]);
   const [transport, setTransport] = useState(EMPTY_TRANSPORT);
+  const [fixedRooms, setFixedRooms] = useState([]);
   const [offsiteRooms, setOffsiteRooms] = useState([]);
   const [housekeeping, setHousekeeping] = useState([]);
   const [tripDisplay, setTripDisplay] = useState([]);
@@ -50,6 +51,7 @@ export function useSheetWorkspace(enabled) {
     setGuests(result.guests || (result.role === "admin" ? guestsFromRows(result.rows) : result.kitchenGuests || []));
     setTransport(result.transport || EMPTY_TRANSPORT);
     setOffsiteRooms(result.offsiteRooms || []);
+    setFixedRooms(result.fixedRooms || []);
     setHousekeeping(result.housekeeping || []);
     setMeals({
       ...emptyMeals(),
@@ -139,6 +141,7 @@ export function useSheetWorkspace(enabled) {
     guests,
     transport,
     offsiteRooms,
+    fixedRooms,
     housekeeping,
     tripDisplay,
     meals,
@@ -174,6 +177,7 @@ export function useSheetWorkspace(enabled) {
       }),
     saveResource: (type, name, active) =>
       save({ action: "resource", type, name, active }),
+    addBedSlot: room => save({action:"bed-slot", lodging:room.lodging || "Samarpan",room:room.id || room.number,expectedRevision:room.revision}),
     saveOffsiteRoom: (room) => save({ action: "offsite", ...room }),
     refreshLinens: (bed) => save({ action: "linen", roomCode: bed.roomCode, expected: bed.events.map((e) => e.id) }),
     saveMealOverride: (identity, day, meal, included, expectedRevision = "") =>
