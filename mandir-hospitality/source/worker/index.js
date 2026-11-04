@@ -142,7 +142,7 @@ export class HospitalityWorkspace extends DurableObject {
     const book = tabularWorkspace({ ...this.load(), "Assignment History": [TABLES["Assignment History"]] });
     const snapshot = engine.snapshot(book, "viewer");
     const notices = JSON.parse(this.meta("lodgingNotices", "[]"));
-    return { ok: true, ...snapshot, capabilities: { childBedSharing: true, multipleDrivers: true, transportConfirmation: true, hotelInventory: true, samarpanRoomNumbering: 2 }, guests: withLodgingNotices(this.meals.augment(snapshot.guests), notices), meals: this.meals.snapshot(role, snapshot.guests, role === "admin" ? this.survey.summary() : undefined), role, ...(role === "admin" ? { rows: book.data.Attendees } : {}), revision: this.meta("revision", "0"), sync: this.syncState() };
+    return { ok: true, ...snapshot, capabilities: { roomSlots: true, childBedSharing: true, multipleDrivers: true, transportConfirmation: true, hotelInventory: true, samarpanRoomNumbering: 2 }, guests: withLodgingNotices(this.meals.augment(snapshot.guests), notices), meals: this.meals.snapshot(role, snapshot.guests, role === "admin" ? this.survey.summary() : undefined), role, ...(role === "admin" ? { rows: book.data.Attendees } : {}), revision: this.meta("revision", "0"), sync: this.syncState() };
   }
   async refreshLodgingNotices() {
     if (!this.env.LODGING_STATUS_KEY) return;
