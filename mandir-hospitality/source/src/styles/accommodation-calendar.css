@@ -211,4 +211,12 @@
 .stay-capacity-bar.is-busy i { background: #d99a1c; }
 .stay-capacity-bar.is-full i { background: #b3342a; }
 
-.stay-room-choice{position:relative}.stay-add-bed{border:1px solid #cbd5e1;background:white;color:#326681;border-radius:50%;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}.stay-room-choice>.stay-add-bed{position:absolute;top:5px;right:5px}.stay-room-choice:has(>.stay-add-bed) .stay-room-chip{padding-right:36px}.stay-add-bed:disabled{opacity:.45;cursor:wait}
+.stay-add-bed{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+
+.stay-add-bed{width:auto;height:36px;min-width:96px;padding:0 11px;border-radius:7px;border:1px solid #8bacba;gap:5px;background:#e9f3f7;color:#174b61;font-size:13px;font-weight:650;position:static}
+.stay-add-bed:disabled{opacity:.65;cursor:default;color:#526b77;background:#f1f5f9}
+.stay-room-header-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+.stay-whole-room-select{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:650;margin:14px 0}
+.stay-whole-room-select select{width:min(100%,340px);border:1px solid #cbd5e1;border-radius:7px;padding:10px;background:#fff;color:#18313e}
+.final-room-name .stay-add-bed{margin-top:10px}
+@media(max-width:600px){.stay-day-room>header,.stay-overview-room>header{flex-wrap:wrap;gap:8px}.stay-room-header-actions{justify-content:flex-start}.stay-panel-title{align-items:flex-start}.stay-whole-room-select select{flex:1}.stay-add-bed{min-width:90px}}

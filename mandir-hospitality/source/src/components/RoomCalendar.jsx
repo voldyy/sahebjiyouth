@@ -9,13 +9,17 @@ const roomPlaceAria = (room, position) => OFFSITE_HOTELS.includes(room.lodging)
   ? `${roomLabel(room)} ${roomPlaceLabel(room, position)}`
   : `${room.lodging === "Sadhak" ? "Sadhak " : ""}room ${room.number} bed ${position}`;
 
+export function AddRoomBed({room,onAddBed,saving=false}) {
+  return <button type="button" className="stay-add-bed" aria-label={`Add extra bed to ${roomLabel(room)}`} title={onAddBed ? "Add one extra bed slot" : "Use your private admin link to add a bed"} disabled={saving || !onAddBed} onClick={()=>onAddBed?.(room)}><Plus size={16}/><span>Add bed</span></button>;
+}
+
 export function RoomStrip({ selected, onSelect, rooms = samarpanRooms, lodging = "Samarpan", onRoomTypeChange, saving = false, onAddBed }) {
   const strip = useRef(null);
   return <section className="stay-room-selector" aria-label={`Choose a ${lodging} room`}>
     <button className="stay-arrow" aria-label="Scroll rooms left" onClick={() => strip.current?.scrollBy({ left: -300, behavior: "smooth" })}><ChevronLeft size={18} /></button>
     <div className="stay-room-strip" ref={strip}>{rooms.map((room) => <div className="stay-room-choice" key={roomKey(room)}>
       <button className={`stay-room-chip ${selected === roomKey(room) ? "is-selected" : ""}`} aria-pressed={selected === roomKey(room)} onClick={() => onSelect(roomKey(room))}><BedDouble size={20} /><span><strong>{roomLabel(room)}</strong><small>{roomCapacityLabel(room)}{OFFSITE_HOTELS.includes(room.lodging) && !room.roomNo ? " · Number pending" : ""}</small></span></button>
-      {onAddBed && <button className="stay-add-bed" aria-label={`Add bed slot to ${roomLabel(room)}`} title="Add bed slot" disabled={saving} onClick={()=>onAddBed(room)}><Plus size={15}/></button>}
+
       {onRoomTypeChange && OFFSITE_HOTELS.includes(room.lodging) && <div className="stay-room-type-switch" role="group" aria-label={`${room.label || roomLabel(room)} room type`}>
         {[{ value: "king", label: "King", spots: 2 }, { value: "doubleQueen", label: "Double Queen", spots: 4 }].map(type => <button key={type.value} type="button" aria-pressed={room.beds === type.spots} disabled={saving} onClick={() => { if (room.beds !== type.spots) onRoomTypeChange(room, type.value); }}>{type.label}<small>{type.spots} spots</small></button>)}
       </div>}
@@ -29,7 +33,7 @@ export function RoomOverview({ guests, day, rooms, onAssign, onEdit, saving, rea
     const places = Array.from({ length: room.beds }, (_, i) => ({ number: i + 1, state: bedState(guests, room.number, i + 1, { start: day, end: moveDay(day, 1) }, null, room.lodging || "Samarpan", rooms) }));
     const free = places.filter(b => b.state.free).length;
     return <article className="stay-overview-room" key={roomKey(room)}>
-      <header><div><small>{room.lodging || "Samarpan"}</small><h2>{roomLabel(room)}</h2></div><span>{room.beds - free}/{room.beds} occupied</span>{onAddBed && <button className="stay-add-bed" aria-label={`Add bed slot to ${roomLabel(room)}`} disabled={saving} onClick={()=>onAddBed(room)}><Plus size={15}/></button>}</header>
+      <header><div><small>{room.lodging || "Samarpan"}</small><h2>{roomLabel(room)}</h2></div><span>{room.beds - free}/{room.beds} occupied</span><AddRoomBed room={room} onAddBed={onAddBed} saving={saving}/></header>
       <div className="stay-overview-beds">{places.map(({ number, state }) => <div className={`stay-overview-bed ${state.free ? "is-free" : state.uncertain.length || state.conflict ? "needs-review" : ""}`} key={number}>
         <span className="stay-overview-number">{roomPeoplePerBed(room) > 1 ? roomPlaceLabel(room, number).replace("Bed ", "B").replace(" · Guest ", ".") : number}</span><div>
           {state.occupants.map(guest => <button key={guest.id} disabled={saving} onClick={() => onEdit(guest)}>{guest.name}<WhatsAppSent guest={guest} /></button>)}
@@ -67,10 +71,10 @@ function BedSlot({ guests, room, bed, day, onAssign, onEdit, saving, compact = f
   </div>;
 }
 
-export function WeeklyRooms({ guests, room, week, onAssign, onEdit, saving, onChooseDay, rooms, drag, readOnly = false }) {
+export function WeeklyRooms({ guests, room, week, onAssign, onEdit, saving, onChooseDay, rooms, drag, readOnly = false, onAddBed }) {
   const days = planningWeekDays(week);
   return <section className="stay-calendar-panel" aria-label={`${roomLabel(room)} weekly occupancy`}>
-    <div className="stay-panel-title"><div><h2>{roomLabel(room)}</h2><p>{room.lodging || "Samarpan"} · {roomCapacityLabel(room)}{OFFSITE_HOTELS.includes(room.lodging) && !room.roomNo ? " · Hotel room number pending" : ""}</p></div><div className="stay-legend"><span><i className="legend-occupied" /> Occupied</span><span><i /> Empty</span></div></div>
+    <div className="stay-panel-title"><div><h2>{roomLabel(room)}</h2><p>{room.lodging || "Samarpan"} · {roomCapacityLabel(room)}{OFFSITE_HOTELS.includes(room.lodging) && !room.roomNo ? " · Hotel room number pending" : ""}</p></div><div className="stay-room-header-actions"><AddRoomBed room={room} onAddBed={onAddBed} saving={saving}/><div className="stay-legend"><span><i className="legend-occupied" /> Occupied</span><span><i /> Empty</span></div></div></div>
     <div className="stay-grid-scroll" tabIndex={0} role="region" aria-label="Weekly bed calendar; scroll horizontally for all dates">
       <table className="stay-week-grid"><thead><tr><th scope="col">{roomPeoplePerBed(room) > 1 ? "Bed / guest" : "Bed"}</th>{days.map((day) => <th scope="col" key={day}><button onClick={() => onChooseDay(day)} aria-label={`Open daily view for ${fullDay(day)}`}><span>{localDay(day).toLocaleDateString("en-US", { weekday: "short" })}</span><strong>{shortDay(day)}</strong></button></th>)}</tr></thead>
         <tbody>{Array.from({ length: room.beds }, (_, i) => i + 1).map((bed) => <tr key={bed}><th scope="row"><BedDouble size={16} /><strong>{roomPlaceLabel(room, bed)}</strong><small>{OFFSITE_HOTELS.includes(room.lodging) ? `${room.roomNo || room.label} · P${bed}` : roomAssignment(room, bed).roomCode}</small></th>{days.map((day) => <td key={day}><BedSlot guests={guests} room={room} bed={bed} day={day} onAssign={onAssign} onEdit={onEdit} saving={saving} rooms={rooms} drag={drag} readOnly={readOnly} /></td>)}</tr>)}</tbody>
@@ -84,6 +88,6 @@ export function DailyRooms({ guests, day, onAssign, onEdit, saving, rooms = sama
   return <section className="stay-daily-rooms" aria-label={`All ${lodging} rooms`}>{rooms.map((room) => {
     const beds = Array.from({ length: room.beds }, (_, i) => i + 1);
     const free = beds.filter((bed) => bedState(guests, room.number, bed, { start: day, end: moveDay(day, 1) }, null, lodging, rooms).free).length;
-    return <article className="stay-day-room" key={roomKey(room)} aria-label={roomLabel(room)}><header><div><BedDouble size={21} /><h2>{roomLabel(room)}</h2></div><span className={free ? "stay-free-count" : "stay-full-count"}>{free} / {room.beds} {roomPeoplePerBed(room) > 1 ? "places" : "beds"} empty</span>{onAddBed && <button className="stay-add-bed" aria-label={`Add bed slot to ${roomLabel(room)}`} disabled={saving} onClick={()=>onAddBed(room)}><Plus size={15}/></button>}</header><div className="stay-day-beds">{beds.map((bed) => <BedSlot key={bed} guests={guests} room={room} bed={bed} day={day} onAssign={onAssign} onEdit={onEdit} saving={saving} compact rooms={rooms} drag={drag} readOnly={readOnly} />)}</div></article>;
+    return <article className="stay-day-room" key={roomKey(room)} aria-label={roomLabel(room)}><header><div><BedDouble size={21} /><h2>{roomLabel(room)}</h2></div><span className={free ? "stay-free-count" : "stay-full-count"}>{free} / {room.beds} {roomPeoplePerBed(room) > 1 ? "places" : "beds"} empty</span><AddRoomBed room={room} onAddBed={onAddBed} saving={saving}/></header><div className="stay-day-beds">{beds.map((bed) => <BedSlot key={bed} guests={guests} room={room} bed={bed} day={day} onAssign={onAssign} onEdit={onEdit} saving={saving} compact rooms={rooms} drag={drag} readOnly={readOnly} />)}</div></article>;
   })}</section>;
 }

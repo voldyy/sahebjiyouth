@@ -818,15 +818,32 @@ test('Samarpan YP1 has four assignable beds and 202 has three', async ({page}) =
 test('room plus saves onsite and offsite slots through refresh and viewers cannot add slots', async ({page,browser})=>{
  const h=await setup(page,'ok',[plannerGuest('PLUS','Waiting Guest','2026-11-03','2026-11-08')]);
  await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Accommodations',exact:true}).click();
- await page.getByRole('button',{name:'Add bed slot to Room 202',exact:true}).click();
+ await page.getByLabel('Choose room',{exact:true}).selectOption('202');
+ await page.getByRole('button',{name:'Add extra bed to Room 202',exact:true}).click();
  await page.getByRole('button',{name:'Room 202 4 beds',exact:true}).click();
  await expect(page.locator('.stay-week-grid tbody tr')).toHaveCount(4);
  await page.reload();await page.getByRole('button',{name:'Room 202 4 beds',exact:true}).click();
  await expect(page.locator('.stay-week-grid')).toContainText('S202B4');
  await page.getByRole('button',{name:'Offsite',exact:true}).click();
- await page.getByRole('button',{name:'Add bed slot to R01',exact:true}).click();
+ await page.getByLabel('Choose room',{exact:true}).selectOption('hawthorn-r01');
+ await page.getByRole('button',{name:'Add extra bed to R01',exact:true}).click();
  await expect(page.getByRole('button',{name:/^R01 3 beds · 5 people/})).toBeVisible();
  await page.getByRole('button',{name:/^R01 3 beds · 5 people/}).click();
  await expect(page.locator('.stay-week-grid tbody tr')).toHaveCount(5);
- const c=await browser.newContext();await c.clock.install({time:TODAY});await mockBridge(c,h,false);const viewer=await c.newPage();await viewer.goto('http://localhost:5175/#rooms');await expect(viewer.getByRole('button',{name:/Add bed slot/})).toHaveCount(0);await c.close();
+ const c=await browser.newContext();await c.clock.install({time:TODAY});await mockBridge(c,h,false);const viewer=await c.newPage();await viewer.goto('http://localhost:5175/#rooms');await expect(viewer.getByRole('button',{name:/Add extra bed/}).first()).toBeDisabled();await c.close();
+});
+
+test('whole room views expose Add bed and put YP1 first in Samarpan cards', async ({page})=>{
+ await setup(page,'ok',[plannerGuest('WHOLE','YP1 Guest','2026-11-03','2026-11-08','YP1','1')]);
+ await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Accommodations',exact:true}).click();
+ await page.getByLabel('Choose room',{exact:true}).selectOption('YP1');
+ await expect(page.getByRole('button',{name:'Add extra bed to Room YP1',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Daily view',exact:true}).click();
+ await expect(page.locator('.stay-day-room').first()).toHaveAttribute('aria-label','Room YP1');
+ await expect(page.locator('.stay-day-room').first().getByRole('button',{name:'Add extra bed to Room YP1',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Day at a glance',exact:true}).click();
+ await expect(page.locator('.stay-overview-room').first()).toContainText('Room YP1');
+ await expect(page.locator('.stay-overview-room').first().getByRole('button',{name:'Add extra bed to Room YP1',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Final',exact:true}).click();
+ await expect(page.locator('.final-room-name').first().getByRole('button',{name:/Add extra bed/})).toBeVisible();
 });

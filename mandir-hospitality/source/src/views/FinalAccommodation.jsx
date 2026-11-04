@@ -1,3 +1,4 @@
+import { AddRoomBed } from "../components/RoomCalendar";
 import { useMemo, useState } from "react";
 import { Building2, CalendarDays } from "lucide-react";
 import { OFFSITE_HOTELS, roomCapacityLabel, roomTypeLabel } from "../lib/offsite";
@@ -6,7 +7,7 @@ import { finalAccommodationPlan, staysOnNight } from "../lib/finalAccommodation"
 import "../styles/final-accommodation.css";
 
 const nightLabel = day => new Date(`${day}T12:00:00`).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-export default function FinalAccommodation({ workspace }) {
+export default function FinalAccommodation({ workspace, onAddBed }) {
   const [hotel, setHotel] = useState("All hotels");
   const [night, setNight] = useState(null);
   const plan = useMemo(() => finalAccommodationPlan(workspace.guests, workspace.offsiteRooms), [workspace.guests, workspace.offsiteRooms]);
@@ -27,7 +28,7 @@ export default function FinalAccommodation({ workspace }) {
       const rows = plan.rows.filter(row => row.room.lodging === h);
       return <section className="final-hotel" key={h} aria-label={`${h} room plan`}><h3><Building2 size={19} />{h}<small>{rows.length} rooms</small></h3><table className="final-room-table"><caption className="sr-only">{h} rooms and occupants</caption><thead><tr><th scope="col">Room</th><th scope="col">Occupant</th><th scope="col">Check-in</th><th scope="col">Check-out</th></tr></thead>{rows.map(({room,occupants}) => {
         const shown = night ? occupants.filter(stay => staysOnNight(stay,night)) : occupants;
-        return <tbody key={room.id} className="final-room-group">{(shown.length ? shown : [null]).map((stay,index) => <tr key={stay?.guest.sourceIdentity || stay?.guest.id || "empty"}>{index === 0 && <th className="final-room-name" scope="rowgroup" rowSpan={Math.max(1,shown.length)}><strong>{room.label}</strong>{room.roomNo && <span>Hotel room {room.roomNo}</span>}<small>{roomTypeLabel(room)} · {roomCapacityLabel(room)}</small></th>}<td className="final-occupant" data-label="Occupant">{stay ? <><strong>{stay.guest.name}</strong>{stay.guest.city && <small>{stay.guest.city}</small>}</> : <span className="final-empty">{night ? "Not needed this night" : "No stays from Nov 6"}</span>}</td><td className="final-stay-date" data-label="Check-in">{stay ? shortDay(stay.start) : "—"}</td><td className="final-stay-date" data-label="Check-out">{stay ? shortDay(stay.end) : "—"}</td></tr>)}</tbody>;
+        return <tbody key={room.id} className="final-room-group">{(shown.length ? shown : [null]).map((stay,index) => <tr key={stay?.guest.sourceIdentity || stay?.guest.id || "empty"}>{index === 0 && <th className="final-room-name" scope="rowgroup" rowSpan={Math.max(1,shown.length)}><strong>{room.label}</strong>{room.roomNo && <span>Hotel room {room.roomNo}</span>}<small>{roomTypeLabel(room)} · {roomCapacityLabel(room)}</small><AddRoomBed room={room} onAddBed={onAddBed} saving={workspace.saving}/></th>}<td className="final-occupant" data-label="Occupant">{stay ? <><strong>{stay.guest.name}</strong>{stay.guest.city && <small>{stay.guest.city}</small>}</> : <span className="final-empty">{night ? "Not needed this night" : "No stays from Nov 6"}</span>}</td><td className="final-stay-date" data-label="Check-in">{stay ? shortDay(stay.start) : "—"}</td><td className="final-stay-date" data-label="Check-out">{stay ? shortDay(stay.end) : "—"}</td></tr>)}</tbody>;
       })}</table>{!rows.length && <p className="final-empty">No rooms at this hotel yet.</p>}</section>;
     })}
   </section>;
