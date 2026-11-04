@@ -68,3 +68,9 @@ npm run build
 ```
 
 Copy generated `notifications/hospitality-service.cjs` to repository `api/src/hospitality-notifications.js` before packaging/deploying the existing API. Update the existing Apps Script deployment with generated `apps-script/Code.gs`, keeping its URL and properties. Publish the dashboard source and dist assets to the existing GitHub Pages application. Do not publish live roster data, recipient exports, credentials or test traces.
+
+## November 4 accommodation templates
+
+The official room-details template is `mandir_accommodation_assignment_v2` (`HX0227c2d6001b09e1bb88c672f351a6ef`, approved Utility). It retains the welcome and uses warmer wording about satsang, seva, and Sahebji’s blessings. The name, lodging, and room variables remain 1, 2, and 3. Updating the template does not clear sent claims or queue another room-details batch.
+
+The separate approved Utility correction template is `mandir_lodging_correction_20261104` (`HXdcb91308fd93cbd80d5cb69893d49de1`). The November 3 evening batch had 160 messages; the correction was sent once to each of its 83 unique successfully contacted WhatsApp numbers. Its receipt ledger is the private `hospitality-lodging-correction-20261104` partition in `RegRegistrations`. It is independent of normal room-details claims.

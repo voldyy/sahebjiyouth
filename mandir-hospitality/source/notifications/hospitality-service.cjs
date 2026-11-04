@@ -353,10 +353,10 @@ var hospitality_templates_default = {
     }
   },
   accommodation: {
-    name: "mandir_accommodation_assignment",
-    sid: "HX5e2aa1c79476223befbfa7b599c66454",
+    name: "mandir_accommodation_assignment_v2",
+    sid: "HX0227c2d6001b09e1bb88c672f351a6ef",
     language: "en",
-    body: "Jai Swaminarayan {{1}}. We are eager to welcome you to the Mandir for your registered visit.\n\nYour lodging assignment is confirmed at {{2}}. Your room number is {{3}}.\n\nPlease contact Monica Matalia for further accommodation details.",
+    body: "Jai Swaminarayan {{1}}. We are eager to welcome you to the Mandir for your registered visit.\n\nWe\u2019ve arranged your stay at {{2}}, in room {{3}}, so you can settle in and enjoy these blessed days of satsang and seva.\n\nMay your visit be filled with devotion and Sahebji\u2019s blessings. If you need any help with your stay, please reach out to Monica Matalia.\n\nJai Swaminarayan.",
     samples: {
       "1": "Alex Patel",
       "2": "Samarpan",
