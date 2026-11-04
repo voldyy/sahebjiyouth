@@ -100,12 +100,15 @@ test("permission failure does not retry or change the snapshot", async (t) => {
   assert.equal(google.writes.length, 1);
   assert.deepEqual(google.rows[1].slice(29), ["", "", ""]);
 });
-test("confirmed Samarpan inventory includes room 201 and totals 85 beds", () => {
-  assert.equal(samarpanBedCount, 85);
-  assert.deepEqual(samarpanRooms.map((r) => r.number), ["201", "202", "203", "204", "205", "206", "207", "101", "102", "103", "104", "105"]);
-  assert.deepEqual(samarpanRooms.map((r) => r.beds), [2, 2, 4, 4, 4, 4, 4, 7, 12, 14, 13, 15]);
+test("confirmed Samarpan inventory includes YP1 and the third bed in 202, totaling 90 beds", () => {
+  assert.equal(samarpanBedCount, 90);
+  assert.deepEqual(samarpanRooms.map((r) => r.number), ["201", "202", "203", "204", "205", "206", "207", "101", "102", "103", "104", "105", "YP1"]);
+  assert.deepEqual(samarpanRooms.map((r) => r.beds), [2, 3, 4, 4, 4, 4, 4, 7, 12, 14, 13, 15, 4]);
   assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "202", roomCode: "S202B2" }), ["Samarpan", "202", "S202B2"]);
-  assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "202", roomCode: "S202B3" }), /valid bed/);
+  assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "202", roomCode: "S202B3" }), ["Samarpan", "202", "S202B3"]);
+  assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "202", roomCode: "S202B4" }), /valid bed/);
+  assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "YP1", roomCode: "SYP1B4" }), ["Samarpan", "YP1", "SYP1B4"]);
+  assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "YP1", roomCode: "SYP1B5" }), /valid bed/);
   assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "204", roomCode: "S204B4" }), ["Samarpan", "204", "S204B4"]);
   assert.deepEqual(validateAssignment({ lodging: "Samarpan", roomNo: "201", roomCode: "S201B2" }), ["Samarpan", "201", "S201B2"]);
   assert.throws(() => validateAssignment({ lodging: "Samarpan", roomNo: "201", roomCode: "S201B3" }), /valid bed/);

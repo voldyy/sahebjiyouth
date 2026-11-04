@@ -10,9 +10,11 @@ export function moveDay(iso, days) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 export const WEEK_STARTS = Array.from({ length: 6 }, (_, i) => moveDay(FIRST_STAY_DAY, i * 7));
-// Room planning now starts with the week of Oct 25; earlier stays are hidden from the Accommodations views.
-export const PLANNING_START_DAY = "2026-10-25";
-export const PLANNING_WEEK_STARTS = WEEK_STARTS.filter((start) => start >= PLANNING_START_DAY);
+// Keep current stays visible, including stays that started before the cutoff.
+export const PLANNING_START_DAY = "2026-11-03";
+export const PLANNING_WEEK_STARTS = [PLANNING_START_DAY, ...WEEK_STARTS.filter((start) => start > PLANNING_START_DAY)];
+export const planningWeekEnd = start => PLANNING_WEEK_STARTS.find(day => day > start) || moveDay(LAST_STAY_DAY, 1);
+export const planningWeekDays = start => Array.from({ length: 7 }, (_, i) => moveDay(start, i)).filter(day => day < planningWeekEnd(start));
 export const shortDay = (iso) => localDay(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 export const fullDay = (iso) => localDay(iso).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
@@ -40,7 +42,7 @@ export function bedForGuest(guest, rooms = []) {
     const bed = Number(String(guest.roomCode || "").match(/B([1-9]\d*)$/)?.[1]);
     return room && bed >= 1 && bed <= room.beds ? bed : null;
   }
-  const bed = String(guest.roomCode || "").match(/^SD?\d+B([1-9]\d*)$/)?.[1];
+  const bed = String(guest.roomCode || "").match(/B([1-9]\d*)$/)?.[1];
   return bed && fixedRoomCode(guest.lodging, guest.roomNo, bed) === guest.roomCode ? Number(bed) : null;
 }
 const sameGuest = (a, b) => (a.sourceIdentity || a.id) === (b.sourceIdentity || b.id);

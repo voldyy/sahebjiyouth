@@ -387,16 +387,16 @@ test("weekly calendar has four bounded planning weeks, correct room beds, and ch
   await expect(page.getByRole("heading", { name: "Nov 8 – Nov 14, 2026" })).toBeVisible();
 });
 
-test("room planning hides stays before the week of Oct 25 and limits dates to the planning window", async ({ page }) => {
+test("room planning hides stays ending before Nov 3 and limits dates to the planning window", async ({ page }) => {
   await setup(page, "ok", [
-    plannerGuest("H1", "Hidden Early", "2026-10-20", "2026-10-24"),
-    plannerGuest("H2", "Hidden Boundary", "2026-10-23", "2026-10-25"),
-    plannerGuest("S1", "Shown Overlap", "2026-10-23", "2026-10-26"),
-    plannerGuest("S2", "Shown Current", "2026-10-27", "2026-10-29"),
+    plannerGuest("H1", "Hidden Early", "2026-10-30", "2026-11-02"),
+    plannerGuest("H2", "Hidden Boundary", "2026-11-01", "2026-11-03"),
+    plannerGuest("S1", "Shown Overlap", "2026-11-01", "2026-11-04"),
+    plannerGuest("S2", "Shown Current", "2026-11-05", "2026-11-07"),
     plannerGuest("S3", "Shown Undated", "", ""),
   ]);
   await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Accommodations", exact: true }).click();
-  await expect(page.getByLabel("Choose occupancy week").locator("option")).toHaveText(["Oct 25 – Oct 31", "Nov 1 – Nov 7", "Nov 8 – Nov 14", "Nov 15 – Nov 21"]);
+  await expect(page.getByLabel("Choose occupancy week").locator("option")).toHaveText(["Nov 3 – Nov 7", "Nov 8 – Nov 14", "Nov 15 – Nov 21"]);
   await expect(page.getByRole("button", { name: "Assign Shown Current", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Assign Shown Overlap", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: /Assign Hidden/ })).toHaveCount(0);
@@ -407,14 +407,14 @@ test("room planning hides stays before the week of Oct 25 and limits dates to th
   await expect(page.locator("body")).not.toContainText("Hidden Early");
   await expect(page.locator("body")).not.toContainText("Hidden Boundary");
   await page.getByRole("button", { name: "Daily view", exact: true }).click();
-  await expect(page.getByLabel("Choose occupancy date")).toHaveAttribute("min", "2026-10-25");
+  await expect(page.getByLabel("Choose occupancy date")).toHaveAttribute("min", "2026-11-03");
   await expect(page.getByRole("button", { name: "Previous occupancy day", exact: true })).toBeDisabled();
 });
 
 test("a hidden early guest still blocks their bed for a visible overlapping stay", async ({ page, browser }) => {
   const h = await setup(page, "ok", [
-    plannerGuest("O", "Hidden Occupant", "2026-10-22", "2026-10-25", "204", "1"),
-    plannerGuest("N", "Needs Bed", "2026-10-24", "2026-10-27"),
+    plannerGuest("O", "Hidden Occupant", "2026-11-01", "2026-11-03", "204", "1"),
+    plannerGuest("N", "Needs Bed", "2026-11-02", "2026-11-05"),
   ]);
   const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
   await context.clock.install({ time: TODAY });
@@ -422,8 +422,8 @@ test("a hidden early guest still blocks their bed for a visible overlapping stay
   const desktop = await context.newPage();
   await desktop.goto("http://localhost:5175/#rooms");
   await expect(desktop.getByRole("button", { name: /Hidden Occupant/ })).toHaveCount(0);
-  await desktop.getByRole("button", { name: "Room 204 3 beds", exact: true }).click();
-  await desktop.getByRole("button", { name: "Assign Needs Bed", exact: true }).dragTo(slot(desktop, "204", "1", "2026-10-26"));
+  await desktop.getByRole("button", { name: "Room 204 4 beds", exact: true }).click();
+  await desktop.getByRole("button", { name: "Assign Needs Bed", exact: true }).dragTo(slot(desktop, "204", "1", "2026-11-04"));
   await expect(desktop.locator(".stay-drop-error")).toContainText("occupied");
   expect(h.writes).toHaveLength(0);
   await context.close();
@@ -802,4 +802,15 @@ test('flight status only calls the paid service on explicit request', async ({pa
   await expect.poll(()=>calls).toBe(1);
   await page.clock.fastForward(20*60*1000);
   expect(calls).toBe(1);
+});
+
+test('Samarpan YP1 has four assignable beds and 202 has three', async ({page}) => {
+  await setup(page,'ok',[plannerGuest('YP-TEST','YP Guest','2026-11-03','2026-11-08')]);
+  await page.getByRole('navigation',{name:'Mobile navigation'}).getByRole('link',{name:'Accommodations',exact:true}).click();
+  await page.getByRole('button',{name:'Room YP1 4 beds',exact:true}).click();
+  await expect(page.locator('.stay-week-grid tbody tr')).toHaveCount(4);
+  await expect(page.locator('.stay-week-grid')).toContainText('SYP1B4');
+  await page.getByRole('button',{name:'Room 202 3 beds',exact:true}).click();
+  await expect(page.locator('.stay-week-grid tbody tr')).toHaveCount(3);
+  await expect(page.locator('.stay-week-grid')).toContainText('S202B3');
 });

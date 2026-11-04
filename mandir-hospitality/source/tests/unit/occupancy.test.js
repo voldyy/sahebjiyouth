@@ -75,3 +75,15 @@ test("capacity reached counts assigned beds against all beds, per day, and repor
   assert.equal(result.peak.day, "2026-10-27");
   assert.equal(lodgingOccupancy(guests, "Samarpan", [], days).perDay[0].percent, 0);
 });
+
+test('Nov 3 planning cutoff preserves ongoing and undated stays and bounds the first week', async () => {
+  const { inPlanningWindow, PLANNING_START_DAY, PLANNING_WEEK_STARTS, planningWeekDays } = await import('../../src/lib/occupancy.js');
+  assert.equal(PLANNING_START_DAY, '2026-11-03');
+  assert.deepEqual(PLANNING_WEEK_STARTS, ['2026-11-03','2026-11-08','2026-11-15']);
+  assert.equal(inPlanningWindow(guest('past','2026-10-30','2026-11-02')),false);
+  assert.equal(inPlanningWindow(guest('checkout','2026-11-01','2026-11-03')),false);
+  assert.equal(inPlanningWindow(guest('ongoing','2026-11-01','2026-11-04')),true);
+  assert.equal(inPlanningWindow(guest('undated','','')),true);
+  assert.deepEqual(planningWeekDays('2026-11-03'),['2026-11-03','2026-11-04','2026-11-05','2026-11-06','2026-11-07']);
+  assert.equal(planningWeekDays('2026-11-15').at(-1),'2026-11-21');
+});

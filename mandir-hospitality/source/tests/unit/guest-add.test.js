@@ -63,3 +63,14 @@ test('Sadhak walk-ins preserve the building and reject out-of-range and overlapp
   assert.match(send({...assignment,roomCode:'SD201B2'}).error,/valid bed/);
   assert.equal(h.rows.length,2);
 });
+
+test('YP1 accepts four beds and 202 accepts its third bed with full-stay conflict checks', () => {
+  const h=createHarness([headers]);
+  const add=(name,roomNo,roomCode)=>h.request({action:'guest',requestId:randomUUID(),guest:{name,arrivalDate:'2026-11-06',departureDate:'2026-11-08',overnight:'YES'},assignment:{lodging:'Samarpan',roomNo,roomCode}});
+  assert.equal(add('YP Guest','YP1','SYP1B4').ok,true);
+  assert.deepEqual(h.rows[1].slice(29),['Samarpan','YP1','SYP1B4']);
+  assert.match(add('Conflicting Guest','YP1','SYP1B4').error,/occupied/);
+  assert.match(add('Invalid Bed','YP1','SYP1B5').error,/valid bed/);
+  assert.equal(add('202 Guest','202','S202B3').ok,true);
+  assert.match(add('Invalid 202 Bed','202','S202B4').error,/valid bed/);
+});

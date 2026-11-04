@@ -181,7 +181,7 @@ export function validateAssignment(assignment) {
   if (!LODGING_LOCATIONS.includes(values[0]) || (!values[1] && !provisional) || !values[2]) throw new Error("Choose a lodging location and enter both the room number and custom room code.");
   if (isFixedLodging(values[0]) && !fixedRoomsFor(values[0]).some(room => room.number === values[1])) throw new Error(`Choose a confirmed ${values[0]} room.`);
   if (isFixedLodging(values[0])) {
-    const bed = values[2].match(/^SD?\d+B([1-9]\d*)$/)?.[1];
+    const bed = values[2].match(/B([1-9]\d*)$/)?.[1];
     if (!bed || fixedRoomCode(values[0], values[1], bed) !== values[2]) throw new Error(`Select a valid bed in the chosen ${values[0]} room to generate its code.`);
   }
   if (values.some((v) => v.length > 100 || /[\r\n\x00]/.test(v))) throw new Error("Room details must be single-line text, up to 100 characters each.");

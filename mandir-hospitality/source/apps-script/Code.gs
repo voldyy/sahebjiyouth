@@ -91,7 +91,7 @@ var Hospitality = (() => {
   // src/lib/lodgingRooms.js
   var samarpanRooms = [
     { number: "201", beds: 2 },
-    { number: "202", beds: 2 },
+    { number: "202", beds: 3 },
     { number: "203", beds: 4 },
     { number: "204", beds: 4 },
     { number: "205", beds: 4 },
@@ -101,7 +101,8 @@ var Hospitality = (() => {
     { number: "102", beds: 12 },
     { number: "103", beds: 14 },
     { number: "104", beds: 13 },
-    { number: "105", beds: 15 }
+    { number: "105", beds: 15 },
+    { number: "YP1", beds: 4 }
   ];
   var samarpanBedCount = samarpanRooms.reduce((sum, room) => sum + room.beds, 0);
   var sadhakRooms = [
@@ -157,8 +158,8 @@ var Hospitality = (() => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   }
   var WEEK_STARTS = Array.from({ length: 6 }, (_, i) => moveDay(FIRST_STAY_DAY, i * 7));
-  var PLANNING_START_DAY = "2026-10-25";
-  var PLANNING_WEEK_STARTS = WEEK_STARTS.filter((start) => start >= PLANNING_START_DAY);
+  var PLANNING_START_DAY = "2026-11-03";
+  var PLANNING_WEEK_STARTS = [PLANNING_START_DAY, ...WEEK_STARTS.filter((start) => start > PLANNING_START_DAY)];
   function needsLodging(guest) {
     return guest.stay !== "Day visitor" && !["Cancelled", "Departed"].includes(guest.status);
   }
@@ -177,7 +178,7 @@ var Hospitality = (() => {
       const bed2 = Number(String(guest.roomCode || "").match(/B([1-9]\d*)$/)?.[1]);
       return room && bed2 >= 1 && bed2 <= room.beds ? bed2 : null;
     }
-    const bed = String(guest.roomCode || "").match(/^SD?\d+B([1-9]\d*)$/)?.[1];
+    const bed = String(guest.roomCode || "").match(/B([1-9]\d*)$/)?.[1];
     return bed && fixedRoomCode(guest.lodging, guest.roomNo, bed) === guest.roomCode ? Number(bed) : null;
   }
   var sameGuest = (a, b) => (a.sourceIdentity || a.id) === (b.sourceIdentity || b.id);
@@ -374,7 +375,7 @@ var Hospitality = (() => {
     if (!LODGING_LOCATIONS.includes(values[0]) || !values[1] && !provisional || !values[2]) throw new Error("Choose a lodging location and enter both the room number and custom room code.");
     if (isFixedLodging(values[0]) && !fixedRoomsFor(values[0]).some((room) => room.number === values[1])) throw new Error(`Choose a confirmed ${values[0]} room.`);
     if (isFixedLodging(values[0])) {
-      const bed = values[2].match(/^SD?\d+B([1-9]\d*)$/)?.[1];
+      const bed = values[2].match(/B([1-9]\d*)$/)?.[1];
       if (!bed || fixedRoomCode(values[0], values[1], bed) !== values[2]) throw new Error(`Select a valid bed in the chosen ${values[0]} room to generate its code.`);
     }
     if (values.some((v) => v.length > 100 || /[\r\n\x00]/.test(v))) throw new Error("Room details must be single-line text, up to 100 characters each.");

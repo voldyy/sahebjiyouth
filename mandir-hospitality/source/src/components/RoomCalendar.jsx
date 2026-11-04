@@ -3,7 +3,7 @@ import WhatsAppSent from "./WhatsAppSent";
 import { BedDouble, ChevronLeft, ChevronRight, Plus, AlertCircle } from "lucide-react";
 import { samarpanRooms, roomAssignment, roomKey } from "../lib/lodgingRooms";
 import { roomCapacityLabel, roomLabel, roomPeoplePerBed, roomPlaceLabel, roomTypeFor, OFFSITE_HOTELS } from "../lib/offsite";
-import { bedState, isAdultBedOccupant, moveDay, shortDay, fullDay, localDay, onDay } from "../lib/occupancy";
+import { bedState, isAdultBedOccupant, moveDay, shortDay, fullDay, localDay, onDay, planningWeekDays } from "../lib/occupancy";
 
 const roomPlaceAria = (room, position) => OFFSITE_HOTELS.includes(room.lodging)
   ? `${roomLabel(room)} ${roomPlaceLabel(room, position)}`
@@ -67,10 +67,10 @@ function BedSlot({ guests, room, bed, day, onAssign, onEdit, saving, compact = f
 }
 
 export function WeeklyRooms({ guests, room, week, onAssign, onEdit, saving, onChooseDay, rooms, drag, readOnly = false }) {
-  const days = Array.from({ length: 7 }, (_, i) => moveDay(week, i));
+  const days = planningWeekDays(week);
   return <section className="stay-calendar-panel" aria-label={`${roomLabel(room)} weekly occupancy`}>
     <div className="stay-panel-title"><div><h2>{roomLabel(room)}</h2><p>{room.lodging || "Samarpan"} · {roomCapacityLabel(room)}{OFFSITE_HOTELS.includes(room.lodging) && !room.roomNo ? " · Hotel room number pending" : ""}</p></div><div className="stay-legend"><span><i className="legend-occupied" /> Occupied</span><span><i /> Empty</span></div></div>
-    <div className="stay-grid-scroll" tabIndex={0} role="region" aria-label="Weekly bed calendar; scroll horizontally for all seven days">
+    <div className="stay-grid-scroll" tabIndex={0} role="region" aria-label="Weekly bed calendar; scroll horizontally for all dates">
       <table className="stay-week-grid"><thead><tr><th scope="col">{roomPeoplePerBed(room) > 1 ? "Bed / guest" : "Bed"}</th>{days.map((day) => <th scope="col" key={day}><button onClick={() => onChooseDay(day)} aria-label={`Open daily view for ${fullDay(day)}`}><span>{localDay(day).toLocaleDateString("en-US", { weekday: "short" })}</span><strong>{shortDay(day)}</strong></button></th>)}</tr></thead>
         <tbody>{Array.from({ length: room.beds }, (_, i) => i + 1).map((bed) => <tr key={bed}><th scope="row"><BedDouble size={16} /><strong>{roomPlaceLabel(room, bed)}</strong><small>{OFFSITE_HOTELS.includes(room.lodging) ? `${room.roomNo || room.label} · P${bed}` : roomAssignment(room, bed).roomCode}</small></th>{days.map((day) => <td key={day}><BedSlot guests={guests} room={room} bed={bed} day={day} onAssign={onAssign} onEdit={onEdit} saving={saving} rooms={rooms} drag={drag} readOnly={readOnly} /></td>)}</tr>)}</tbody>
       </table>
