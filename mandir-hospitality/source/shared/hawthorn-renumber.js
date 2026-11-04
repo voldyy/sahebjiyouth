@@ -1,9 +1,13 @@
 import { guestsFromRows } from "../src/lib/sheets.js";
 import { normalizeOffsiteHotel, offsiteRoomFor } from "../src/lib/offsite.js";
 
-export function renumberHawthornTables(tables, rooms, revision) {
-  const active = rooms.filter(room => room.lodging === "Hawthorn").sort((a,b) => Number(a.label.slice(2))-Number(b.label.slice(2)));
+export function renumberHawthornTables(tables, rooms, revision, roomOrder) {
+  let active = rooms.filter(room => room.lodging === "Hawthorn").sort((a,b) => Number(a.label.slice(2))-Number(b.label.slice(2)));
   if (active.length !== 23 || active.some(room => !/^HR\d+$/.test(room.label))) throw Error("Review Hawthorn inventory: expected 23 numbered rooms.");
+  if (roomOrder !== undefined) {
+    if (!Array.isArray(roomOrder) || roomOrder.length !== active.length || new Set(roomOrder).size !== active.length || roomOrder.some(label => !active.some(room => room.label === label))) throw Error("Room order must include every Hawthorn room exactly once.");
+    active = roomOrder.map(label => active.find(room => room.label === label));
+  }
   const mapping = Object.fromEntries(active.map((room,index) => [room.label, `HR${String(index+1).padStart(2,"0")}`]));
   const labels = Object.values(mapping);
   if (new Set(Object.keys(mapping)).size !== 23) throw Error("Duplicate Hawthorn room labels.");

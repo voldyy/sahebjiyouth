@@ -31,4 +31,13 @@ test('Hawthorn renumbering preserves room groups, bed places, capacity, housekee
  assert.equal(result.tables.Housekeeping[1][3],'HR12B2');assert.equal(JSON.parse(result.tables.Housekeeping[1][0])[1],'HR12B2');assert.deepEqual(result.tables.Housekeeping[1].slice(4),tables.Housekeeping[1].slice(4));
  const contiguous=active.map((r,i)=>({...r,label:`HR${String(i+1).padStart(2,'0')}`}));
  assert.equal(renumberHawthornTables(result.tables,contiguous,'repeat').changed,false);
+ const order=contiguous.map(r=>r.label).reverse();
+ const reordered=renumberHawthornTables(result.tables,contiguous,'arrival',order);
+ assert.equal(reordered.mapping.HR12,'HR12');
+ assert.equal(reordered.mapping.HR23,'HR01');
+ assert.deepEqual(reordered.tables.Attendees[2].slice(29,32),['Hawthorn','HR01','']);
+ assert.equal(reordered.tables['Offsite Rooms'].find(r=>r[4]==='HR19')[3],'2');
+ assert.deepEqual(reordered.tables.Attendees.slice(3),tables.Attendees.slice(3));
+ assert.throws(()=>renumberHawthornTables(result.tables,contiguous,'bad',Array(23).fill('HR01')),/exactly once/);
+ assert.throws(()=>renumberHawthornTables(result.tables,contiguous,'bad',[...order.slice(1),'HR99']),/exactly once/);
 });
