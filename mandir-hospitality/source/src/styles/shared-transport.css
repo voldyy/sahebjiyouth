@@ -110,6 +110,15 @@
   font-size: 15px;
   color: #244d65;
   margin: 5px 0;
+  /* The date stays visible while scrolling through a long day of trips. */
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+  box-shadow: 0 6px 6px -6px #193a5022;
+}
+@media (max-width: 767px) {
+  .transport-day > h2 { top: 70px; }
 }
 .transport-day-toggle { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 44px; padding: 10px 12px; border-radius: 9px; text-align: left; color: inherit; font: inherit; }
 .transport-day-toggle > span { flex: 1; }
