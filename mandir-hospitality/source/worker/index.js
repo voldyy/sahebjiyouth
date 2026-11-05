@@ -61,6 +61,16 @@ export default {
         let mealFailed = false;
         try { await env.WORKSPACES.getByName(env.WORKSPACE_ID).mealReply(Object.fromEntries(params)); }
         catch (_) { mealFailed = true; console.error(JSON.stringify({ event: "meal_reply_storage_failed" })); }
+        // Yes/No taps on puja seating messages ("seat:<event>:<token>:yes|no") are recorded by the seating
+        // dashboard API (mahapuja-seating-fn). Best effort: a failure here never blocks the inbox below.
+        const seatPayload = params.get("ButtonPayload") || "";
+        if (seatPayload.startsWith("seat:") && env.SEAT_REPLY_KEY) {
+          try {
+            const seat = await fetch("https://mahapuja-seating-fn.azurewebsites.net/api/seating/reply", { method: "POST", headers: { "Content-Type": "application/json", "x-reply-key": env.SEAT_REPLY_KEY }, body: JSON.stringify({ payload: seatPayload, from: params.get("From") || "", messageSid: params.get("MessageSid") || "" }), signal: AbortSignal.timeout(8000), redirect: "manual" });
+            await seat.body?.cancel();
+            if (!seat.ok) console.error(JSON.stringify({ event: "seat_reply_rejected", status: seat.status }));
+          } catch (_) { console.error(JSON.stringify({ event: "seat_reply_failed" })); }
+        }
         // Keep the existing Chatwoot inbox, including the visible button reply.
         // Its signature is recalculated for its own exact webhook URL.
         const forwardUrl = "https://app.chatwoot.com/twilio/callback";
