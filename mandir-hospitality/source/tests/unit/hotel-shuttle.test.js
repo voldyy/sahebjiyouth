@@ -16,4 +16,6 @@ test("counts active offsite flight guests by hotel for shuttle planning", () => 
   assert.equal(result.total, 2);
   assert.deepEqual(result.byHotel, { Hawthorn: 1, Hilton: 1 });
   assert.deepEqual(result.riders.map((guest) => guest.name), ["Hawthorn flight", "Hilton flight"]);
+  assert.deepEqual(result.ridersByHotel.Hawthorn.map((guest) => guest.name), ["Hawthorn flight"]);
+  assert.deepEqual(result.ridersByHotel.Hilton.map((guest) => guest.name), ["Hilton flight"]);
 });

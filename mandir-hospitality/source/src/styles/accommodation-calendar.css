@@ -231,3 +231,13 @@
 .stay-shuttle-hotels span { padding: 8px 10px; border: 1px solid #d88a55; border-radius: 8px; background: #fff7f0; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .stay-shuttle-hotels strong { font-size: 16px; }
 @media (max-width: 700px) { .stay-shuttle-alert { align-items: flex-start; gap: 12px; padding: 15px; } .stay-shuttle-icon { flex-basis: 38px; width: 38px; height: 38px; } .stay-shuttle-alert h2 { font-size: 17px; } .stay-shuttle-hotels { justify-content: flex-start; } }
+.stay-shuttle-summary { min-width: 0; flex: 1; }
+.stay-shuttle-hotels { flex: 1 1 510px; display: grid; grid-template-columns: repeat(2, minmax(210px, 1fr)); justify-content: stretch; }
+.stay-shuttle-hotel { padding: 11px 12px; border: 1px solid #d88a55; border-radius: 9px; background: #fff7f0; min-width: 0; }
+.stay-shuttle-hotel header { display: flex; align-items: baseline; gap: 6px; }
+.stay-shuttle-hotel header strong { font-size: 19px; }
+.stay-shuttle-hotel header span { font-size: 12px; font-weight: 800; }
+.stay-shuttle-hotel a { display: flex; align-items: flex-start; gap: 4px; margin-top: 6px; color: #743d22; font-size: 10px; font-weight: 700; line-height: 1.35; text-decoration: underline; }
+.stay-shuttle-hotel a svg { flex: 0 0 auto; margin-top: 1px; }
+.stay-shuttle-hotel p { margin: 7px 0 0; color: #743d22; font-size: 11px; font-weight: 600; line-height: 1.5; }
+@media (max-width: 700px) { .stay-shuttle-hotels { grid-template-columns: 1fr; flex-basis: 100%; } }

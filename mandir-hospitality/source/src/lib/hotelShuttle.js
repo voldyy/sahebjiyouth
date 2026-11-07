@@ -9,6 +9,7 @@ export function hotelShuttleNeed(guests, day) {
   const riders = guests.filter((guest) =>
     needsLodging(guest) && OFFSITE_HOTELS.includes(guest.lodging) && isFlightArrival(guest) && onDay(guest, day),
   );
-  const byHotel = Object.fromEntries(OFFSITE_HOTELS.map((hotel) => [hotel, riders.filter((guest) => guest.lodging === hotel).length]));
-  return { day, total: riders.length, byHotel, riders };
+  const ridersByHotel = Object.fromEntries(OFFSITE_HOTELS.map((hotel) => [hotel, riders.filter((guest) => guest.lodging === hotel)]));
+  const byHotel = Object.fromEntries(OFFSITE_HOTELS.map((hotel) => [hotel, ridersByHotel[hotel].length]));
+  return { day, total: riders.length, byHotel, ridersByHotel, riders };
 }

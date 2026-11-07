@@ -1,7 +1,7 @@
 import LodgingNotifications from "../components/LodgingNotifications";
 import WhatsAppSent from "../components/WhatsAppSent";
 import { useMemo, useState } from "react";
-import { BedDouble, CalendarDays, ChevronLeft, ChevronRight, List, Plus, Search, Users, GripVertical, Building2, Sparkles, Settings2, Download, ClipboardList, BusFront } from "lucide-react";
+import { BedDouble, CalendarDays, ChevronLeft, ChevronRight, List, Plus, Search, Users, GripVertical, Building2, Sparkles, Settings2, Download, ClipboardList, BusFront, MapPin } from "lucide-react";
 import Sheet from "../components/Sheet";
 import { DailyRooms, RoomStrip, WeeklyRooms, RoomOverview } from "../components/RoomCalendar";
 import WalkInForm from "../components/WalkInForm";
@@ -163,8 +163,11 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
       <header className="page-header"><div><p className="eyebrow">{isFixedLodging(section) ? `${section.toUpperCase()} · ${rooms.length} ROOMS · ${rooms.reduce((sum, r) => sum + (r.beds || 0), 0)} BEDS` : `${hotel.toUpperCase()} · ${rooms.length} PLANNING ROOMS`}</p><h1 className="page-title">Accommodations</h1><p className="page-description">See who’s staying, find an empty bed, and make room for the next arrival.</p></div><div className="page-actions"><button className="button secondary" disabled={!workspace.connected || workspace.loading || exporting || !exportRows.length} title="Download all room assignments, regardless of accommodation filters" onClick={exportRooms}><Download size={17} />{exporting ? "Exporting…" : "Export room assignments"}</button>{!readOnly && <><LodgingNotifications workspace={workspace} toast={toast} /><button className="button secondary" onClick={() => openWalkIn()} disabled={workspace.saving || !workspace.connected}><Plus size={17} />Add walk-in</button><button className="button primary" onClick={openAssign} disabled={workspace.saving || !workspace.connected || !rooms.length}><Plus size={17} />Assign guest</button></>}</div></header>
       {section !== "Final" && <section className="stay-shuttle-alert" aria-label="Hotel shuttle riders">
         <span className="stay-shuttle-icon"><BusFront size={24} /></span>
-        <div><p className="stay-shuttle-kicker">HOTEL ↔ TEMPLE SHUTTLE · {shortDay(shuttle.day)}</p><h2>{shuttle.total} {shuttle.total === 1 ? "person needs a ride" : "people need rides"}</h2><p>Offsite guests who arrived by flight and are staying tonight.</p></div>
-        <div className="stay-shuttle-hotels" aria-label="Shuttle riders by hotel">{OFFSITE_HOTELS.map((name) => <span key={name}><strong>{shuttle.byHotel[name]}</strong> {name}</span>)}</div>
+        <div className="stay-shuttle-summary"><p className="stay-shuttle-kicker">HOTEL ↔ TEMPLE SHUTTLE · {shortDay(shuttle.day)}</p><h2>{shuttle.total} {shuttle.total === 1 ? "person needs a ride" : "people need rides"}</h2><p>Offsite guests who arrived by flight and are staying tonight.</p></div>
+        <div className="stay-shuttle-hotels" aria-label="Shuttle riders by hotel">{OFFSITE_HOTELS.map((name) => {
+          const location = name === "Hawthorn" ? { label: "Hawthorn Suites by Wyndham Allentown-Fogelsville", href: "https://maps.app.goo.gl/4DbrrjFu5Qg6rjBn6" } : { label: "Hilton Garden Inn Allentown West", href: "https://maps.app.goo.gl/9SYZmxX1rex9kBjAA" };
+          return <section className="stay-shuttle-hotel" key={name}><header><strong>{shuttle.byHotel[name]}</strong><span>{name}</span></header><a href={location.href} target="_blank" rel="noreferrer"><MapPin size={13} />{location.label}</a><p>{shuttle.ridersByHotel[name].length ? shuttle.ridersByHotel[name].map((guest) => guest.name).join(" · ") : "No riders"}</p></section>;
+        })}</div>
       </section>}
       {capacityMeter}
       {section === "Offsite" && <div className="stay-offsite-toolbar"><label className="field">Hotel<select aria-label="Offsite hotel" value={hotel} onChange={(e) => { setHotel(e.target.value); setRoomNo(""); }}>{OFFSITE_HOTELS.map((name) => <option key={name}>{name}</option>)}</select></label>{!readOnly && <button className="button secondary" onClick={() => openRoom()} disabled={workspace.saving}><Plus size={17} />Add planning room</button>}{room && !readOnly && <button className="button secondary" onClick={() => openRoom(room)} disabled={workspace.saving}><Settings2 size={17} />Edit room details</button>}<p>Room slots hold assignments until the hotel confirms room numbers. King rooms have 2 guest places; Double Queen rooms have 4.</p></div>}
