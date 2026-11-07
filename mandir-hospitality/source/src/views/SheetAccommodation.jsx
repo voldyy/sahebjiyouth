@@ -1,7 +1,7 @@
 import LodgingNotifications from "../components/LodgingNotifications";
 import WhatsAppSent from "../components/WhatsAppSent";
 import { useMemo, useState } from "react";
-import { BedDouble, CalendarDays, ChevronLeft, ChevronRight, List, Plus, Search, Users, GripVertical, Building2, Sparkles, Settings2, Download, ClipboardList } from "lucide-react";
+import { BedDouble, CalendarDays, ChevronLeft, ChevronRight, List, Plus, Search, Users, GripVertical, Building2, Sparkles, Settings2, Download, ClipboardList, BusFront } from "lucide-react";
 import Sheet from "../components/Sheet";
 import { DailyRooms, RoomStrip, WeeklyRooms, RoomOverview } from "../components/RoomCalendar";
 import WalkInForm from "../components/WalkInForm";
@@ -14,6 +14,7 @@ import { samarpanRooms, sadhakRooms, fixedRoomsFor, isFixedLodging, roomKey, roo
 import { HAWTHORN_ROOM_TYPES, OFFSITE_HOTELS, offsiteRoomFor, roomCapacityLabel, roomLabel, roomPlaceLabel, roomTypeFor, roomTypeLabel } from "../lib/offsite";
 import { isChildUnder12, isAdultBedOccupant, bedState, lodgingOccupancy, PLANNING_START_DAY, LAST_STAY_DAY, PLANNING_WEEK_STARTS, planningWeekEnd, planningWeekDays, inPlanningWindow, moveDay, shortDay, fullDay, needsLodging, stayRange, overlaps, onDay, unassignedGuest, bedForGuest, assignmentIssue } from "../lib/occupancy";
 import { downloadRoomAssignments, roomAssignmentRows } from "../lib/roomAssignmentsExport";
+import { hotelShuttleNeed } from "../lib/hotelShuttle";
 import "../styles/operations.css";
 import "../styles/sheets.css";
 import "../styles/accommodation-calendar.css";
@@ -72,6 +73,7 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
   const rooms = section === "Offsite" ? workspace.offsiteRooms.filter((r) => r.lodging === hotel) : fixedRoomsFor(section, onsiteRooms).sort((a,b)=>Number(b.number === "YP1")-Number(a.number === "YP1"));
   const room = rooms.find((r) => roomKey(r) === roomNo) || rooms[0];
   const guests = workspace.guests.filter(needsLodging).filter(inPlanningWindow);
+  const shuttle = hotelShuttleNeed(workspace.guests, currentStayDay());
   const week = PLANNING_WEEK_STARTS[weekIndex];
   const draftRooms = isFixedLodging(draft.lodging) ? fixedRoomsFor(draft.lodging, onsiteRooms) : workspace.offsiteRooms.filter((r) => r.lodging === draft.lodging);
   const selectedRoom = draftRooms.find((r) => isFixedLodging(draft.lodging) ? r.number === draft.roomNo : r.id === hotelRoomId);
@@ -159,6 +161,11 @@ export default function SheetAccommodation({ workspace, toast, readOnly = false 
     <div className="stay-section-switch" role="group" aria-label="Accommodation sections">{[{ label: "Samarpan", icon: BedDouble }, { label: "Sadhak", icon: BedDouble }, { label: "Offsite", icon: Building2 }, { label: "Final", icon: ClipboardList }, { label: "Housekeeping", icon: Sparkles }].map(({ label, icon: Icon }) => <button key={label} aria-pressed={section === label} onClick={() => { setSection(label); setRoomNo(""); setDropError(""); const params = new URLSearchParams(location.hash.split("?")[1] || ""); if (label === "Final") params.set("view", "final"); else params.delete("view"); history.replaceState(null, "", `${location.pathname}${location.search}#rooms${params.size ? `?${params}` : ""}`); }}><Icon size={19} />{label}</button>)}</div>
     {!workspace.refreshedAt ? <p role="status">{workspace.loading ? "Loading room occupancy from the sheet…" : "Room occupancy is unavailable. Refresh the sheet to load the calendar."}</p> : section === "Final" ? <FinalAccommodation workspace={workspace} onAddBed={!readOnly ? addBedSlot : undefined} /> : section === "Housekeeping" ? <Housekeeping workspace={workspace} toast={toast} readOnly={readOnly} /> : <>
       <header className="page-header"><div><p className="eyebrow">{isFixedLodging(section) ? `${section.toUpperCase()} · ${rooms.length} ROOMS · ${rooms.reduce((sum, r) => sum + (r.beds || 0), 0)} BEDS` : `${hotel.toUpperCase()} · ${rooms.length} PLANNING ROOMS`}</p><h1 className="page-title">Accommodations</h1><p className="page-description">See who’s staying, find an empty bed, and make room for the next arrival.</p></div><div className="page-actions"><button className="button secondary" disabled={!workspace.connected || workspace.loading || exporting || !exportRows.length} title="Download all room assignments, regardless of accommodation filters" onClick={exportRooms}><Download size={17} />{exporting ? "Exporting…" : "Export room assignments"}</button>{!readOnly && <><LodgingNotifications workspace={workspace} toast={toast} /><button className="button secondary" onClick={() => openWalkIn()} disabled={workspace.saving || !workspace.connected}><Plus size={17} />Add walk-in</button><button className="button primary" onClick={openAssign} disabled={workspace.saving || !workspace.connected || !rooms.length}><Plus size={17} />Assign guest</button></>}</div></header>
+      {section !== "Final" && <section className="stay-shuttle-alert" aria-label="Hotel shuttle riders">
+        <span className="stay-shuttle-icon"><BusFront size={24} /></span>
+        <div><p className="stay-shuttle-kicker">HOTEL ↔ TEMPLE SHUTTLE · {shortDay(shuttle.day)}</p><h2>{shuttle.total} {shuttle.total === 1 ? "person needs a ride" : "people need rides"}</h2><p>Offsite guests who arrived by flight and are staying tonight.</p></div>
+        <div className="stay-shuttle-hotels" aria-label="Shuttle riders by hotel">{OFFSITE_HOTELS.map((name) => <span key={name}><strong>{shuttle.byHotel[name]}</strong> {name}</span>)}</div>
+      </section>}
       {capacityMeter}
       {section === "Offsite" && <div className="stay-offsite-toolbar"><label className="field">Hotel<select aria-label="Offsite hotel" value={hotel} onChange={(e) => { setHotel(e.target.value); setRoomNo(""); }}>{OFFSITE_HOTELS.map((name) => <option key={name}>{name}</option>)}</select></label>{!readOnly && <button className="button secondary" onClick={() => openRoom()} disabled={workspace.saving}><Plus size={17} />Add planning room</button>}{room && !readOnly && <button className="button secondary" onClick={() => openRoom(room)} disabled={workspace.saving}><Settings2 size={17} />Edit room details</button>}<p>Room slots hold assignments until the hotel confirms room numbers. King rooms have 2 guest places; Double Queen rooms have 4.</p></div>}
       <div className="stay-view-switch" role="group" aria-label="Accommodation views">{[{ id: "weekly", label: "Weekly view", icon: CalendarDays }, { id: "daily", label: "Daily view", icon: BedDouble }, { id: "overview", label: "Day at a glance", icon: Building2 }, { id: "list", label: "Guest list", icon: List }].map((tab) => <button key={tab.id} aria-pressed={view === tab.id} onClick={() => { setView(tab.id); if (tab.id !== view && tab.id !== "list") selectDay(currentStayDay()); }}><tab.icon size={17} />{tab.label}</button>)}</div>

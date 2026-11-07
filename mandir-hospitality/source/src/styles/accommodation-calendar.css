@@ -220,3 +220,14 @@
 .stay-whole-room-select select{width:min(100%,340px);border:1px solid #cbd5e1;border-radius:7px;padding:10px;background:#fff;color:#18313e}
 .final-room-name .stay-add-bed{margin-top:10px}
 @media(max-width:600px){.stay-day-room>header,.stay-overview-room>header{flex-wrap:wrap;gap:8px}.stay-room-header-actions{justify-content:flex-start}.stay-panel-title{align-items:flex-start}.stay-whole-room-select select{flex:1}.stay-add-bed{min-width:90px}}
+
+.stay-shuttle-alert { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border: 2px solid #985127; border-radius: 14px; background: #ffe5ce; color: #743d22; }
+.stay-shuttle-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 46px; width: 46px; height: 46px; border-radius: 12px; background: #743d22; color: white; }
+.stay-shuttle-alert > div:nth-child(2) { min-width: 0; flex: 1; }
+.stay-shuttle-kicker { margin: 0 0 4px; color: #985127; font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+.stay-shuttle-alert h2 { margin: 0; color: #743d22; font-size: 20px; }
+.stay-shuttle-alert p:last-child { margin: 5px 0 0; color: #743d22; font-size: 12px; line-height: 1.45; }
+.stay-shuttle-hotels { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.stay-shuttle-hotels span { padding: 8px 10px; border: 1px solid #d88a55; border-radius: 8px; background: #fff7f0; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.stay-shuttle-hotels strong { font-size: 16px; }
+@media (max-width: 700px) { .stay-shuttle-alert { align-items: flex-start; gap: 12px; padding: 15px; } .stay-shuttle-icon { flex-basis: 38px; width: 38px; height: 38px; } .stay-shuttle-alert h2 { font-size: 17px; } .stay-shuttle-hotels { justify-content: flex-start; } }
