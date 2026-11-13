@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YYLR 2026 · Update Your Travel Details</title>
+    <meta name="robots" content="noindex, nofollow">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Lato:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['"Lato"', 'sans-serif'],
+                    },
+                    colors: {
+                        yylr: {
+                            primary: '#9A5A18',
+                            dark: '#2F2418',
+                            amber: '#F2B84B',
+                            gold: '#F8D06A',
+                            softOrange: '#FFF1DE',
+                            sky: '#38BDF8',
+                            skyLight: '#EAF8FF',
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass {
+                @apply bg-white/90 backdrop-blur-xl border border-white/70 shadow-[0_24px_70px_rgba(154,90,24,0.14)];
+            }
+            .glass-panel {
+                @apply bg-white/80 border border-orange-100 rounded-xl p-5 shadow-sm;
+            }
+            .glass-input {
+                @apply bg-white/85 border border-orange-100 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-yylr-sky/50 focus:border-yylr-sky focus:bg-white transition-all duration-300 rounded-xl;
+            }
+            .btn-primary {
+                @apply bg-gradient-to-r from-yylr-primary via-yylr-amber to-yylr-gold text-white font-black py-3 px-6 rounded-xl shadow-lg hover:shadow-orange-300/50 transform hover:-translate-y-0.5 transition-all duration-300 uppercase tracking-wider text-sm;
+            }
+            .btn-secondary {
+                @apply bg-white text-gray-600 font-bold py-3 px-6 rounded-xl border border-orange-100 hover:bg-orange-50 hover:text-yylr-dark transition-all duration-300 uppercase tracking-wider text-sm;
+            }
+            .section-title {
+                @apply font-serif text-2xl md:text-3xl text-yylr-dark mb-2;
+            }
+            .form-label {
+                @apply block text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 ml-1;
+            }
+            .data-label {
+                @apply text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1;
+            }
+            .data-value {
+                @apply text-xl font-bold text-gray-800 break-words leading-tight;
+            }
+            .consent-box::-webkit-scrollbar { width: 6px; }
+            .consent-box::-webkit-scrollbar-track { background: #f1f1f1; }
+            .consent-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        }
+
+        body {
+            background: linear-gradient(145deg, #fff9ef 0%, #fff6e8 44%, #ebf9ff 100%);
+        }
+
+        #retreat-scene {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .hero-copy strong {
+            color: #8a4f13;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .mobile-actions {
+                flex-direction: column;
+            }
+
+            .mobile-actions button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden font-sans text-gray-700">
+
+    <canvas id="retreat-scene" aria-hidden="true"></canvas>
+
+    <div class="container mx-auto px-4 py-8 md:py-12 max-w-4xl relative z-10">
+
+        <div class="text-center mb-8 md:mb-10 animate-fade-in-up">
+            <div class="inline-flex items-center justify-center h-24 w-56 max-w-[72vw] rounded-2xl bg-white/85 border border-orange-100 shadow-sm mb-4 p-4">
+                <img src="../amlogo_sm.png" alt="Anoopam Mission Logo" class="h-full w-full object-contain">
+            </div>
+            <h1 class="font-serif text-4xl md:text-6xl text-yylr-primary font-bold mt-5 mb-4 leading-tight">Yogi Youth Leadership Retreat</h1>
+            <div class="w-16 h-px bg-yylr-primary/20 mx-auto mb-7"></div>
+
+            <div class="hero-copy max-w-3xl mx-auto text-left text-[15px] md:text-base leading-7 text-yylr-dark/90 mb-6 bg-white/85 border border-orange-100 rounded-2xl p-5 md:p-6 shadow-[0_18px_48px_rgba(154,90,24,0.10)] backdrop-blur">
+                <p class="mb-3">
+                    <strong>Update Your Travel Details</strong>
+                </p>
+                <p class="mb-3">
+                    Jai Swaminarayan! When you registered, you let us know your flight was not booked yet. Now that your travel is set, please add your arrival and departure flights below so the planning team can arrange airport pickups and accommodations.
+                </p>
+                <p>
+                    For flights, the preferred airport is <strong>RIC (Richmond International Airport)</strong>. <strong>IAD</strong> or <strong>BWI</strong> are acceptable as well.
+                </p>
+            </div>
+
+            <div class="inline-flex flex-wrap items-center justify-center gap-2 mt-2 text-xs md:text-sm font-black text-yylr-dark uppercase tracking-widest bg-white/80 py-3 px-4 rounded-xl shadow-sm border border-orange-100">
+                <span>December 25-30, 2026</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-yylr-primary mx-2"></span>
+                <span>Richmond, VA</span>
+            </div>
+        </div>
+
+        <div class="glass rounded-2xl p-5 md:p-10 relative overflow-hidden animate-fade-in-up" style="animation-delay: 0.2s;">
+
+            <div class="absolute top-0 left-0 w-full h-1 bg-gray-100">
+                <div id="progress-bar" class="h-full bg-gradient-to-r from-yylr-sky to-yylr-primary w-[15%] transition-all duration-500"></div>
+            </div>
+
+            <div id="loader" class="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
+                <div class="w-12 h-12 border-4 border-gray-100 border-t-yylr-primary rounded-full animate-spin"></div>
+                <p class="mt-4 text-yylr-primary font-bold text-sm tracking-widest animate-pulse">PROCESSING...</p>
+            </div>
+
+            <div id="step-loading" class="step-content block text-center py-10">
+                <div class="w-12 h-12 border-4 border-gray-100 border-t-yylr-primary rounded-full animate-spin mx-auto"></div>
+                <p class="mt-4 text-yylr-primary font-bold text-sm tracking-widest animate-pulse">LOADING YOUR REGISTRATION...</p>
+            </div>
+
+            <div id="step-error" class="step-content hidden text-center py-10">
+                <div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="material-icons text-4xl text-yylr-primary">link_off</span>
+                </div>
+                <h2 class="font-serif text-3xl text-gray-800 mb-4">We couldn't open your registration</h2>
+                <p id="error-message" class="text-gray-600 mb-2 max-w-md mx-auto">This link is not valid. Please use the link from your most recent YYLR email.</p>
+                <p class="text-gray-500 text-sm max-w-md mx-auto">If it still doesn't work, reply to your YYLR reminder email and the team will help.</p>
+            </div>
+
+            <div id="step-travel" class="step-content hidden">
+                <div class="bg-yylr-skyLight border border-blue-100 rounded-xl p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <div>
+                        <div class="data-label">Registrant</div>
+                        <div id="reg-name" class="font-serif text-xl font-bold text-yylr-dark">--</div>
+                    </div>
+                    <div class="md:text-right">
+                        <div class="data-label">Registration ID</div>
+                        <div id="reg-id" class="text-sm font-bold text-blue-900">--</div>
+                    </div>
+                </div>
+
+                <div id="current-travel-card" class="hidden bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-sm text-green-900">
+                    <div class="flex items-start gap-2">
+                        <span class="material-icons text-green-600 text-xl">check_circle</span>
+                        <div>
+                            <div class="font-bold">Travel details already on file<span id="current-travel-updated"></span></div>
+                            <div id="current-travel-lines" class="mt-1 leading-relaxed"></div>
+                            <div class="mt-2 text-green-800">If something changed, you can update it below.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mb-8">
+                    <h3 class="section-title">Travel Plans</h3>
+
+                    <div class="bg-gradient-to-r from-yylr-softOrange to-yylr-skyLight border-2 border-yylr-sky/50 rounded-xl p-5 my-5 shadow-sm mx-auto max-w-md transform hover:scale-[1.02] transition-transform">
+                        <span class="material-icons text-yylr-primary mb-1">event_available</span>
+                        <p class="text-yylr-dark text-lg font-black tracking-wide m-0 leading-snug">YYLR will begin December 25th and conclude December 30th.</p>
+                    </div>
+
+                    <div class="bg-yylr-skyLight border border-blue-100 rounded-lg p-3 inline-block text-left text-sm text-blue-900 shadow-sm max-w-md">
+                        <strong>Disclaimer:</strong> Check-in begins at 3:00 PM on Friday, December 25th. Retreat concludes with departure by 1:00 PM on Wednesday, December 30th.
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-4 mb-8 mt-6">
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="travelType" value="Flight" class="peer hidden" onchange="toggleTravelMode()" checked>
+                        <div class="w-24 h-24 rounded-2xl bg-white border-2 border-gray-100 peer-checked:border-yylr-primary peer-checked:bg-yylr-skyLight flex flex-col items-center justify-center transition-all shadow-sm hover:shadow-md">
+                            <span class="material-icons text-3xl text-gray-400 peer-checked:text-yylr-primary mb-1">flight</span>
+                            <span class="text-xs font-bold text-gray-500 peer-checked:text-yylr-dark">Flight</span>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="travelType" value="Car" class="peer hidden" onchange="toggleTravelMode()">
+                        <div class="w-24 h-24 rounded-2xl bg-white border-2 border-gray-100 peer-checked:border-yylr-primary peer-checked:bg-yylr-skyLight flex flex-col items-center justify-center transition-all shadow-sm hover:shadow-md text-center p-2">
+                            <span class="material-icons text-3xl text-gray-400 peer-checked:text-yylr-primary mb-1">directions_car</span>
+                            <span class="text-[10px] leading-tight font-bold text-gray-500 peer-checked:text-yylr-dark">Driving Instead</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div id="flight-airport-note" class="hidden max-w-md mx-auto -mt-4 mb-8 bg-white/90 border border-orange-100 rounded-2xl p-4 shadow-lg animate-fade-in-up text-left">
+                    <div class="flex items-start gap-3">
+                        <span class="material-icons text-yylr-sky text-xl mt-0.5">flight_takeoff</span>
+                        <div>
+                            <div class="font-bold text-yylr-dark text-sm">Preferred Airport</div>
+                            <p class="text-sm text-gray-600 leading-relaxed mt-1">
+                                Please use <strong>RIC</strong> when possible. <strong>IAD</strong> and <strong>BWI</strong> are acceptable alternatives.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="flight-module" class="hidden space-y-8 animate-fade-in-up">
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
+                        <h4 class="font-bold text-gray-800 mb-4 flex items-center"><span class="material-icons text-green-500 mr-2 transform rotate-90">flight</span> Arrival Flight</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                            <div><label class="form-label">Date <span class="text-red-500">*</span></label><input type="date" id="arr-date" class="glass-input w-full p-2 text-sm" min="2026-12-20" max="2027-01-05"></div>
+                            <div class="md:col-span-2">
+                                <label class="form-label">Flight # <span class="text-red-500">*</span></label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="arr-num" class="glass-input w-full p-2 text-sm uppercase" placeholder="e.g. UA123">
+                                    <button onclick="checkFlight('arr', event)" class="bg-gray-800 text-white px-4 rounded-lg text-xs font-bold hover:bg-black transition-colors">CHECK</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="arr-result" class="hidden bg-gray-50 rounded-lg p-3 border border-gray-100">
+                            <div class="flex justify-between items-center mb-2 pb-2 border-b border-gray-200">
+                                <img id="arr-logo" src="" class="h-6 object-contain" alt="Airline">
+                                <span id="arr-flight-display" class="font-black text-lg text-gray-800">--</span>
+                            </div>
+                            <div class="flex justify-between items-center text-center">
+                                <div><div id="arr-dep-code" class="text-xl font-bold text-gray-600">DEP</div><div id="arr-dep-time" class="text-xs text-yylr-primary font-bold">00:00</div></div>
+                                <div class="flex-1 px-4 text-gray-300 flex items-center justify-center"><span class="border-t-2 border-dashed border-gray-300 w-full"></span><span class="material-icons text-sm">arrow_forward</span></div>
+                                <div><div id="arr-arr-code" class="text-xl font-bold text-gray-600">ARR</div><div id="arr-arr-time" class="text-xs text-yylr-primary font-bold">00:00</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+                        <h4 class="font-bold text-gray-800 mb-4 flex items-center"><span class="material-icons text-red-500 mr-2 transform rotate-90">flight</span> Departure Flight</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                            <div><label class="form-label">Date <span class="text-red-500">*</span></label><input type="date" id="dep-date" class="glass-input w-full p-2 text-sm" min="2026-12-20" max="2027-01-05"></div>
+                            <div class="md:col-span-2">
+                                <label class="form-label">Flight # <span class="text-red-500">*</span></label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="dep-num" class="glass-input w-full p-2 text-sm uppercase" placeholder="e.g. DL456">
+                                    <button onclick="checkFlight('dep', event)" class="bg-gray-800 text-white px-4 rounded-lg text-xs font-bold hover:bg-black transition-colors">CHECK</button>
+                                </div>
+                            </div>
+                        </div>
+                         <div id="dep-result" class="hidden bg-gray-50 rounded-lg p-3 border border-gray-100">
+                            <div class="flex justify-between items-center mb-2 pb-2 border-b border-gray-200">
+                                <img id="dep-logo" src="" class="h-6 object-contain" alt="Airline">
+                                <span id="dep-flight-display" class="font-black text-lg text-gray-800">--</span>
+                            </div>
+                            <div class="flex justify-between items-center text-center">
+                                <div><div id="dep-dep-code" class="text-xl font-bold text-gray-600">DEP</div><div id="dep-dep-time" class="text-xs text-yylr-primary font-bold">00:00</div></div>
+                                <div class="flex-1 px-4 text-gray-300 flex items-center justify-center"><span class="border-t-2 border-dashed border-gray-300 w-full"></span><span class="material-icons text-sm">arrow_forward</span></div>
+                                <div><div id="dep-arr-code" class="text-xl font-bold text-gray-600">ARR</div><div id="dep-arr-time" class="text-xs text-yylr-primary font-bold">00:00</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="car-module" class="hidden space-y-4 animate-fade-in-up">
+                    <div class="bg-yylr-skyLight text-blue-950 rounded-xl p-5 border border-blue-200">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="material-icons text-yylr-sky">directions_car</span>
+                            <span class="font-bold">Driving Details</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label text-blue-900">Arrival Date & Time <span class="text-red-500">*</span></label>
+                                <input type="datetime-local" id="car-arr-dt" class="glass-input w-full p-3 bg-white/80" min="2026-12-20T00:00" max="2027-01-05T23:59" value="2026-12-25T15:00">
+                            </div>
+                            <div>
+                                <label class="form-label text-blue-900">Departure Date & Time <span class="text-red-500">*</span></label>
+                                <input type="datetime-local" id="car-dep-dt" class="glass-input w-full p-3 bg-white/80" min="2026-12-20T00:00" max="2027-01-05T23:59" value="2026-12-30T13:00">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-gray-100">
+                    <button onclick="submitTravelUpdate()" class="btn-primary w-full py-4 text-base md:text-lg">
+                        Save Travel Details
+                    </button>
+                </div>
+            </div>
+
+            <div id="step-success" class="step-content hidden text-center py-10">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="material-icons text-4xl text-green-600">check</span>
+                </div>
+                <h2 class="font-serif text-3xl text-gray-800 mb-4">Travel Details Saved!</h2>
+                <p class="text-gray-600 mb-6">Jai Swaminarayan!<br>Thank you for updating your registration. A confirmation email with your travel details is on its way.</p>
+                <div id="success-lines" class="inline-block text-left bg-white/80 border border-orange-100 rounded-xl p-4 text-sm text-gray-700 leading-relaxed"></div>
+                <p class="text-gray-600 mt-6">We look forward to seeing you in Richmond, VA on December 25!</p>
+                <button onclick="goToStep('step-travel')" class="w-full text-gray-400 font-bold text-sm mt-6 hover:text-gray-600">Need to change something? Edit again</button>
+            </div>
+        </div>
+
+        <div class="text-center mt-12 text-gray-400 text-xs font-sans">
+            <p>Anoopam Mission &copy; 2026</p>
+        </div>
+    </div>
+
+
+    <script>
+        // CONFIGURATION
+        const YYLR_REGISTER_API_URL = "https://script.google.com/macros/s/AKfycbx87DdGyYj-IF7A_Z3rsuZwj926YtG_19QqIib2rZutpu_PC7aS-ICDmOF410Y0j9XQdg/exec";
+        const FLIGHT_PROXY_URL = "https://default6a3682358b304544aeac16b2bfa9cb.65.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2b6587f3c7044fa79230e99f855129bd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Kwr2zyHS0lJ8wDANt8KLn0p6Yf8c-KGihZQDSfEfCb8";
+        const PREFERRED_AIRPORT_CODES = ["RIC", "IAD", "BWI"];
+
+        let flightData = { arr: null, dep: null };
+
+        function initRetreatScene() {
+            const canvas = document.getElementById('retreat-scene');
+            if (!canvas || !window.THREE) return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.z = 12;
+
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, preserveDrawingBuffer: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const group = new THREE.Group();
+            scene.add(group);
+
+            const makeRibbon = (color, yOffset, zOffset) => {
+                const segments = 80;
+                const positions = new Float32Array(segments * 3);
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const material = new THREE.LineBasicMaterial({
+                    color,
+                    transparent: true,
+                    opacity: 0.32,
+                });
+                const line = new THREE.Line(geometry, material);
+                line.userData = { yOffset, zOffset, segments };
+                group.add(line);
+                return line;
+            };
+
+            const ribbons = [
+                makeRibbon(0xf2b84b, -2.7, -2),
+                makeRibbon(0xf8d06a, -1.8, -3),
+                makeRibbon(0x38bdf8, -0.9, -4),
+            ];
+
+            const particleCount = window.innerWidth < 640 ? 70 : 130;
+            const particlePositions = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount; i++) {
+                particlePositions[i * 3] = (Math.random() - 0.5) * 18;
+                particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 12;
+                particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 8;
+            }
+            const particleGeometry = new THREE.BufferGeometry();
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+            const particles = new THREE.Points(
+                particleGeometry,
+                new THREE.PointsMaterial({
+                    color: 0xd9902d,
+                    size: 0.055,
+                    transparent: true,
+                    opacity: 0.45,
+                })
+            );
+            scene.add(particles);
+
+            const updateRibbons = (time) => {
+                const width = window.innerWidth < 640 ? 9 : 14;
+                ribbons.forEach((line, index) => {
+                    const { segments, yOffset, zOffset } = line.userData;
+                    const positions = line.geometry.attributes.position.array;
+                    for (let i = 0; i < segments; i++) {
+                        const progress = i / (segments - 1);
+                        const x = (progress - 0.5) * width;
+                        const y = yOffset + Math.sin(progress * Math.PI * 2 + time + index) * 0.32;
+                        positions[i * 3] = x;
+                        positions[i * 3 + 1] = y;
+                        positions[i * 3 + 2] = zOffset;
+                    }
+                    line.geometry.attributes.position.needsUpdate = true;
+                });
+            };
+
+            let animationFrame;
+            const animate = (timeMs) => {
+                const time = timeMs * 0.00045;
+                group.rotation.z = Math.sin(time * 0.7) * 0.025;
+                particles.rotation.y = time * 0.06;
+                particles.rotation.x = Math.sin(time * 0.4) * 0.035;
+                updateRibbons(time);
+                renderer.render(scene, camera);
+                animationFrame = requestAnimationFrame(animate);
+            };
+
+            const handleResize = () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            };
+
+            window.addEventListener('resize', handleResize);
+            animate(0);
+
+            window.addEventListener('beforeunload', () => {
+                cancelAnimationFrame(animationFrame);
+                window.removeEventListener('resize', handleResize);
+                renderer.dispose();
+            });
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const UPDATE_TOKEN = (params.get('t') || '').trim();
+        let registration = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initRetreatScene();
+            ['arr', 'dep'].forEach(type => {
+                ['num', 'date'].forEach(field => {
+                    document.getElementById(`${type}-${field}`).addEventListener('input', () => clearFlight(type));
+                });
+            });
+            toggleTravelMode();
+            loadRegistration();
+        });
+
+        function goToStep(stepId) {
+            document.querySelectorAll('.step-content').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('block', 'animate-fade-in-up');
+            });
+            const target = document.getElementById(stepId);
+            target.classList.remove('hidden');
+            target.classList.add('block', 'animate-fade-in-up');
+
+            const bar = document.getElementById('progress-bar');
+            if(stepId === 'step-travel') bar.style.width = '55%';
+            if(stepId === 'step-success') bar.style.width = '100%';
+            if(stepId === 'step-error') bar.style.width = '0%';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleLoader(show) {
+            const loader = document.getElementById('loader');
+            if(show) loader.classList.remove('hidden');
+            else loader.classList.add('hidden');
+        }
+
+        function showError(message) {
+            if (message) document.getElementById('error-message').innerText = message;
+            goToStep('step-error');
+        }
+
+        async function loadRegistration() {
+            if (!/^[a-f0-9]{32}$/i.test(UPDATE_TOKEN)) {
+                showError();
+                return;
+            }
+            try {
+                const url = `${YYLR_REGISTER_API_URL}?action=flightLookup&token=${encodeURIComponent(UPDATE_TOKEN)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (!data.ok) { showError(data.error); return; }
+                registration = data;
+                document.getElementById('reg-name').innerText = data.fullName || data.firstName || '--';
+                document.getElementById('reg-id').innerText = data.registrationId || '--';
+                if (data.travelType && data.travelType !== 'FlightNotBooked' && data.flightDetails) {
+                    prefillTravel(data.travelType, data.flightDetails, data.updatedAt);
+                }
+                goToStep('step-travel');
+            } catch (e) {
+                console.error(e);
+                showError("We couldn't reach the registration system. Please check your connection and reload this page.");
+            }
+        }
+
+        function travelLines(type, details) {
+            const arr = details.arr || {};
+            const dep = details.dep || {};
+            if (type === 'Car') {
+                return [`Driving`, `Arrive: ${arr.date} ${arr.time}`, `Depart: ${dep.date} ${dep.time}`];
+            }
+            return [
+                `Arrival: ${arr.flight} on ${arr.date} — lands ${arr.arr || arr.airport} at ${arr.time}`,
+                `Departure: ${dep.flight} on ${dep.date} — leaves ${dep.dep || dep.airport} at ${dep.time}`
+            ];
+        }
+
+        function renderLines(elId, lines) {
+            const el = document.getElementById(elId);
+            el.innerHTML = '';
+            lines.forEach(line => {
+                const div = document.createElement('div');
+                div.innerText = line;
+                el.appendChild(div);
+            });
+        }
+
+        function to24h(time) {
+            const m = String(time || '').match(/^(\d{1,2}):(\d{2}) (AM|PM)$/);
+            if (!m) return '';
+            let h = parseInt(m[1]) % 12;
+            if (m[3] === 'PM') h += 12;
+            return `${String(h).padStart(2, '0')}:${m[2]}`;
+        }
+
+        function prefillTravel(type, details, updatedAt) {
+            document.getElementById('current-travel-card').classList.remove('hidden');
+            document.getElementById('current-travel-updated').innerText = updatedAt ? ` (updated ${updatedAt})` : '';
+            renderLines('current-travel-lines', travelLines(type, details));
+
+            const radio = document.querySelector(`input[name="travelType"][value="${type}"]`);
+            if (radio) radio.checked = true;
+            toggleTravelMode();
+
+            if (type === 'Car') {
+                const arrT = to24h(details.arr.time), depT = to24h(details.dep.time);
+                if (arrT) document.getElementById('car-arr-dt').value = `${details.arr.date}T${arrT}`;
+                if (depT) document.getElementById('car-dep-dt').value = `${details.dep.date}T${depT}`;
+            } else if (type === 'Flight') {
+                ['arr', 'dep'].forEach(t => {
+                    const f = details[t];
+                    if (!f || !f.flight) return;
+                    document.getElementById(`${t}-date`).value = f.date;
+                    document.getElementById(`${t}-num`).value = f.flight;
+                    document.getElementById(`${t}-result`).classList.remove('hidden');
+                    document.getElementById(`${t}-logo`).src = `https://pics.avs.io/200/100/${f.flight.substring(0, 2)}.png`;
+                    document.getElementById(`${t}-flight-display`).innerText = `${f.flight.substring(0, 2)} ${f.flight.substring(2)}`;
+                    document.getElementById(`${t}-dep-code`).innerText = f.dep || '';
+                    document.getElementById(`${t}-arr-code`).innerText = f.arr || '';
+                    document.getElementById(`${t}-dep-time`).innerText = t === 'dep' ? f.time : '';
+                    document.getElementById(`${t}-arr-time`).innerText = t === 'arr' ? f.time : '';
+                    flightData[t] = { flight: f.flight, date: f.date, dep: f.dep, arr: f.arr, time: f.time };
+                });
+            }
+        }
+
+        function clearFlight(type) {
+            if (!flightData[type]) return;
+            flightData[type] = null;
+            document.getElementById(`${type}-result`).classList.add('hidden');
+        }
+
+        function toggleTravelMode() {
+            const mode = document.querySelector('input[name="travelType"]:checked').value;
+            const flightMod = document.getElementById('flight-module');
+            const carMod = document.getElementById('car-module');
+            const airportNote = document.getElementById('flight-airport-note');
+
+            flightMod.classList.add('hidden');
+            carMod.classList.add('hidden');
+            airportNote.classList.add('hidden');
+
+            if(mode === 'Flight') {
+                flightMod.classList.remove('hidden');
+                airportNote.classList.remove('hidden');
+            } else if(mode === 'Car') {
+                carMod.classList.remove('hidden');
+            }
+        }
+
+        function formatTime(iso) {
+            if(!iso) return "";
+            const timePart = iso.split('T')[1].substring(0,5);
+            let [h, m] = timePart.split(':');
+            h = parseInt(h);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        }
+        
+        function formatDateTime12(dtVal) {
+             if(!dtVal) return "";
+             const [date, time] = dtVal.split('T');
+             let [h, m] = time.split(':');
+             h = parseInt(h);
+             const ampm = h >= 12 ? 'PM' : 'AM';
+             h = h % 12 || 12;
+             return `${date} ${h}:${m} ${ampm}`;
+        }
+
+        function selectRetreatFlight(scheduledFlights, type) {
+            for (const airportCode of PREFERRED_AIRPORT_CODES) {
+                const match = scheduledFlights.find(f => {
+                    const dep = (f.departureAirportFsCode || "").toUpperCase();
+                    const arr = (f.arrivalAirportFsCode || "").toUpperCase();
+                    return type === 'arr' ? arr === airportCode : dep === airportCode;
+                });
+
+                if (match) return match;
+            }
+
+            return null;
+        }
+
+        async function checkFlight(type, evt) {
+            const num = document.getElementById(`${type}-num`).value.replace(/\s/g, '').toUpperCase();
+            const date = document.getElementById(`${type}-date`).value;
+            if(!num || !date) { alert("Please enter flight number and date."); return; }
+            
+            const btn = evt.target; 
+            const originalText = btn.innerText;
+            btn.innerText = "..."; btn.disabled = true;
+
+            try {
+                const match = num.match(/^([A-Z0-9]{2})(\d{1,4})$/);
+                if(!match) throw new Error("Invalid format");
+                const [year, month, day] = date.split('-');
+
+                const response = await fetch(FLIGHT_PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ carrier: match[1], flight: match[2], direction: type === 'arr' ? 'arriving' : 'departing', year: year, month: month, day: day })
+                });
+                if(!response.ok) throw new Error("Flight not found");
+                const data = await response.json();
+                
+                if(data.scheduledFlights && data.scheduledFlights.length > 0) {
+                    const f = selectRetreatFlight(data.scheduledFlights, type);
+                    if (!f) {
+                        const routes = data.scheduledFlights
+                            .map(flight => `${flight.departureAirportFsCode || "?"}-${flight.arrivalAirportFsCode || "?"}`)
+                            .join(", ");
+                        throw new Error(`No preferred airport segment found. Returned routes: ${routes}`);
+                    }
+                    const depTime = formatTime(f.departureTime);
+                    const arrTime = formatTime(f.arrivalTime);
+                    
+                    document.getElementById(`${type}-result`).classList.remove('hidden');
+                    document.getElementById(`${type}-logo`).src = `https://pics.avs.io/200/100/${f.carrierFsCode}.png`;
+                    document.getElementById(`${type}-flight-display`).innerText = `${f.carrierFsCode} ${f.flightNumber}`;
+                    document.getElementById(`${type}-dep-code`).innerText = f.departureAirportFsCode;
+                    document.getElementById(`${type}-dep-time`).innerText = depTime;
+                    document.getElementById(`${type}-arr-code`).innerText = f.arrivalAirportFsCode;
+                    document.getElementById(`${type}-arr-time`).innerText = arrTime;
+                    
+                    flightData[type] = {
+                        flight: `${f.carrierFsCode}${f.flightNumber}`, date: date,
+                        dep: f.departureAirportFsCode, arr: f.arrivalAirportFsCode, time: type === 'arr' ? arrTime : depTime
+                    };
+                } else { throw new Error("Flight not found"); }
+            } catch(e) {
+                console.warn(e);
+                alert(`Could not find a preferred ${type === 'arr' ? 'arrival' : 'departure'} airport segment (${PREFERRED_AIRPORT_CODES.join(", ")}) for that flight. Please check the flight number/date.`);
+            } finally {
+                btn.innerText = originalText; btn.disabled = false;
+            }
+        }
+
+        function buildTravelPayload() {
+            const travelType = document.querySelector('input[name="travelType"]:checked').value;
+
+            if (travelType === 'Car') {
+                const arrDT = document.getElementById('car-arr-dt').value;
+                const depDT = document.getElementById('car-dep-dt').value;
+                if (!arrDT || !depDT) {
+                    alert("Please specify your car arrival and departure times.");
+                    return null;
+                }
+                const arrParts = formatDateTime12(arrDT).split(' ');
+                const depParts = formatDateTime12(depDT).split(' ');
+                return {
+                    type: 'Car',
+                    flightDetails: {
+                        arr: { date: arrParts[0], time: arrParts[1] + ' ' + arrParts[2], airport: "N/A", flight: "Car" },
+                        dep: { date: depParts[0], time: depParts[1] + ' ' + depParts[2], airport: "N/A", flight: "Car" }
+                    }
+                };
+            }
+
+            if(!flightData.arr || !flightData.arr.date || !flightData.dep || !flightData.dep.date) {
+                alert("Please validate both your Arrival and Departure flight details before saving (press CHECK for each flight).");
+                return null;
+            }
+            return { type: 'Flight', flightDetails: { arr: flightData.arr, dep: flightData.dep } };
+        }
+
+        async function submitTravelUpdate() {
+            const travel = buildTravelPayload();
+            if (!travel) return;
+
+            toggleLoader(true);
+            try {
+                const response = await fetch(YYLR_REGISTER_API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                    body: JSON.stringify({ action: 'updateFlight', token: UPDATE_TOKEN, travel: travel })
+                });
+                const result = await response.json();
+                if (!result.ok) {
+                    alert(result.error || "We couldn't save your travel details. Please try again.");
+                    return;
+                }
+                renderLines('success-lines', travelLines(travel.type, travel.flightDetails));
+                prefillTravel(travel.type, travel.flightDetails, '');
+                document.getElementById('current-travel-updated').innerText = ' (just now)';
+                goToStep('step-success');
+            } catch(e) {
+                console.error(e);
+                alert("Saving failed. Please check your connection and try again.");
+            } finally {
+                toggleLoader(false);
+            }
+        }
+    </script>
+</body>
+</html>
